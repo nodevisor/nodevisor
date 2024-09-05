@@ -14,7 +14,7 @@ jobs:
       matrix:
         # , centos:7, fedora:latest
         os: ["debian:buster", "ubuntu:latest"]
-        node-version: [16.x, 18.x]
+        node-version: [18.x, 20.x]
 
     steps:
       # Step 1: Checkout the repository
