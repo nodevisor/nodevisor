@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig-base.json",
+  "include": ["src/**/*"],
+  "exclude": ["src/**/*.spec.ts"],
+  "compilerOptions": {
+    "declaration": true,
+    "module": "ESNext",
+    "outDir": "dist/esm"
+  }
+}

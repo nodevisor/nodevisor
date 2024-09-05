@@ -1,38 +1,24 @@
 {
-  "name": "nodevisor",
-  "version": "0.0.1",
+  "name": "@nodevisor/root",
+  "description": "Server Management and Scalable Application Deployment",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "repository": {
-    "type": "git",
-    "url": "git://github.com/nodevisor/nodevisor.git"
-  },
-  "engines": {
-    "node": ">=16.2.0"
-  },
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
-  "exports": {
-    ".": {
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
-    }
+    "url": "https://github.com/nodevisor/nodevisor"
   },
   "scripts": {
-    "clean": "rm -rf dist",
     "prettier": "prettier --write src/**/*.ts test/**/*.ts",
-    "build": "npm run clean && npm run build:esm && npm run build:cjs",
-    "build:esm": "tsc -p tsconfig.json",
-    "build:cjs": "tsc -p tsconfig-cjs.json",
-    "test": "jest",
-    "valid": "tsc --noEmit"
+    "build": "lerna run build",
+    "build:nodevisor": "lerna run build --scope=nodevisor --include-dependencies",
+    "test": "lerna run test",
+    "test:nodevisor": "lerna run test --scope=nodevisor --include-dependencies"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@types/jest": "^29.5.1",
-    "@types/node": "^20.2.5",
-    "jest": "^29.5.0",
-    "prettier": "^2.8.8",
-    "ts-jest": "^29.1.0",
-    "typescript": "5.0.4"
+    "lerna": "^8.1.8",
+    "prettier": "^3.3.3"
   }
 }

@@ -1,3 +1,7 @@
+---
+title: Intro
+---
+
 # Nodevisor
 
 Simple server management and application deployment, fully in your control.
@@ -46,8 +50,25 @@ npm install -g nodevisor
 
 ## Supported OS
 
-- Ubuntu
-- Debian
+import Image from 'next/image';
+
+export function OSImage({ src, name, versions }) {
+  return (
+    <div className="flex flex-row items-center gap-4">
+      <Image src={src} alt={name} width={64} height={64} className="grayscale" />
+      <div className="flex flex-col">
+        <h4>{name}</h4>
+        <p>Version: {versions}</p>
+      </div>
+    </div>
+  );
+}
+
+<OSImage
+  name="Debian"
+  src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Openlogo-debianV2.svg/1200px-Openlogo-debianV2.svg.png"
+  versions="12"
+/>
 
 ### In progress
 
@@ -66,13 +87,6 @@ Be aware that Nodevisor has a special [license](https://github.com/nodevisor/nod
 - Evaluating Nodevisor to see if it’s a good fit, without using it commercially.
 
 For more information, please read our [LICENSE page](https://github.com/nodevisor/nodevisor/blob/main/LICENSE.md).
-
-## Pricing
-
-- **$9 per server, per month**
-- Simple, flat-rate pricing with full feature access and unlimited users.
-
-For more details, visit our [pricing page](https://www.nodevisor.com/pricing).
 
 ## Support
 
