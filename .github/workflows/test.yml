@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         # , centos:7, fedora:latest
-        os: [debian:buster, ubuntu:latest]
+        os: ["debian:buster", "ubuntu:latest"]
         node-version: [16.x, 18.x]
 
     steps:
