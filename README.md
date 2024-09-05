@@ -1,3 +1,7 @@
+<picture>
+  <img alt="Nodevisor Logo" width="150px" src="https://github.com/nodevisor/logo/raw/main/nodevisor.png">
+</picture>
+
 # Nodevisor
 
 Simple server management and application deployment, fully in your control.
