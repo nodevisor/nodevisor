@@ -18,7 +18,8 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "debug": "^4.3.6",
+    "debug": "^4.3.7",
+    "lodash": "^4.17.21",
     "node-ssh": "^13.2.0",
     "ssh2-sftp-client": "^11.0.0",
     "shelljs": "^0.8.5",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
+    "@types/lodash": "^4.17.7",
     "@types/node": "^22.5.4",
     "@types/shelljs": "^0.8.15",
     "@types/ssh2-sftp-client": "^9.0.4",

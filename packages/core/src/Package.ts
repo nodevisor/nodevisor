@@ -1,7 +1,5 @@
-import { type Debugger } from 'debug';
-import log from './utils/log';
 import Module, { type ModuleConfig } from './Module';
-import Nodevisor, { type ExecAsMethod } from './Nodevisor';
+import Nodevisor from './Nodevisor';
 
 export type PackageConfig = ModuleConfig & {
   dependencies?: (new (nodevisor: Nodevisor) => Package)[];
@@ -44,16 +42,6 @@ export default abstract class Package extends Module {
     this.log('Installed');
 
     return this;
-  }
-
-  as(execAs: string, execAsMethod?: ExecAsMethod): this {
-    const PackageClass = this.constructor as {
-      new (nodevisor: Nodevisor, config?: PackageConfig): Package;
-    };
-
-    const nodevisor = this.nodevisor.as(execAs, execAsMethod);
-
-    return new PackageClass(nodevisor, this.config) as this;
   }
 
   // New abstract method for subclasses to implement

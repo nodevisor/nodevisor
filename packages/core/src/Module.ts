@@ -1,6 +1,8 @@
 import { type Debugger } from 'debug';
 import log from './utils/log';
-import Nodevisor, { type ExecAsMethod } from './Nodevisor';
+import Nodevisor from './Nodevisor';
+import type RunAs from './@types/RunAs';
+import { type CommandBuilderOptions } from './CommandBuilder';
 
 export type ModuleConfig = {
   name?: string;
@@ -20,17 +22,21 @@ export default abstract class Module {
     this.log = log.extend(name);
   }
 
-  as(execAs: string, execAsMethod?: ExecAsMethod): this {
+  as(runAs: RunAs): this {
     const ModuleClass = this.constructor as {
       new (nodevisor: Nodevisor, config?: ModuleConfig): Module;
     };
 
-    const nodevisor = this.nodevisor.as(execAs, execAsMethod);
+    const nodevisor = this.nodevisor.as(runAs);
 
     return new ModuleClass(nodevisor, this.config) as this;
   }
 
-  async $(strings: TemplateStringsArray, ...values: any[]) {
+  cmd(options: CommandBuilderOptions = {}) {
+    return this.nodevisor.cmd(options);
+  }
+
+  $(strings: TemplateStringsArray, ...values: any[]) {
     return this.nodevisor.$(strings, ...values);
   }
 }

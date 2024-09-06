@@ -1,16 +1,16 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 
-import ShellConnection from './ShellConnection';
+import SSHConnection from './SSHConnection';
 import { createTempFile } from '../utils/tests';
 
 describe('SSHConnection', () => {
-  let connection: ShellConnection;
+  let connection: SSHConnection;
   
   beforeEach(() => {
     const { username } = os.userInfo();
 
-    connection = new ShellConnection({
+    connection = new SSHConnection({
       host: 'localhost',
       username,
     });

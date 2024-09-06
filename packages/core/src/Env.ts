@@ -5,6 +5,13 @@ export default class Env {
 
   private files: Set<string> = new Set();
 
+  public constructor(env?: Env) {
+    if (env) {
+      this.env = new Map(env.env);
+      this.files = new Set(env.files);
+    }
+  }
+
   public has(key: string) {
     return this.env.has(key);
   }
@@ -13,7 +20,17 @@ export default class Env {
     return this.env.get(key);
   }
 
-  public set(key: string, value: string) {
+  public set(key: string | Record<string, string>, value?: string) {
+    if (typeof key === 'object') {
+      Object.entries(key).forEach(([k, v]) => this.set(k, v));
+      return;
+    }
+
+    if (typeof value === 'undefined') {
+      this.delete(key);
+      return;
+    }
+
     this.env.set(key, value);
   }
 

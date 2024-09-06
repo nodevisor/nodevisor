@@ -1,3 +1,8 @@
+import type Quote from '../@types/Quote';
+import type QuoteArg from '../@types/QuoteArg';
+import { type Raw } from '../utils/raw';
+import defaultQuote from '../quotes/quote';
+
 export type PutOptions = {
   flags?: 'w' | 'a';
   encoding?: null | BufferEncoding;
@@ -15,13 +20,21 @@ export type GetOptions = {
 
 export const defaultGetOptions: GetOptions = { flags: 'r' as const, encoding: null, mode: 0o644 };
 
-export type ConnectionConfig = {};
+export type ConnectionConfig = {
+  quote?: Quote;
+};
 
 export default abstract class Connection {
   protected config: ConnectionConfig;
 
   constructor(config: ConnectionConfig) {
     this.config = config;
+  }
+
+  quote(value: QuoteArg | QuoteArg[]): string | Raw {
+    const quoteFn = this.config.quote || defaultQuote;
+
+    return quoteFn(value);
   }
 
   // connection
