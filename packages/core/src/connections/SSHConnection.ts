@@ -106,6 +106,9 @@ export default class SSHConnection extends Connection {
 
       logExec(cmd);
       const result = await this.ssh.execCommand(cmd);
+      if (typeof result === 'undefined') {
+        throw new Error('No response');
+      }
 
       if (result.stdout) {
         logResponse(result.stdout);

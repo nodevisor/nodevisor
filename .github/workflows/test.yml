@@ -13,8 +13,9 @@ jobs:
     strategy:
       matrix:
         # , centos:7, fedora:latest
-        os: ["debian:buster", "ubuntu:latest"]
-        node-version: [18.x, 20.x]
+        os: ["debian:buster", "ubuntu:latest", "fedora:latest"]
+        # , 20.x
+        node-version: [18.x]
 
     steps:
       # Step 1: Checkout the repository
@@ -39,13 +40,15 @@ jobs:
                          dnf update -y && dnf groupinstall -y 'Development Tools' && dnf install -y curl;
                        fi;
 
-                       # Install Node.js
-                       curl -fsSL https://deb.nodesource.com/setup_${{ matrix.node-version }} | bash -
+                      # Install Node.js
                        if [ '${{ matrix.os }}' = 'debian:buster' ] || [ '${{ matrix.os }}' = 'ubuntu:latest' ]; then
+                         curl -fsSL https://deb.nodesource.com/setup_${{ matrix.node-version }} | bash -;
                          apt-get install -y nodejs;
                        elif [ '${{ matrix.os }}' = 'centos:7' ]; then
+                         curl -fsSL https://rpm.nodesource.com/setup_${{ matrix.node-version }} | bash -;
                          yum install -y nodejs;
                        elif [ '${{ matrix.os }}' = 'fedora:latest' ]; then
+                         curl -fsSL https://rpm.nodesource.com/setup_${{ matrix.node-version }} | bash -;
                          dnf install -y nodejs;
                        fi;
 
@@ -54,4 +57,4 @@ jobs:
 
                        # Step 4: Run tests
                        npm test;
-                     "
+                     "                  

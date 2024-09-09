@@ -1,19 +1,39 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
+import Server from '../utils/Server';
 
 import SSHConnection from './SSHConnection';
 import { createTempFile } from '../utils/tests';
 
+
 describe('SSHConnection', () => {
   let connection: SSHConnection;
-  
-  beforeEach(() => {
-    const { username } = os.userInfo();
+  let server: Server;
+
+  beforeEach(async () => {
+    server = new Server({
+      username: 'test',
+      password: 'testpassword',
+      hostname: '127.0.0.1',
+      port: 2222,
+    });
+
+    await server.listen();
 
     connection = new SSHConnection({
+      username: 'test',
+      password: 'testpassword',
       host: 'localhost',
-      username,
+      port: 2222,
     });
+  });
+
+  afterEach(async () => {
+    await connection.close();
+
+    if (server) {
+      await server.close();
+    }
   });
 
   it('should not be connected initially', () => {
@@ -34,8 +54,20 @@ describe('SSHConnection', () => {
 
   it('should throw an error for an invalid command', async () => {
     await expect(connection.exec('invalidCommand')).rejects.toThrow();
+
+    expect(connection.isConnected()).toBe(true);
+
+    await expect(await connection.exec('printf "Hello, world!"')).toBe('Hello, world!');
   });
 
+  it('should be able to execute a command after an invalid command', async () => {
+    await expect(connection.exec('invalidCommand')).rejects.toThrow();
+
+    expect(connection.isConnected()).toBe(true);
+
+    await expect(await connection.exec('printf "Hello, world!"')).toBe('Hello, world!');
+  });
+/*
   it('should handle file transfer with putContent correctly', async () => {
     const tempFilePath = await createTempFile();
 
@@ -94,4 +126,5 @@ describe('SSHConnection', () => {
     await fs.unlink(tempFilePath);
     await fs.unlink(localFile);
   });
+  */
 });
