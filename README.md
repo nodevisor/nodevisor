@@ -51,7 +51,7 @@ npm install -g nodevisor
 
 ## Supported OS
 
-- Ubuntu 14+
+- Ubuntu 18+
 - Debian 11+
 - Fedora 39+
 
