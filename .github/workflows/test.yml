@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["debian:bullseye", "ubuntu:bionic", "fedora:39"]
+        os: ["debian:bullseye", "ubuntu:focal", "fedora:39"]
         node-version: [18.x]
 
     runs-on: ubuntu-latest
