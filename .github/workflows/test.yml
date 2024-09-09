@@ -8,6 +8,9 @@ on:
 
 jobs:
   test-windows-macos:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
@@ -33,6 +36,9 @@ jobs:
 
   test-linux:
     if: contains(github.event.head_commit.message, 'run-all-tests')
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
