@@ -14,51 +14,65 @@ jobs:
       fail-fast: false
       matrix:
         # , centos:7, fedora:latest
-        os: ["debian:buster", "ubuntu:latest", "fedora:latest"]
+        os: ["debian:buster", "ubuntu:latest", "fedora:latest", "windows-latest"]
         # , 20.x
         node-version: [18.x]
 
     steps:
       # Step 1: Checkout the repository
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       # Step 2: Set up Docker for each OS in the matrix
       - name: Set up Docker container for ${{ matrix.os }}
         run: |
-          docker run -v ${{ github.workspace }}:/workspace \
-                     -w /workspace \
-                     ${{ matrix.os }} \
-                     /bin/bash -c "
-                       # Update and install essential packages
-                       if [ '${{ matrix.os }}' = 'debian:buster' ]; then
-                         apt-get update && apt-get install -y build-essential curl;
-                       elif [ '${{ matrix.os }}' = 'ubuntu:latest' ]; then
-                         apt-get update && apt-get install -y build-essential curl;
-                       elif [ '${{ matrix.os }}' = 'centos:7' ]; then
-                         yum update -y && yum groupinstall -y 'Development Tools' && yum install -y curl;
-                       elif [ '${{ matrix.os }}' = 'fedora:latest' ]; then
-                         dnf update -y && dnf groupinstall -y 'Development Tools' && dnf install -y curl;
-                       fi;
+         if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            # Windows setup (no Docker)
+            # Install Node.js on Windows
+            nvm install ${{ matrix.node-version }};
+            nvm use ${{ matrix.node-version }};
+            
+            # Install project dependencies
+            npm install;
 
-                      # Install Node.js
-                       if [ '${{ matrix.os }}' = 'debian:buster' ] || [ '${{ matrix.os }}' = 'ubuntu:latest' ]; then
-                         curl -fsSL https://deb.nodesource.com/setup_${{ matrix.node-version }} | bash -;
-                         apt-get install -y nodejs;
-                       elif [ '${{ matrix.os }}' = 'centos:7' ]; then
-                         curl -fsSL https://rpm.nodesource.com/setup_${{ matrix.node-version }} | bash -;
-                         yum install -y nodejs;
-                       elif [ '${{ matrix.os }}' = 'fedora:latest' ]; then
-                         curl -fsSL https://rpm.nodesource.com/setup_${{ matrix.node-version }} | bash -;
-                         dnf install -y nodejs;
-                       fi;
+            # Build and run tests
+            npm run build;
+            npm test;
+          else
+            # Linux (using Docker)
+            docker run -v ${{ github.workspace }}:/workspace \
+                      -w /workspace \
+                      ${{ matrix.os }} \
+                      /bin/bash -c "
+                        # Update and install essential packages
+                        if [ '${{ matrix.os }}' = 'debian:buster' ]; then
+                          apt-get update && apt-get install -y build-essential curl;
+                        elif [ '${{ matrix.os }}' = 'ubuntu:latest' ]; then
+                          apt-get update && apt-get install -y build-essential curl;
+                        elif [ '${{ matrix.os }}' = 'centos:7' ]; then
+                          yum update -y && yum groupinstall -y 'Development Tools' && yum install -y curl;
+                        elif [ '${{ matrix.os }}' = 'fedora:latest' ]; then
+                          dnf update -y && dnf groupinstall -y 'Development Tools' && dnf install -y curl;
+                        fi;
 
-                       # Step 3: Install project dependencies
-                       npm install;
+                        # Install Node.js
+                        if [ '${{ matrix.os }}' = 'debian:buster' ] || [ '${{ matrix.os }}' = 'ubuntu:latest' ]; then
+                          curl -fsSL https://deb.nodesource.com/setup_${{ matrix.node-version }} | bash -;
+                          apt-get install -y nodejs;
+                        elif [ '${{ matrix.os }}' = 'centos:7' ]; then
+                          curl -fsSL https://rpm.nodesource.com/setup_${{ matrix.node-version }} | bash -;
+                          yum install -y nodejs;
+                        elif [ '${{ matrix.os }}' = 'fedora:latest' ]; then
+                          curl -fsSL https://rpm.nodesource.com/setup_${{ matrix.node-version }} | bash -;
+                          dnf install -y nodejs;
+                        fi;
 
-                       # Step 4: Build the project
-                       npm run build;
+                        # Step 3: Install project dependencies
+                        npm install;
 
-                       # Step 5: Run tests
-                       npm test;
-                     "                  
+                        # Step 4: Build the project
+                        npm run build;
+
+                        # Step 5: Run tests
+                        npm test;
+                      "                  

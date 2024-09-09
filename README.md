@@ -50,15 +50,15 @@ npm install -g nodevisor
 
 ## Supported OS
 
+### Linux
+
 - Ubuntu
 - Debian
-
-### In progress
-
-- mac osx
-- Centos
 - Fedora
-- windows
+
+### Darwin
+
+- macOS
 
 ## License
 
