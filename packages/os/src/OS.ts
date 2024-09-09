@@ -120,10 +120,13 @@ export default class OS extends Module {
   async platform(): Promise<Platform> {
     try {
       const platform = await this.$`uname -s`.trim().toLowerCase();
+      console.log('platform linux', platform);
 
       if (platforms.includes(platform)) {
         return platform as Platform;
       }
+
+      throw new Error('Unsupported platform');
     } catch (error) {
       // try another method
       const platform = await this

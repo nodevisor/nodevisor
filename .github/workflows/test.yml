@@ -8,15 +8,16 @@ on:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
-
     strategy:
       fail-fast: false
       matrix:
+        # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners
         # , centos:7, fedora:latest "debian:buster", "ubuntu:latest", "fedora:latest", 
-        os: ["windows-latest"]
+        os: ["windows-2019"]
         # , 20.x
         node-version: [18.x]
+
+    runs-on: ${{ matrix.os == 'windows-2019' && 'windows-2019' || 'ubuntu-latest' }}
 
     steps:
       # Step 1: Checkout the repository
@@ -24,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Use Node.js
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2019'
         uses: actions/setup-node@v3
         with:
             node-version: ${{ matrix.node-version }}
@@ -33,7 +34,7 @@ jobs:
       - name: Set up Docker container for ${{ matrix.os }}
         shell: bash
         run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then            
+          if [ "${{ matrix.os }}" == "windows-2019" ]; then            
             # Install project dependencies
             npm install;
 
