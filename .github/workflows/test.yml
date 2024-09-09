@@ -13,70 +13,72 @@ jobs:
       matrix:
         # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners
         # , centos:7, fedora:latest "debian:buster", "ubuntu:latest", "fedora:latest", 
-        os: ["windows-2019"]
+        os: ["windows-2019", "macos-12", "debian:buster"]
         # , 20.x
         node-version: [18.x]
 
-    runs-on: ${{ matrix.os == 'windows-2019' && 'windows-2019' || 'ubuntu-latest' }}
-
     steps:
-      # Step 1: Checkout the repository
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Set up runner for Windows and Mac
+        if: startsWith(matrix.os, 'windows-') || startsWith(matrix.os, 'macos-')
+        runs-on: ${{ matrix.os }}
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
 
-      - name: Use Node.js
-        if: matrix.os == 'windows-2019'
-        uses: actions/setup-node@v3
-        with:
-            node-version: ${{ matrix.node-version }}
+          - name: Use Node.js
+            uses: actions/setup-node@v3
+            with:
+              node-version: ${{ matrix.node-version }}
 
-      # Step 2: Set up Docker for each OS in the matrix
-      - name: Set up Docker container for ${{ matrix.os }}
-        shell: bash
-        run: |
-          if [ "${{ matrix.os }}" == "windows-2019" ]; then            
-            # Install project dependencies
-            npm install;
+          - name: Install dependencies and run tests
+            run: |
+              npm install;
+              npm run build;
+              npm test;
 
-            # Build and run tests
-            npm run build;
-            npm test;
-          else
-            # Linux (using Docker)
-            docker run -v ${{ github.workspace }}:/workspace \
-                      -w /workspace \
-                      ${{ matrix.os }} \
-                      /bin/bash -c "
-                        # Update and install essential packages
-                        if [ '${{ matrix.os }}' = 'debian:buster' ]; then
-                          apt-get update && apt-get install -y build-essential curl;
-                        elif [ '${{ matrix.os }}' = 'ubuntu:latest' ]; then
-                          apt-get update && apt-get install -y build-essential curl;
-                        elif [ '${{ matrix.os }}' = 'centos:7' ]; then
-                          yum update -y && yum groupinstall -y 'Development Tools' && yum install -y curl;
-                        elif [ '${{ matrix.os }}' = 'fedora:latest' ]; then
-                          dnf update -y && dnf groupinstall -y 'Development Tools' && dnf install -y curl;
-                        fi;
+      - name: Set up runner for Linux distributions (Docker)
+        if: "!startsWith(matrix.os, 'windows-') && !startsWith(matrix.os, 'macos-')"
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
 
-                        # Install Node.js
-                        if [ '${{ matrix.os }}' = 'debian:buster' ] || [ '${{ matrix.os }}' = 'ubuntu:latest' ]; then
-                          curl -fsSL https://deb.nodesource.com/setup_${{ matrix.node-version }} | bash -;
-                          apt-get install -y nodejs;
-                        elif [ '${{ matrix.os }}' = 'centos:7' ]; then
-                          curl -fsSL https://rpm.nodesource.com/setup_${{ matrix.node-version }} | bash -;
-                          yum install -y nodejs;
-                        elif [ '${{ matrix.os }}' = 'fedora:latest' ]; then
-                          curl -fsSL https://rpm.nodesource.com/setup_${{ matrix.node-version }} | bash -;
-                          dnf install -y nodejs;
-                        fi;
+          - name: Set up Docker container
+            shell: bash
+            run: |
+                docker run -v ${{ github.workspace }}:/workspace \
+                          -w /workspace \
+                          ${{ matrix.os }} \
+                          /bin/bash -c "
+                            # Update and install essential packages
+                            if [ '${{ matrix.os }}' = 'debian:buster' ]; then
+                              apt-get update && apt-get install -y build-essential curl;
+                            elif [ '${{ matrix.os }}' = 'ubuntu:latest' ]; then
+                              apt-get update && apt-get install -y build-essential curl;
+                            elif [ '${{ matrix.os }}' = 'centos:7' ]; then
+                              yum update -y && yum groupinstall -y 'Development Tools' && yum install -y curl;
+                            elif [ '${{ matrix.os }}' = 'fedora:latest' ]; then
+                              dnf update -y && dnf groupinstall -y 'Development Tools' && dnf install -y curl;
+                            fi;
 
-                        # Step 3: Install project dependencies
-                        npm install;
+                            # Install Node.js
+                            if [ '${{ matrix.os }}' = 'debian:buster' ] || [ '${{ matrix.os }}' = 'ubuntu:latest' ]; then
+                              curl -fsSL https://deb.nodesource.com/setup_${{ matrix.node-version }} | bash -;
+                              apt-get install -y nodejs;
+                            elif [ '${{ matrix.os }}' = 'centos:7' ]; then
+                              curl -fsSL https://rpm.nodesource.com/setup_${{ matrix.node-version }} | bash -;
+                              yum install -y nodejs;
+                            elif [ '${{ matrix.os }}' = 'fedora:latest' ]; then
+                              curl -fsSL https://rpm.nodesource.com/setup_${{ matrix.node-version }} | bash -;
+                              dnf install -y nodejs;
+                            fi;
 
-                        # Step 4: Build the project
-                        npm run build;
+                            # Step 3: Install project dependencies
+                            npm install;
 
-                        # Step 5: Run tests
-                        npm test;
-                      "
-          fi
+                            # Step 4: Build the project
+                            npm run build;
+
+                            # Step 5: Run tests
+                            npm test;
+                          "
