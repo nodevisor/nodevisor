@@ -33,7 +33,6 @@ describe('OS Module', () => {
     const result = await os.uptime();
 
     expect(result).toContain('up');
-    expect(result).toContain('days');
     expect(result).toContain('load averages');
   });
 

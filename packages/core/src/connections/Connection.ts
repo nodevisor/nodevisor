@@ -18,7 +18,7 @@ export type GetOptions = {
   autoClose?: boolean;
 };
 
-export const defaultGetOptions: GetOptions = { flags: 'r' as const, encoding: null, mode: 0o644 };
+export const defaultGetOptions: GetOptions = { flags: 'r', encoding: null, mode: 0o644 };
 
 export type ConnectionConfig = {
   quote?: Quote;

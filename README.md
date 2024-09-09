@@ -55,8 +55,10 @@ npm install -g nodevisor
 
 ### In progress
 
+- mac osx
 - Centos
 - Fedora
+- windows
 
 ## License
 

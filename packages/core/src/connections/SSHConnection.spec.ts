@@ -67,7 +67,7 @@ describe('SSHConnection', () => {
 
     await expect(await connection.exec('printf "Hello, world!"')).toBe('Hello, world!');
   });
-/*
+
   it('should handle file transfer with putContent correctly', async () => {
     const tempFilePath = await createTempFile();
 
@@ -126,5 +126,4 @@ describe('SSHConnection', () => {
     await fs.unlink(tempFilePath);
     await fs.unlink(localFile);
   });
-  */
 });

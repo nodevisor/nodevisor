@@ -1,6 +1,20 @@
 import { Server as ServerOG, type Connection } from 'ssh2';
+import fs from 'fs/promises';
+import { nanoid } from 'nanoid';
 import { ShellConnection } from '../connections';
 import log from './log';
+
+enum STATUS_CODE {
+  OK = 0,
+  EOF = 1,
+  NO_SUCH_FILE = 2,
+  PERMISSION_DENIED = 3,
+  FAILURE = 4,
+  BAD_MESSAGE = 5,
+  NO_CONNECTION = 6,
+  CONNECTION_LOST = 7,
+  OP_UNSUPPORTED = 8,
+}
 
 const logServer = log.extend('server');
 const logExec = logServer.extend('exec');
@@ -127,6 +141,87 @@ MQd/p9Q2fR/Rt2afAAAAInNlZWRlbkBabGF0a29zLU1hY0Jvb2stUHJvLTIubG9jYWw=
           } finally {
             stream.end();
           }
+        });
+
+        session.on('sftp', (accept, reject) => {
+          const sftpStream = accept();
+        
+          const files: Map<string, { filename: string; mode: 'r' | 'w' }> = new Map();
+
+          sftpStream.on('OPEN', async (reqid, filename, flags, attrs) => {
+            let mode: 'r' | 'w';
+        
+            // Determine the mode based on flags
+            if (flags & fs.constants.O_WRONLY || flags & fs.constants.O_RDWR) {
+              mode = 'w';  // Open file for writing
+            } else if (flags & fs.constants.O_RDONLY) {
+              mode = 'r';  // Open file for reading
+            } else {
+              // Unsupported flags
+              sftpStream.status(reqid, STATUS_CODE.FAILURE);
+              return;
+            }
+        
+            // Create a unique handle using nanoid
+            const handle = nanoid(8);
+            files.set(handle, { filename, mode });  // Store the file and its mode in the map
+        
+            // Respond with the handle
+            sftpStream.handle(reqid, Buffer.from(handle, 'utf8'));
+          });
+        
+          sftpStream.on('WRITE', async (reqid, handle, offset, data) => {
+            const fileInfo = files.get(handle.toString('utf8'));
+            if (!fileInfo || fileInfo.mode !== 'w') {
+              sftpStream.status(reqid, STATUS_CODE.FAILURE);
+              return;
+            }
+        
+            try {
+              // Write data to the file at the specified offset
+              const fileHandle = await fs.open(fileInfo.filename, 'r+');
+              await fileHandle.write(data, 0, data.length, offset);
+              await fileHandle.close();
+        
+              sftpStream.status(reqid, STATUS_CODE.OK);
+            } catch (err) {
+              console.error('Write error:', err);
+              sftpStream.status(reqid, STATUS_CODE.FAILURE);
+            }
+          });
+        
+          sftpStream.on('READ', async (reqid, handle, offset, length) => {
+            const fileInfo = files.get(handle.toString('utf8'));
+            if (!fileInfo) {
+              sftpStream.status(reqid, STATUS_CODE.FAILURE);
+              return;
+            }
+        
+            try {
+              // Read data from the file
+  
+              const fileHandle = await fs.open(fileInfo.filename, 'r');
+              const { buffer, bytesRead } = await fileHandle.read(Buffer.alloc(length), 0, length, offset);
+              await fileHandle.close();
+
+              // Send the read data back
+              sftpStream.data(reqid, buffer.slice(0, bytesRead));
+            } catch (err) {
+              logServer('Read error:', err);
+              sftpStream.status(reqid, STATUS_CODE.FAILURE);
+            }
+          });
+        
+          sftpStream.on('CLOSE', (reqid, handle) => {
+            const fileInfo = files.get(handle.toString('utf8'));
+            if (fileInfo) {
+              // Remove the file handle from the map
+              // files.delete(handle.toString('utf8'));
+              sftpStream.status(reqid, STATUS_CODE.OK);
+            } else {
+              sftpStream.status(reqid, STATUS_CODE.FAILURE);
+            }
+          });
         });
       });
     });

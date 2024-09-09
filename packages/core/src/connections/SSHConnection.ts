@@ -162,7 +162,8 @@ export default class SSHConnection extends Connection {
     const sftp = await this.getSFTP();
 
     try {
-      await sftp.put(content, remotePath, {
+      const bufferContent = Buffer.isBuffer(content) ? content : Buffer.from(content);
+      await sftp.put(bufferContent, remotePath, {
         writeStreamOptions: {
           ...defaultPutOptions,
           ...options,
