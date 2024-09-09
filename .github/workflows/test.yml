@@ -9,9 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    fail-fast: false
 
     strategy:
+      fail-fast: false
       matrix:
         # , centos:7, fedora:latest
         os: ["debian:buster", "ubuntu:latest", "fedora:latest"]
