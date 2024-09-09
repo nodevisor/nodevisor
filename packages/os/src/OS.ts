@@ -20,14 +20,14 @@ export default class OS extends Module {
   }
 
   async hostname() {
-    return this.$`hostname`;
+    return this.$`hostname`.trimOutput();
   }
 
   async arch() {
-    return this.$`uname -m`;
+    return this.$`uname -m`.trimOutput();
   }
 
   async platform() {
-    return this.$`uname -s`;
+    return this.$`uname -s`.trimOutput();
   }
 }

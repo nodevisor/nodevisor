@@ -2,6 +2,20 @@ import { hostname, arch } from 'os';
 import OS from './OS';
 import { Module, Nodevisor } from '@nodevisor/core';
 
+type Arch =
+  | 'arm'
+  | 'arm64'
+  | 'ia32'
+  | 'loong64'
+  | 'mips'
+  | 'mipsel'
+  | 'ppc'
+  | 'ppc64'
+  | 'riscv64'
+  | 's390'
+  | 's390x'
+  | 'x64';
+
 describe('OS Module', () => {
   let os: OS;
   let nodevisor: Nodevisor;
@@ -45,7 +59,31 @@ describe('OS Module', () => {
   it('should execute arch command', async () => {
     const result = await os.arch();
 
-    expect(result).toBe(arch());
+    // convert to Node.js arch value
+    // https://documentation.ubuntu.com/lxd/en/latest/architectures/
+    const archMap: Record<string, Arch> = {
+      x86_64: 'x64',
+      i386: 'ia32',
+      i486: 'ia32',
+      i586: 'ia32',
+      i686: 'ia32',
+      armv6l: 'arm',
+      armv7l: 'arm',
+      armv8l: 'arm64',
+      loongarch64: 'loong64',
+      mips: 'mips',
+      mipsel: 'mipsel',
+      ppc64: 'ppc64',
+      ppc64le: 'ppc64',
+      ppc: 'ppc',
+      riscv64: 'riscv64',
+      s390: 's390',
+      s390x: 's390x',
+    };
+
+    const converted = archMap[result] || result;
+
+    expect(converted).toBe(arch());
   });
 /*
   it('should execute platform command', async () => {

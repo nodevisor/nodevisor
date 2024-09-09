@@ -5,6 +5,14 @@ import type { Raw } from './utils/raw';
 import type RunAs from './@types/RunAs';
 import Env from './Env';
 
+/*
+  - do not map response from exec by default
+  - for example arch response is different from nodejs.os.arch, if we need arch from nodejs we will use it directly
+  - if we need to map response from exec we can use a custom command builder
+
+  - information about trim
+*/
+
 export type CommandBuilderOptions = {
   runAs?: RunAs;
   env?: Env;
@@ -15,6 +23,8 @@ export default class CommandBuilder {
   private command = '';
   private runAs?: RunAs;
   private env: Env;
+  private trimNewline = false;
+
 
   constructor(connection: Connection, options: CommandBuilderOptions = {}) {
     const { runAs, env } = options;
@@ -23,6 +33,11 @@ export default class CommandBuilder {
     this.runAs = runAs;
 
     this.env = new Env(env);
+  }
+
+  trimOutput(): this {
+    this.trimNewline = true;
+    return this;
   }
 
   private exec(cmd: string) {
@@ -89,7 +104,9 @@ export default class CommandBuilder {
 
       let result = await this.exec(command);
 
-      result = trimEnd(result, '\n');
+      if (this.trimNewline) {
+        result = trimEnd(result, '\n\r');
+      }
 
       resolve(result);
     } catch (error) {
