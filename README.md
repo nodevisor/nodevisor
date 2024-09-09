@@ -39,6 +39,7 @@ Without **Nodevisor**, managing servers and deploying applications can be diffic
 - **YAML Configuration:** Configure servers easily using YAML files.
 - **GitHub Actions Integration:** Seamlessly integrate with CI/CD pipelines.
 - **Web Interface:** Manage and control your servers through an intuitive, user-friendly web interface.
+- **NodeJS** compatible API with pure shell scripts across platforms.
 
 ## Installation
 
@@ -50,15 +51,13 @@ npm install -g nodevisor
 
 ## Supported OS
 
-### Linux
+- Ubuntu 14+
+- Debian 11+
+- Fedora 39+
 
-- Ubuntu
-- Debian
-- Fedora
+- macOS 12+
 
-### Darwin
-
-- macOS
+- Window 10+ with PowerShell
 
 ## License
 
