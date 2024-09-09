@@ -55,6 +55,9 @@ jobs:
                        # Step 3: Install project dependencies
                        npm install;
 
-                       # Step 4: Run tests
+                       # Step 4: Build the project
+                       npm run build;
+
+                       # Step 5: Run tests
                        npm test;
                      "                  
