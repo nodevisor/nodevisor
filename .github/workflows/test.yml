@@ -23,21 +23,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Use Node.js latest
+        uses: actions/setup-node@v3
+        with:
+            node-version: ${{ matrix.node-version }}
+
       # Step 2: Set up Docker for each OS in the matrix
       - name: Set up Docker container for ${{ matrix.os }}
         shell: bash
         run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            # Install NVM on Windows
-            Invoke-WebRequest https://github.com/coreybutler/nvm-windows/releases/download/1.1.10/nvm-setup.zip -OutFile nvm-setup.zip
-            Expand-Archive nvm-setup.zip -DestinationPath C:\nvm-setup
-            Start-Process -FilePath C:\nvm-setup\nvm-setup.exe -Wait
-
-            # Windows setup (no Docker)
-            # Install Node.js on Windows
-            nvm install ${{ matrix.node-version }};
-            nvm use ${{ matrix.node-version }};
-            
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then            
             # Install project dependencies
             npm install;
 
