@@ -38,7 +38,6 @@ jobs:
       matrix:
         os: ["debian:bullseye", "ubuntu:trusty", "fedora:39"]
         node-version: [18.x]
-        include:
 
     runs-on: ubuntu-latest
     steps:
