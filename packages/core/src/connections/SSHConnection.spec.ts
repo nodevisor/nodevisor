@@ -23,7 +23,7 @@ describe('SSHConnection', () => {
     connection = new SSHConnection({
       username: 'test',
       password: 'testpassword',
-      host: 'localhost',
+      host: '127.0.0.1',
       port: 2222,
     });
   });
