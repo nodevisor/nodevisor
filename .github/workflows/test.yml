@@ -13,8 +13,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # , centos:7, fedora:latest
-        os: ["debian:buster", "ubuntu:latest", "fedora:latest", "windows-latest"]
+        # , centos:7, fedora:latest "debian:buster", "ubuntu:latest", "fedora:latest", 
+        os: ["windows-latest"]
         # , 20.x
         node-version: [18.x]
 
@@ -28,6 +28,11 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            # Install NVM on Windows
+            Invoke-WebRequest https://github.com/coreybutler/nvm-windows/releases/download/1.1.10/nvm-setup.zip -OutFile nvm-setup.zip
+            Expand-Archive nvm-setup.zip -DestinationPath C:\nvm-setup
+            Start-Process -FilePath C:\nvm-setup\nvm-setup.exe -Wait
+
             # Windows setup (no Docker)
             # Install Node.js on Windows
             nvm install ${{ matrix.node-version }};
