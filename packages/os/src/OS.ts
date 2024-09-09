@@ -23,6 +23,11 @@ export default class OS extends Module {
   }
 
   async hostname() {
+    const platform = await this.platform();
+    if (platform === 'linux') {
+      return this.$`cat /proc/sys/kernel/hostname`.trim();
+    }
+
     return this.$`hostname`.trim();
   }
 
