@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["windows-2019", "macos-12"]
+        os: ["windows-2019", "macos-12", "ubuntu-latest"]
         node-version: [18.x]
 
     runs-on: ${{ matrix.os }}
@@ -32,14 +32,13 @@ jobs:
           npm test;
 
   test-linux:
+    if: contains(github.event.head_commit.message, 'run-all-tests')
     strategy:
       fail-fast: false
       matrix:
-        # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners
-        # , centos:7, fedora:latest "debian:buster", "ubuntu:latest", "fedora:latest", 
-        os: ["debian:buster"]
-        # , 20.x
+        os: ["debian:bullseye", "ubuntu:trusty", "fedora:39"]
         node-version: [18.x]
+        include:
 
     runs-on: ubuntu-latest
     steps:
