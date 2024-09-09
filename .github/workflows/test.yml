@@ -23,7 +23,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js latest
+      - name: Use Node.js
+        if: matrix.os == 'windows-latest'
         uses: actions/setup-node@v3
         with:
             node-version: ${{ matrix.node-version }}
