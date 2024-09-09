@@ -1,4 +1,7 @@
 import { Module, type Nodevisor } from '@nodevisor/core';
+import Arch from './constants/Arch';
+
+const archs = Object.values(Arch) as string[];
 
 export default class OS extends Module {
   constructor(nodevisor: Nodevisor) {
@@ -16,18 +19,24 @@ export default class OS extends Module {
   }
 
   async uptime() {
-    return this.$`uptime`;
+    return this.$`uptime`.trim();
   }
 
   async hostname() {
-    return this.$`hostname`.trimOutput();
+    return this.$`hostname`.trim();
   }
 
   async arch() {
-    return this.$`uname -m`.trimOutput();
+    const arch = await this.$`uname -m`.trim().toLowerCase();
+
+    if (archs.includes(arch)) {
+      return arch as Arch;
+    }
+
+    return arch;
   }
 
   async platform() {
-    return this.$`uname -s`.trimOutput();
+    return this.$`uname -s`.trim().toLowerCase();
   }
 }

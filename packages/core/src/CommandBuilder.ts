@@ -5,17 +5,12 @@ import type { Raw } from './utils/raw';
 import type RunAs from './@types/RunAs';
 import Env from './Env';
 
-/*
-  - do not map response from exec by default
-  - for example arch response is different from nodejs.os.arch, if we need arch from nodejs we will use it directly
-  - if we need to map response from exec we can use a custom command builder
-
-  - information about trim
-*/
+type Transform = 'trim' | 'trimEnd' | 'toLowerCase';
 
 export type CommandBuilderOptions = {
   runAs?: RunAs;
   env?: Env;
+  transforms?: Transform[];
 };
 
 export default class CommandBuilder {
@@ -23,7 +18,8 @@ export default class CommandBuilder {
   private command = '';
   private runAs?: RunAs;
   private env: Env;
-  private trimNewline = false;
+
+  private transforms: Transform[] = [];
 
 
   constructor(connection: Connection, options: CommandBuilderOptions = {}) {
@@ -33,15 +29,6 @@ export default class CommandBuilder {
     this.runAs = runAs;
 
     this.env = new Env(env);
-  }
-
-  trimOutput(): this {
-    this.trimNewline = true;
-    return this;
-  }
-
-  private exec(cmd: string) {
-    return this.connection.exec(cmd);
   }
 
   private quote(value: QuoteArg | QuoteArg[]): string | Raw {
@@ -98,20 +85,50 @@ export default class CommandBuilder {
     return command;
   }
 
+  async applyTransforms(value: string) {
+    let result = value;
+
+    this.transforms.forEach((transform) => {
+      if (transform === 'trim') {
+        result = result.trim();
+      } else if (transform === 'trimEnd') {
+        result = trimEnd(result);
+      } else if (transform === 'toLowerCase') {
+        result = result.toLowerCase();
+      }
+    });  
+
+    return result;
+  }
+
+  async exec(): Promise<string> {
+    const command = this.buildCommand();
+    const result = await this.connection.exec(command);
+    return this.applyTransforms(result);
+  }
+
   async then(resolve: (value: string) => void, reject: (reason?: Error) => void) {
     try {
-      const command = this.buildCommand();
-
-      let result = await this.exec(command);
-
-      if (this.trimNewline) {
-        result = trimEnd(result, '\n\r');
-      }
-
-      resolve(result);
+      resolve(await this.exec());
     } catch (error) {
       reject(error as Error);
     }
+  }
+
+  // transform methods
+  trim(): this {
+    this.transforms.push('trim');
+    return this;
+  }
+
+  trimEnd(): this {
+    this.transforms.push('trimEnd');
+    return this;
+  }
+
+  toLowerCase(): this {
+    this.transforms.push('toLowerCase');
+    return this;
   }
 
   toString() {
