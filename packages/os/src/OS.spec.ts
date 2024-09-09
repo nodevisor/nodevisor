@@ -1,4 +1,4 @@
-import { hostname, arch, platform } from 'os';
+import { hostname, arch, platform, uptime } from 'os';
 import OS from './OS';
 import Arch from './constants/Arch';
 import { Module, Nodevisor } from '@nodevisor/core';
@@ -34,9 +34,11 @@ describe('OS Module', () => {
 
   it('should execute uptime command', async () => {
     const result = await os.uptime();
+    const nodejsUptime = await os.uptime();
 
-    expect(result).toContain('up');
-    expect(result).toContain('load average');
+    const diff = Math.abs(result - nodejsUptime);
+
+    expect(diff).toBeLessThan(1);
   });
 
   it('should execute hostname command', async () => {

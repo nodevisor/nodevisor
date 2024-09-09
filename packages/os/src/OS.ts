@@ -18,13 +18,32 @@ export default class OS extends Module {
     return this.$`shutdown now`;
   }
 
-  async uptime() {
+  async uptime(): Promise<number> {
     const platform = await this.platform();
     if (platform === 'linux') {
-      return this.$`cat /proc/uptime`.trim();
+      const value = await this.$`cat /proc/uptime`.trim();
+
+      const [seconds] = value.split(' ');
+      if (!seconds) {
+        throw new Error('Unable to parse uptime');
+      }
+
+      return parseFloat(seconds);
+    } else if (platform === 'darwin') {
+      const str = await this.$`sysctl -n kern.boottime`.trim();
+
+      const match = str.match(/sec\s*=\s*(\d+)/);
+      if (!match) {
+        throw new Error('Unable to parse uptime');
+      }
+
+      const bootTime = parseInt(match[1] as string, 10);
+      const now = Date.now() / 1000;
+
+      return now - bootTime;
     }
 
-    return this.$`uptime`.trim();
+    throw new Error('Unsupported platform');
   }
 
   async hostname() {
