@@ -88,8 +88,10 @@ describe('SSHConnection', () => {
   
     await connection.putContent(testContent, tempFilePath, customOptions);
   
-    const stats = await fs.stat(tempFilePath);
-    expect((stats.mode & 0o777)).toBe(0o600); // Verify custom file permissions
+    if (os.platform() !== 'win32') {
+      const stats = await fs.stat(tempFilePath);
+      expect((stats.mode & 0o777)).toBe(0o600); // Verify custom file permissions
+    }
   
     await fs.unlink(tempFilePath);
   });
