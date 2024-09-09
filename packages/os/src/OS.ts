@@ -19,6 +19,11 @@ export default class OS extends Module {
   }
 
   async uptime() {
+    const platform = await this.platform();
+    if (platform === 'linux') {
+      return this.$`cat /proc/uptime`.trim();
+    }
+
     return this.$`uptime`.trim();
   }
 
