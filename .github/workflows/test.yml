@@ -41,7 +41,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["debian:bullseye", "ubuntu:bionic", "fedora:39"]
-        node-version: [20.x]
+        node-version: [18.x]
 
     runs-on: ubuntu-latest
     steps:
