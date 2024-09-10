@@ -1,6 +1,6 @@
 {
-  "name": "nodevisor",
-  "description": "Server Management and Scalable Application Deployment",
+  "name": "@nodevisor/fs",
+  "description": "Module provides file system-related utility methods and properties",
   "version": "0.0.1",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -20,10 +20,7 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/core": "*",
-    "@nodevisor/fs": "*",
-    "@nodevisor/os": "*",
-    "@nodevisor/endpoint": "*"
+    "@nodevisor/core": "*"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

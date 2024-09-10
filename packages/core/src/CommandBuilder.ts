@@ -5,7 +5,7 @@ import type { Raw } from './utils/raw';
 import type RunAs from './@types/RunAs';
 import Env from './Env';
 
-type Transform = 'trim' | 'trimEnd' | 'toLowerCase';
+type Transform = 'sanitize' | 'trim' | 'trimEnd' | 'toLowerCase' | 'boolean';
 
 export type CommandBuilderOptions = {
   runAs?: RunAs;
@@ -13,13 +13,13 @@ export type CommandBuilderOptions = {
   transforms?: Transform[];
 };
 
-export default class CommandBuilder {
+export default class CommandBuilder<ReturnValue = string> {
   private connection: Connection;
   private command = '';
   private runAs?: RunAs;
   private env: Env;
 
-  private transforms: Transform[] = [];
+  private transforms: Transform[] = ['sanitize'];
 
 
   constructor(connection: Connection, options: CommandBuilderOptions = {}) {
@@ -85,8 +85,8 @@ export default class CommandBuilder {
     return command;
   }
 
-  async applyTransforms(value: string) {
-    let result = value;
+  async applyTransforms(value: string): Promise<ReturnValue> {
+    let result: any = value;
 
     this.transforms.forEach((transform) => {
       if (transform === 'trim') {
@@ -95,19 +95,24 @@ export default class CommandBuilder {
         result = trimEnd(result);
       } else if (transform === 'toLowerCase') {
         result = result.toLowerCase();
+      } else if (transform === 'boolean') {
+        const trueValues = ['true', 'yes', '1'];
+        result = trueValues.includes(result.trim().toLowerCase());
+      } else if (transform === 'sanitize') {
+        result = result.replace(/[\r\n]+$/, '');
       }
-    });  
+    }); 
 
     return result;
   }
 
-  async exec(): Promise<string> {
+  async exec(): Promise<ReturnValue> {
     const command = this.buildCommand();
     const result = await this.connection.exec(command);
     return this.applyTransforms(result);
   }
 
-  async then(resolve: (value: string) => void, reject: (reason?: Error) => void) {
+  async then(resolve: (value: ReturnValue) => void, reject: (reason?: Error) => void) {
     try {
       resolve(await this.exec());
     } catch (error) {
@@ -115,7 +120,25 @@ export default class CommandBuilder {
     }
   }
 
+  // logical operators
+  and(strings: TemplateStringsArray, ...values: any[]) {
+    this.command += ' && ';
+    
+    return this.append(strings, ...values);
+  }
+
+  or(strings: TemplateStringsArray, ...values: any[]) {
+    this.command += ' || ';
+    
+    return this.append(strings, ...values);
+  }
+
   // transform methods
+  sanitize(enable = true): this {
+    this.transforms.push('sanitize');
+    return this;
+  }
+
   trim(): this {
     this.transforms.push('trim');
     return this;
@@ -129,6 +152,15 @@ export default class CommandBuilder {
   toLowerCase(): this {
     this.transforms.push('toLowerCase');
     return this;
+  }
+
+  boolean<TCommandBuilder extends CommandBuilder<boolean>>(test = false): TCommandBuilder {
+    if (test) {
+      this.and`echo ${'true'}`.or`echo ${'false'}`;
+    }
+
+    this.transforms.push('boolean');
+    return this as unknown as TCommandBuilder;
   }
 
   toString() {

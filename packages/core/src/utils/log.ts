@@ -1,5 +1,5 @@
 import debug from 'debug';
 
-const log = debug('servera');
+const log = debug('nodevisor');
 
 export default log;
