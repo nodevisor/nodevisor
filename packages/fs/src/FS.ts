@@ -1,4 +1,5 @@
 import { Module, type Nodevisor } from '@nodevisor/core';
+import { OS, Platform } from '@nodevisor/os';
 
 export default class FS extends Module {
   constructor(nodevisor: Nodevisor) {
@@ -8,6 +9,13 @@ export default class FS extends Module {
   }
 
   async exists(path: string) {
+    const os = new OS(this.nodevisor);
+    const platform = await os.platform();
+
+    if (platform === Platform.WINDOWS) {
+      return this.$`powershell Test-Path ${path}`;
+    }
+
     return this.$`test -e ${path}`.boolean(true);
   }
 

@@ -1,3 +1,5 @@
+import EventEmitter from 'node:events';
+import { LRUCache } from 'lru-cache';
 import type Quote from '../@types/Quote';
 import type QuoteArg from '../@types/QuoteArg';
 import { type Raw } from '../utils/raw';
@@ -24,11 +26,20 @@ export type ConnectionConfig = {
   quote?: Quote;
 };
 
-export default abstract class Connection {
+export default abstract class Connection extends EventEmitter {
   protected config: ConnectionConfig;
 
+  readonly cache = new LRUCache<string, string>({
+    max: 1000,
+  });
+
   constructor(config: ConnectionConfig) {
+    super();
     this.config = config;
+
+    this.on('connected', () => {
+      this.cache.clear();
+    });
   }
 
   quote(value: QuoteArg | QuoteArg[]): string | Raw {

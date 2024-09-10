@@ -102,31 +102,33 @@ export default class OS extends Module {
   }
 
   async platform(): Promise<Platform> {
-    try {
-      const platform = await this.$`uname -s`.toLowerCase();
+    return this.cached<Platform>('platform', async () => {
+      try {
+        const platform = await this.$`uname -s`.toLowerCase();
 
-      if (platforms.includes(platform)) {
-        return platform as Platform;
-      }
+        if (platforms.includes(platform)) {
+          return platform as Platform;
+        }
 
-      if (platform.includes('mingw') || platform.includes('cygwin')) {
-        return Platform.WINDOWS;
+        if (platform.includes('mingw') || platform.includes('cygwin')) {
+          return Platform.WINDOWS;
+        }
+
+        throw new Error('Unsupported platform');
+      } catch (error) {
+        const platform = await this
+          .$`powershell -command "(Get-WmiObject Win32_OperatingSystem).Caption"`;
+
+        if (platforms.includes(platform)) {
+          return platform as Platform;
+        }
+
+        if (platform.includes('Windows')) {
+          return Platform.WINDOWS;
+        }
       }
 
       throw new Error('Unsupported platform');
-    } catch (error) {
-      const platform = await this
-        .$`powershell -command "(Get-WmiObject Win32_OperatingSystem).Caption"`;
-
-      if (platforms.includes(platform)) {
-        return platform as Platform;
-      }
-
-      if (platform.includes('Windows')) {
-        return Platform.WINDOWS;
-      }
-    }
-
-    throw new Error('Unsupported platform');
+    });
   }
 }

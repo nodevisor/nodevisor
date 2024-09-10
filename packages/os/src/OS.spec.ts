@@ -8,7 +8,7 @@ describe('OS Module', () => {
   let os: OS;
   let nodevisor: Nodevisor;
   
-  beforeEach(() => {
+  beforeAll(() => {
     nodevisor = new Nodevisor();
     os = new OS(nodevisor);
   });

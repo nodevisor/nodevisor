@@ -1,14 +1,11 @@
 import { tmpdir } from 'node:os';
+import nodevisor from '@nodevisor/core';
 import FS from './FS';
-import { Nodevisor } from '@nodevisor/core';
-
 
 describe('FS Module', () => {
   let fs: FS;
-  let nodevisor: Nodevisor;
   
-  beforeEach(() => {
-    nodevisor = new Nodevisor();
+  beforeAll(() => {
     fs = new FS(nodevisor);
   });
 
@@ -25,6 +22,14 @@ describe('FS Module', () => {
     expect(await fs.exists(path)).toBe(true);
   });
 
+  it('should create a temporary file', async () => {
+    const tmpFile = await fs.temp();
+    expect(await fs.exists(tmpFile)).toBe(true);
+
+    await fs.rm(tmpFile);
+    expect(await fs.exists(tmpFile)).toBe(false);
+  });
+
   it('should create a temporary directory', async () => {
     const tmpDir = await fs.tempDir();
     expect(await fs.exists(tmpDir)).toBe(true);
@@ -32,4 +37,15 @@ describe('FS Module', () => {
     await fs.rmdir(tmpDir);
     expect(await fs.exists(tmpDir)).toBe(false);
   });
+
+  /*
+  it('should get file stats', async () => {
+    const filePath = await fs.temp();
+
+    await fs.write(filePath, 'File stats');
+    const statResult = await fs.stat(filePath);
+
+    expect(statResult).toContain('File:');
+  });
+  */
 });

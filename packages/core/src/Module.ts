@@ -22,6 +22,21 @@ export default abstract class Module {
     this.log = log.extend(name);
   }
 
+  private get cache() {
+    return this.nodevisor.connection.cache;
+  }
+
+  async cached<T extends string>(key: string, fn: () => Promise<T>): Promise<T> {
+    if (this.cache.has(key)) {
+      return this.cache.get(key) as T;
+    }
+
+    const value = await fn();
+    this.cache.set(key, value);
+
+    return value;
+  }
+
   as(runAs: RunAs): this {
     const ModuleClass = this.constructor as {
       new (nodevisor: Nodevisor, config?: ModuleConfig): Module;
