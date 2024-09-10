@@ -1,9 +1,12 @@
 import { trimEnd } from 'lodash';
 import type Connection from './connections/Connection';
-import type QuoteArg from './@types/QuoteArg';
-import type { Raw } from './utils/raw';
+import type Quote from './@types/Quote';
 import type RunAs from './@types/RunAs';
 import Env from './Env';
+import type Command from './@types/Command';
+import commandToString from './utils/commandToString';
+import quote from './quotes/quote';
+import powerShellQuote from './quotes/powerShellQuote';
 
 type Transform = 'sanitize' | 'trim' | 'trimEnd' | 'toLowerCase' | 'boolean';
 
@@ -11,56 +14,63 @@ export type CommandBuilderOptions = {
   runAs?: RunAs;
   env?: Env;
   transforms?: Transform[];
+  quote?: Quote;
 };
 
 export default class CommandBuilder<ReturnValue = string> {
+  private command: Command = [];
+
   private connection: Connection;
-  private command = '';
   private runAs?: RunAs;
+  private transforms: Transform[];
   private env: Env;
-
-  private transforms: Transform[] = ['sanitize'];
-
+  private quote?: Quote;
 
   constructor(connection: Connection, options: CommandBuilderOptions = {}) {
-    const { runAs, env } = options;
+    const { runAs, env, transforms = ['sanitize'], quote } = options;
 
     this.connection = connection;
     this.runAs = runAs;
+    this.transforms = transforms;
+    this.quote = quote;
 
     this.env = new Env(env);
   }
 
-  private quote(value: QuoteArg | QuoteArg[]): string | Raw {
-    return this.connection.quote(value);
-  }
-
-  private applyRunAs(cmd: string): string {
+  private async applyRunAs(cmd: string) {
     const { runAs } = this;
-    if (!runAs) return cmd;
+    if (!runAs) {
+      return cmd;
+    }
 
     const { username, method = 'su' } = runAs;
-    if (method === 'su') {
-      return `su - ${username} -c ${this.quote(cmd)}`;
-    } else if (method === 'runuser') {
-      return `runuser -l ${username} -c ${this.quote(cmd)}`;
+
+    switch(method) {
+      case 'su':
+        return this.connection.$`su - ${username} -c ${cmd}`.toString();
+      case 'runuser':
+        return this.connection.$`runuser -l ${username} -c ${cmd}`.toString();
+      default:
+        throw new Error(`Unsupported user switch: ${method}`);
     }
-      
-    throw new Error(`Unsupported user switch: ${method}`);
   }
 
-  append(strings: TemplateStringsArray, ...values: any[]): this {
-    const builtCmd = strings.reduce((acc, str, i) => {
-      const variable = values[i] ? this.quote(values[i]) : '';
-      return acc + str + variable;
-    }, '');
-
-    this.command += builtCmd;
-  
+  powerShellQuote() {
+    this.quote = powerShellQuote;
     return this;
   }
 
-  setEnv(key: string | Record<string, string>, value?: string): this {
+  shellQuote() {
+    this.quote = quote;
+    return this;
+  }
+
+  append(strings: TemplateStringsArray, ...values: any[]) {
+    this.command.push({ strings: strings, values });
+    return this;
+  }
+
+  setEnv(key: string | Record<string, string>, value?: string) {
     this.env.set(key, value);
     return this;
   }
@@ -69,18 +79,19 @@ export default class CommandBuilder<ReturnValue = string> {
     return this.append(strings, ...values);
   }
 
-  private buildCommand() {
-    let { command } = this;
+  async toString() {
+    const quote = this.quote || await this.connection.getQuote();
+    let command = commandToString(this.command, quote);
 
     if (!this.env.isEmpty()) {
-      const envCmd = this.env.getCommand(this.quote);
+      const envCmd = this.env.getCommand(quote);
 
       if(envCmd) {
         command = `${envCmd} && ${command}`;
       }
     }
 
-    command = this.applyRunAs(command);
+    command = await this.applyRunAs(command);
 
     return command;
   }
@@ -107,7 +118,7 @@ export default class CommandBuilder<ReturnValue = string> {
   }
 
   async exec(): Promise<ReturnValue> {
-    const command = this.buildCommand();
+    const command = await this.toString();
     const result = await this.connection.exec(command);
     return this.applyTransforms(result);
   }
@@ -122,36 +133,58 @@ export default class CommandBuilder<ReturnValue = string> {
 
   // logical operators
   and(strings: TemplateStringsArray, ...values: any[]) {
-    this.command += ' && ';
+    this.$` && `;
     
     return this.append(strings, ...values);
   }
 
   or(strings: TemplateStringsArray, ...values: any[]) {
-    this.command += ' || ';
-    
+    this.$` || `;
+
     return this.append(strings, ...values);
+  }
+
+  // transformation methods
+  private removeTransformation(transform: Transform): this {
+    const index = this.transforms.indexOf(transform);
+    if (index > -1) {
+      this.transforms.splice(index, 1);
+    }
+
+    return this;
+  }
+
+  private addTransformation(transform: Transform): this {
+    if (!this.transforms.includes(transform)) {
+      this.transforms.push(transform);
+    }
+
+    return this;
+  }
+
+  private transform(transform: Transform, enable = true): this {
+    if (enable) {
+      return this.addTransformation(transform);
+    }
+
+    return this.removeTransformation(transform);
   }
 
   // transform methods
   sanitize(enable = true): this {
-    this.transforms.push('sanitize');
-    return this;
+    return this.transform('sanitize', enable);
   }
 
-  trim(): this {
-    this.transforms.push('trim');
-    return this;
+  trim(enable = true): this {
+    return this.transform('trim', enable);
   }
 
-  trimEnd(): this {
-    this.transforms.push('trimEnd');
-    return this;
+  trimEnd(enable = true): this {
+    return this.transform('trimEnd', enable);
   }
 
-  toLowerCase(): this {
-    this.transforms.push('toLowerCase');
-    return this;
+  toLowerCase(enable = true): this {
+    return this.transform('toLowerCase', enable);
   }
 
   boolean<TCommandBuilder extends CommandBuilder<boolean>>(test = false): TCommandBuilder {
@@ -161,9 +194,5 @@ export default class CommandBuilder<ReturnValue = string> {
 
     this.transforms.push('boolean');
     return this as unknown as TCommandBuilder;
-  }
-
-  toString() {
-    return this.buildCommand();
   }
 }

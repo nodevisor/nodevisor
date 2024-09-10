@@ -1,4 +1,4 @@
-import Module, { type ModuleConfig } from './Module';
+import Module, { type ModuleConfig } from './modules/Module';
 import Nodevisor from './Nodevisor';
 
 export type PackageConfig = ModuleConfig & {

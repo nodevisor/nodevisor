@@ -1,8 +1,8 @@
 import { type Debugger } from 'debug';
-import log from './utils/log';
-import Nodevisor from './Nodevisor';
-import type RunAs from './@types/RunAs';
-import { type CommandBuilderOptions } from './CommandBuilder';
+import log from '../utils/log';
+import Nodevisor from '../Nodevisor';
+import type RunAs from '../@types/RunAs';
+import { type CommandBuilderOptions } from '../CommandBuilder';
 
 export type ModuleConfig = {
   name?: string;
@@ -22,19 +22,16 @@ export default abstract class Module {
     this.log = log.extend(name);
   }
 
-  private get cache() {
-    return this.nodevisor.connection.cache;
+  get connection() {
+    return this.nodevisor.connection;
+  }
+
+  async platform() {
+    return this.nodevisor.connection.platform();
   }
 
   async cached<T extends string>(key: string, fn: () => Promise<T>): Promise<T> {
-    if (this.cache.has(key)) {
-      return this.cache.get(key) as T;
-    }
-
-    const value = await fn();
-    this.cache.set(key, value);
-
-    return value;
+    return this.nodevisor.connection.cached(key, fn);
   }
 
   as(runAs: RunAs): this {

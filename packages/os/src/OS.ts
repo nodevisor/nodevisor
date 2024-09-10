@@ -1,9 +1,7 @@
-import { Module, type Nodevisor } from '@nodevisor/core';
+import { Module, type Nodevisor, Platform } from '@nodevisor/core';
 import Arch from './constants/Arch';
-import Platform from './constants/Platform';
 
 const archs = Object.values(Arch) as string[];
-const platforms = Object.values(Platform) as string[];
 
 export default class OS extends Module {
   constructor(nodevisor: Nodevisor) {
@@ -13,122 +11,85 @@ export default class OS extends Module {
   }
 
   async reboot() {
-    const platform = await this.platform();
-    if ([Platform.LINUX, Platform.DARWIN].includes(platform)) {
-      return this.$`reboot`;
-    } else if (platform === 'win32') {
-      return this.$`shutdown /r /t 0`;
+    switch (await this.platform()) {
+      case Platform.WINDOWS:
+        return this.$`shutdown /r /t 0`;
+      default:
+        return this.$`reboot`;
     }
-
-    throw new Error('Unsupported platform');
   }
 
   async shutdown() {
-    const platform = await this.platform();
-    if ([Platform.LINUX, Platform.DARWIN].includes(platform)) {
-      return this.$`shutdown now`;
-    } else if (platform === 'win32') {
-      return this.$`shutdown /s /t 0`;
+    switch (await this.platform()) {
+      case Platform.WINDOWS:
+        return this.$`shutdown /s /t 0`;
+      default:
+        return this.$`shutdown now`;
     }
-
-    throw new Error('Unsupported platform');
   }
 
   async uptime(): Promise<number> {
-    const platform = await this.platform();
-    if (platform === Platform.LINUX) {
-      const value = await this.$`cat /proc/uptime`;
+    const now = Date.now() / 1000;
 
-      const [seconds] = value.split(' ');
-      if (!seconds) {
-        throw new Error('Unable to parse uptime');
-      }
+    switch (await this.platform()) {
+      case Platform.DARWIN:
+        const macValue = await this.$`sysctl -n kern.boottime`;
 
-      return parseFloat(seconds);
-    } else if (platform === Platform.DARWIN) {
-      const str = await this.$`sysctl -n kern.boottime`;
+        const match = macValue.match(/sec\s*=\s*(\d+)/);
+        if (!match) {
+          throw new Error('Unable to parse uptime');
+        }
 
-      const match = str.match(/sec\s*=\s*(\d+)/);
-      if (!match) {
-        throw new Error('Unable to parse uptime');
-      }
+        const macBootTime = parseInt(match[1] as string, 10);
 
-      const bootTime = parseInt(match[1] as string, 10);
-      const now = Date.now() / 1000;
+        return now - macBootTime;
+      case Platform.WINDOWS:
+        const winValue = await this
+          .$`powershell -command "(Get-CimInstance Win32_OperatingSystem).LastBootUpTime"`;
+        const winBootTime = new Date(winValue).getTime() / 1000;
 
-      return now - bootTime;
-    } else if (platform === Platform.WINDOWS) {
-      const uptimeStr = await this
-        .$`powershell -command "(Get-CimInstance Win32_OperatingSystem).LastBootUpTime"`;
-      const bootTime = new Date(uptimeStr).getTime() / 1000;
-      const now = Date.now() / 1000;
-      return now - bootTime;
+        return now - winBootTime;
+      default:
+        const value = await this.$`cat /proc/uptime`;
+
+        const [seconds] = value.split(' ');
+        if (!seconds) {
+          throw new Error('Unable to parse uptime');
+        }
+
+        return parseFloat(seconds);
     }
-
-    throw new Error('Unsupported platform');
   }
 
   async hostname() {
-    const platform = await this.platform();
-    if (platform === Platform.LINUX) {
-      return this.$`cat /proc/sys/kernel/hostname`;
-    } else if (platform === Platform.DARWIN) {
-      return this.$`hostname`;
-    } else if (platform === Platform.WINDOWS) {
-      return this.$`powershell -command "[System.Net.Dns]::GetHostName()"`;
+    switch (await this.platform()) {
+      case Platform.DARWIN:
+        return this.$`hostname`;
+      case Platform.WINDOWS:
+        return this.$`powershell -command "[System.Net.Dns]::GetHostName()"`;
+      default:
+        return this.$`cat /proc/sys/kernel/hostname`;
     }
-
-    throw new Error('Unsupported platform');
   }
 
   async arch() {
-    const platform = await this.platform();
+    switch (await this.platform()) {
+      case Platform.WINDOWS:
+        const winValue = await this
+          .$`powershell -command "(Get-WmiObject Win32_OperatingSystem).OSArchitecture"`.toLowerCase();
+        return winValue.includes('64') ? 'x64' : 'x86';
+      default:
+        const value = await this.$`uname -m`.toLowerCase();
 
-    if ([Platform.LINUX, Platform.DARWIN].includes(platform)) {
-      const arch = await this.$`uname -m`.toLowerCase();
+        if (archs.includes(value)) {
+          return value as Arch;
+        }
 
-      if (archs.includes(arch)) {
-        return arch as Arch;
-      }
-
-      return arch;
-    } else if (platform === Platform.WINDOWS) {
-      const arch = await this
-        .$`powershell -command "(Get-WmiObject Win32_OperatingSystem).OSArchitecture"`.toLowerCase();
-      return arch.includes('64') ? 'x64' : 'x86';
+        return value;
     }
-
-    throw new Error('Unsupported platform');
   }
 
-  async platform(): Promise<Platform> {
-    return this.cached<Platform>('platform', async () => {
-      try {
-        const platform = await this.$`uname -s`.toLowerCase();
-
-        if (platforms.includes(platform)) {
-          return platform as Platform;
-        }
-
-        if (platform.includes('mingw') || platform.includes('cygwin')) {
-          return Platform.WINDOWS;
-        }
-
-        throw new Error('Unsupported platform');
-      } catch (error) {
-        const platform = await this
-          .$`powershell -command "(Get-WmiObject Win32_OperatingSystem).Caption"`;
-
-        if (platforms.includes(platform)) {
-          return platform as Platform;
-        }
-
-        if (platform.includes('Windows')) {
-          return Platform.WINDOWS;
-        }
-      }
-
-      throw new Error('Unsupported platform');
-    });
+  async platform() {
+    return this.nodevisor.connection.platform();
   }
 }

@@ -1,12 +1,12 @@
 import Nodevisor from './Nodevisor';
 
+export * from './constants';
 export * from './connections';
+export * from './errors';
+export * from './modules';
 
 export { default as Nodevisor } from './Nodevisor';
 export * from './Nodevisor';
-
-export { default as Module } from './Module';
-export * from './Module';
 
 export { default as Package } from './Package';
 export * from './Package';

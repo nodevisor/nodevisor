@@ -41,7 +41,7 @@ export default class Nodevisor {
   }
 
   cmd(options: CommandBuilderOptions = {}): CommandBuilder {
-    return new CommandBuilder(this.connection, {
+    return this.connection.cmd({
       runAs: this.runAs,
       env: this.env,
       ...options,

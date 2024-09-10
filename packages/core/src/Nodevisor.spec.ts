@@ -25,7 +25,7 @@ describe('Nodevisor', () => {
   it('should generate a command as another user with su', async () => {
     const nodevisor = new Nodevisor({ runAs: { username: 'testuser', method: 'su' } });
 
-    const cmd = nodevisor.$`whoami`.toString();
+    const cmd = await nodevisor.$`whoami`.toString();
 
     expect(cmd).toBe("su - testuser -c whoami");
   });
@@ -33,7 +33,16 @@ describe('Nodevisor', () => {
   it('should generate a command as another user with su and escape correctly', async () => {
     const nodevisor = new Nodevisor({ runAs: { username: 'testuser', method: 'runuser' } });
 
-    const cmd = nodevisor.$`printf "Hello, world!"`.toString();
+    const cmd = await nodevisor.$`printf "Hello, world!"`.toString();
+
+    expect(cmd).toBe("runuser -l testuser -c $'printf \"Hello, world!\"'");
+  });
+
+
+  it('should generate a command as another user with su and escape correctly', async () => {
+    const nodevisor = new Nodevisor({ runAs: { username: 'testuser', method: 'runuser' } });
+
+    const cmd = await nodevisor.$`printf "Hello, world!"`.boolean().toString();
 
     expect(cmd).toBe("runuser -l testuser -c $'printf \"Hello, world!\"'");
   });

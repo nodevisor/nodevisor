@@ -94,11 +94,7 @@ export default class SSHConnection extends Connection {
       const ssh2Config = await this.prepareSSH2Config(this.config as SSHConnectionConfig);
       await this.ssh.connect(ssh2Config);
 
-      this.emit('connected');
-
-      this.ssh.connection?.on('close', () => {
-        this.emit('disconnected');
-      });
+      await this.onConnected();
 
       return this;
     } catch (error) {

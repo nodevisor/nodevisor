@@ -42,7 +42,7 @@ export default class ShellConnection extends Connection {
 
   async connect() {
     this.connected = true;
-    this.emit('connected');
+    await this.onConnected();
     return this;
   }
 
@@ -62,7 +62,6 @@ export default class ShellConnection extends Connection {
 
   async close() {
     this.connected = false;
-    this.emit('disconnected');
     return this;
   }
 
