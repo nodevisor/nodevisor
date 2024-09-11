@@ -1,6 +1,6 @@
 {
-  "name": "nodevisor",
-  "description": "Server Management and Scalable Application Deployment",
+  "name": "@nodevisor/packages",
+  "description": "Module provides ability to manage packages",
   "version": "0.0.1",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -20,15 +20,7 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/auth": "*",
-    "@nodevisor/core": "*",
-    "@nodevisor/endpoint": "*",
-    "@nodevisor/groups": "*",
-    "@nodevisor/fs": "*",
-    "@nodevisor/os": "*",
-    "@nodevisor/packages": "*",
-    "@nodevisor/services": "*",
-    "@nodevisor/users": "*"
+    "@nodevisor/core": "*"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

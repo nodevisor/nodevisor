@@ -34,6 +34,10 @@ export default abstract class Module {
     return this.nodevisor.connection.cached(key, fn);
   }
 
+  getModule<TModule extends Module>(module: new (nodevisor: Nodevisor) => TModule): TModule {
+    return new module(this.nodevisor);
+  }
+
   as(runAs: RunAs): this {
     const ModuleClass = this.constructor as {
       new (nodevisor: Nodevisor, config?: ModuleConfig): Module;

@@ -20,17 +20,22 @@ You can use Nodevisor for free if you are:
 
 ### Allowed use cases
 
-Under the “Free License,” eligible users are granted permission, free of charge, to use Nodevisor for both non-commercial and commercial purposes in managing server configurations. Additionally, you may modify Nodevisor to suit your specific needs or to contribute bug fixes or improvements to the Nodevisor community.
+Under the “Free License,” eligible users are granted permission, free of charge, to use Nodevisor for both non-commercial and commercial purposes in managing server configurations. You may also modify Nodevisor to fit your needs or contribute improvements or bug fixes to the Nodevisor community.
+
+**_Note:_** Commercial use is allowed under the Free License for managing up to 2 servers. If you are managing more than 2 servers, you will need a Company License.
 
 ### Disallowed use cases
 
-You are not permitted to copy or modify Nodevisor’s source code with the intention of selling, renting, licensing, relicensing, or sublicensing your own derivative version of Nodevisor.
+You are not permitted to:
+
+- Copy, modify, or distribute Nodevisor’s source code with the intention of selling, renting, licensing, relicensing, or sublicensing your own derivative version of Nodevisor.
+- Use Nodevisor for managing more than 2 servers without obtaining a Company License.
 
 ### Warranty Disclaimer
 
 Nodevisor is provided “as is,” without any express or implied warranties, including but not limited to warranties of:
 
--	Merchantability
+- Merchantability
 - Fitness for a particular purpose
 - Non-infringement
 
@@ -42,8 +47,15 @@ Support is available on a “best-effort” basis through [GitHub Issues](https:
 
 ## Company License
 
-If your use of Nodevisor does not fall within the Free License eligibility criteria, you must obtain a Company License. The Company License allows for the same use cases as the Free License, with the added benefit of prioritized support as outlined in our [Support Policy](https://www.nodevisor.com/support).
+If your use of Nodevisor does not meet the Free License eligibility, you must obtain a Company License. The Company License allows for the same use cases as the Free License, with the added benefit of prioritized support as outlined in our [Support Policy](https://www.nodevisor.com/support).
 
+### Who needs a Company License?
+
+A Company License is required if you:
+
+- Are managing more than 2 servers.
+- Have a larger team or organization that doesn’t qualify for the Free License.
+- Require commercial use of Nodevisor beyond the Free License terms.
 
 For pricing details and to purchase a [Company License](https://www.nodevisor.com/license), please visit [nodevisor.com/pricing](https://www.nodevisor.com/pricing).
 
@@ -51,7 +63,6 @@ For pricing details and to purchase a [Company License](https://www.nodevisor.co
 
 Users of the Company License must agree to the legally binding [Terms and Conditions](https://www.nodevisor.com/terms) to use Nodevisor.
 
-
 ### FAQs
 
-If you are uncertain about whether your situation requires a Company License, please consult our [frequently asked questions](https://www.nodevisor.com/faq).
+If you are unsure whether you need a Company License, please consult our [frequently asked questions](https://www.nodevisor.com/faq) or reach out to us.

@@ -1,6 +1,6 @@
 {
-  "name": "nodevisor",
-  "description": "Server Management and Scalable Application Deployment",
+  "name": "@nodevisor/auth",
+  "description": "Module provides ability to authenticate users",
   "version": "0.0.1",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -20,14 +20,8 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/auth": "*",
     "@nodevisor/core": "*",
-    "@nodevisor/endpoint": "*",
-    "@nodevisor/groups": "*",
     "@nodevisor/fs": "*",
-    "@nodevisor/os": "*",
-    "@nodevisor/packages": "*",
-    "@nodevisor/services": "*",
     "@nodevisor/users": "*"
   },
   "devDependencies": {

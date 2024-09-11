@@ -5,82 +5,70 @@
 # Nodevisor
 
 Simple server management and application deployment, fully in your control.
-Nodevisor **unifies** shell scripts across platforms, eliminating complexity and helping you avoid the common pitfalls of server management.
+Nodevisor **unifies** scripts across different platforms, helping you avoid the common issues that come with managing servers and scaling applications.
 
-With **Nodevisor** you can:
+**_Note:_** We're just starting out, so things might change as we grow.
 
-- Control everything directly from your code, yaml, or web (coming soon)
-- Set up and manage all your servers.
-- Deploy and scale your applications effortlessly.
-- Do anything you can with the shell—only in a simpler, more efficient way.
+## Why choose Nodevisor?
 
-## Challenges without Nodevisor
+- **Works everywhere:** Use Nodevisor on Linux, Mac, or Windows without having to learn different commands for each system.
+- **Familiar API**: Nodevisor’s API is designed to be similar to Node.js, making it easy for developers to start using.
+- **Automate your setup:** Set up servers with code, YAML files, or CLI. A web tool is coming soon.
+- **Easy app deployment:** Deploy your applications smoothly, whether on one server or thousands.
+- **Safe and secure:** Keeps your sensitive info, like passwords, protected.
+- **All-in-one tool:** Manage all your server tasks from one place.
 
-Without **Nodevisor**, managing servers and deploying applications can be difficult and time-consuming:
+## How you can use Nodevisor
 
-- **Platform-Specific Scripts:** Different OS commands make shell scripts inconsistent.
-- **Manual Server Management:** Setting up and managing servers manually leads to errors and inefficiencies.
-- **Complicated Deployments:** Deploying and scaling applications involves juggling scripts, dependencies, and configurations.
-- **Security Risks:** Sensitive data can be exposed in shell history or logs.
-- **Scaling Issues:** Scaling infrastructure manually becomes increasingly complex.
-- **Fragmented Tools:** Multiple tools lead to disorganized workflows and inefficiency.
+You can manage your servers in two ways:
 
-## Features
+- **Remote control via SSH:** Securely send commands to your servers from anywhere.
+- **Local control:** Manage your computer without needing SSH, perfect for local tasks and automation.
 
-- **Universal Deployment:** Easily scale from one server to thousands.
-- **Secure by Design:** Protects sensitive data like passwords from exposure.
-- **Automated Dependency Management:** Automatically handle package installations.
-- **JavaScript/TypeScript Scripting:** Write scripts in your preferred language.
-- **SSH Support:** Execute commands both locally and remotely via SSH.
+### Coming soon
 
-## Coming soon
+Nodevisor is still in the early stages, and we’re working on exciting new features:
 
-- **Cross-Platform:** Full support for Linux, Unix, and Windows (versions >= LTS).
-- **YAML Configuration:** Configure servers easily using YAML files.
-- **GitHub Actions Integration:** Seamlessly integrate with CI/CD pipelines.
-- **Web Interface:** Manage and control your servers through an intuitive, user-friendly web interface.
-- **NodeJS** compatible API with pure shell scripts across platforms.
+- **Server/client mode:** Securely connect clients to a Nodevisor server to manage changes and instructions.
+- **Web interface:** Manage your servers online, either on your own server or through our cloud.
+- **GitHub Actions integration:** Use Nodevisor with your GitHub projects for smoother workflows.
+- **YAML configuration:** Easily configure your servers with YAML files.
 
-## Installation
+## Get started
 
-Install Nodevisor globally with npm:
+### Installation
+
+To install Nodevisor, run this command:
 
 ```bash
 npm install -g nodevisor
 ```
 
-## Supported OS
+### Supported operating systems
 
-- Ubuntu 20+ (Focal)
-- Debian 11+ (Bullseye)
-- Fedora 39+
+- Linux: Ubuntu 20+, Debian 11+, Fedora 39+
+- macOS: macOS 12+
+- Windows: Windows 10+ (PowerShell required)
 
-- macOS 12+
+## Licensing and usage
 
-- Window 10+ with PowerShell
+Nodevisor is free for:
 
-## License
+- Personal use.
+- Small teams (up to 2 servers).
+- Non-profits.
+- Testing to see if it works for you.
 
-Be aware that Nodevisor has a special [license](https://github.com/nodevisor/nodevisor/blob/main/LICENSE.md) and requires obtaining a company license in some cases.
-
-### You can use Nodevisor for free if you are::
-
-- An individual using Nodevisor for personal use.
-- An organization or team managing up to 2 servers.
-- A non-profit or not-for-profit organization.
-- Evaluating Nodevisor to see if it’s a good fit, without using it commercially.
-
-For more information, please read our [LICENSE page](https://github.com/nodevisor/nodevisor/blob/main/LICENSE.md).
+Check out our [LICENSE](https://github.com/nodevisor/nodevisor/blob/main/LICENSE.md) for more details.
 
 ## Pricing
 
-- **$9 per server, per month**
-- Simple, flat-rate pricing with full feature access and unlimited users.
+- **$9 per server, per month:** Get all features and unlimited users.
 
-For more details, visit our [pricing page](https://www.nodevisor.com/pricing).
+Learn more on our [pricing page](https://www.nodevisor.com/pricing).
 
-## Support
+## Need help?
 
-Need help? Open an issue on our [GitHub Issues page](https://github.com/nodevisor/nodevisor/issues/new?title=Help%20needed%3A%20Question%20about%20Nodevisor&labels=question).
+Have questions or need help? Post on our [GitHub Issues page](https://github.com/nodevisor/nodevisor/issues/new?title=Help%20needed%3A%20Question%20about%20Nodevisor&labels=question).
 
-**Get started with Nodevisor today and simplify your server management and deployments**
+**Start using Nodevisor today and make server management simple**

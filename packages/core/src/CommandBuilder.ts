@@ -8,7 +8,7 @@ import commandToString from './utils/commandToString';
 import quote from './quotes/quote';
 import powerShellQuote from './quotes/powerShellQuote';
 
-type Transform = 'sanitize' | 'trim' | 'trimEnd' | 'toLowerCase' | 'boolean';
+type Transform = 'sanitize' | 'trim' | 'trimEnd' | 'toLowerCase' | 'boolean' | 'lines';
 
 export type CommandBuilderOptions = {
   runAs?: RunAs;
@@ -45,7 +45,7 @@ export default class CommandBuilder<ReturnValue = string> {
 
     const { username, method = 'su' } = runAs;
 
-    switch(method) {
+    switch (method) {
       case 'su':
         return this.connection.$`su - ${username} -c ${cmd}`.toString();
       case 'runuser':
@@ -80,13 +80,13 @@ export default class CommandBuilder<ReturnValue = string> {
   }
 
   async toString() {
-    const quote = this.quote || await this.connection.getQuote();
+    const quote = this.quote || (await this.connection.getQuote());
     let command = commandToString(this.command, quote);
 
     if (!this.env.isEmpty()) {
       const envCmd = this.env.getCommand(quote);
 
-      if(envCmd) {
+      if (envCmd) {
         command = `${envCmd} && ${command}`;
       }
     }
@@ -100,7 +100,9 @@ export default class CommandBuilder<ReturnValue = string> {
     let result: any = value;
 
     this.transforms.forEach((transform) => {
-      if (transform === 'trim') {
+      if (transform === 'sanitize') {
+        result = result.replace(/[\r\n]+$/, '');
+      } else if (transform === 'trim') {
         result = result.trim();
       } else if (transform === 'trimEnd') {
         result = trimEnd(result);
@@ -109,10 +111,10 @@ export default class CommandBuilder<ReturnValue = string> {
       } else if (transform === 'boolean') {
         const trueValues = ['true', 'yes', '1'];
         result = trueValues.includes(result.trim().toLowerCase());
-      } else if (transform === 'sanitize') {
-        result = result.replace(/[\r\n]+$/, '');
+      } else if (transform === 'lines') {
+        result = result.split('\n');
       }
-    }); 
+    });
 
     return result;
   }
@@ -134,7 +136,7 @@ export default class CommandBuilder<ReturnValue = string> {
   // logical operators
   and(strings: TemplateStringsArray, ...values: any[]) {
     this.$` && `;
-    
+
     return this.append(strings, ...values);
   }
 
@@ -142,6 +144,10 @@ export default class CommandBuilder<ReturnValue = string> {
     this.$` || `;
 
     return this.append(strings, ...values);
+  }
+
+  silent() {
+    return this.append` > /dev/null`;
   }
 
   // transformation methods
@@ -187,9 +193,14 @@ export default class CommandBuilder<ReturnValue = string> {
     return this.transform('toLowerCase', enable);
   }
 
+  lines<TCommandBuilder extends CommandBuilder<string[]>>(enable = false): TCommandBuilder {
+    this.transform('lines', enable);
+    return this as unknown as TCommandBuilder;
+  }
+
   boolean<TCommandBuilder extends CommandBuilder<boolean>>(test = false): TCommandBuilder {
     if (test) {
-      this.and`echo ${'true'}`.or`echo ${'false'}`;
+      this.silent().and`echo ${'true'}`.or`echo ${'false'}`;
     }
 
     this.transforms.push('boolean');

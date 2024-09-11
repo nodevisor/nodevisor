@@ -1,10 +1,66 @@
 import { Module, type Nodevisor, Platform } from '@nodevisor/core';
 
+export type FSOptions<Flag = 'r'> = {
+  encoding?: BufferEncoding | null;
+  mode?: number;
+  flag?: Flag;
+};
+
 export default class FS extends Module {
   constructor(nodevisor: Nodevisor) {
     super(nodevisor, {
       name: 'fs',
     });
+  }
+
+  async readFile(path: string, options: FSOptions<'r'> = {}): Promise<string | Buffer> {
+    const { encoding = 'utf8', flag = 'r' } = options;
+
+    const content = await this.connection.getContent(path, { encoding, flags: flag });
+    return encoding === null ? content : content.toString(encoding);
+  }
+
+  async writeFile(
+    path: string,
+    data: string | Buffer,
+    options: FSOptions<'w' | 'a'> = {},
+  ): Promise<void> {
+    const { encoding = 'utf8', mode = 0o666, flag = 'w' } = options;
+    const content = Buffer.isBuffer(data) ? data : Buffer.from(data, encoding || 'utf8');
+
+    await this.connection.putContent(content, path, { encoding, mode, flags: flag });
+  }
+
+  async appendFile(
+    path: string,
+    data: string | Buffer,
+    options: FSOptions<'a'> = {},
+  ): Promise<void> {
+    return this.writeFile(path, data, { ...options, flag: 'a' });
+  }
+
+  async unlink(path: string): Promise<void> {
+    if (await this.exists(path)) {
+      await this.$`rm ${path}`;
+    }
+  }
+
+  async rm(path: string) {
+    if (await this.exists(path)) {
+      await this.$`rm ${path}`;
+    }
+  }
+
+  async mkdir(path: string, options: { recursive?: boolean } = {}): Promise<void> {
+    const { recursive = false } = options;
+
+    await this.$`mkdir ${recursive ? '-p' : ''} ${path}`;
+  }
+
+  async rmdir(path: string, options: { recursive?: boolean } = {}): Promise<void> {
+    const { recursive = false } = options;
+
+    await this.$`rm -r${recursive ? '-f' : ''} ${path}`;
   }
 
   async exists(path: string) {
@@ -16,36 +72,7 @@ export default class FS extends Module {
     }
   }
 
-  async append(path: string, data: string) {
-    return this.$`echo ${data} >> ${path}`;
-  }
-
-  async write(path: string, data: string) {
-    return this.$`echo ${data} > ${path}`;
-  }
-
-  async read(path: string) {
-    return this.$`cat ${path}`;
-  }
-
-  async rm(path: string) {
-    if (await this.exists(path)) {
-      await this.$`rm ${path}`;
-    }
-  }
-
-  async mkdir(path: string) {
-    return this.$`mkdir -p ${path}`;
-  }
-
-  async rmdir(path: string) {
-    return this.$`rm -rf ${path}`;
-  }
-
-  async mv(source: string, destination: string) {
-    return this.$`mv ${source} ${destination}`;
-  }
-
+  // not fully compatible yet
   async chmod(path: string, mode: string) {
     return this.$`chmod ${mode} ${path}`;
   }
@@ -56,6 +83,15 @@ export default class FS extends Module {
 
   async chgrp(path: string, group: string) {
     return this.$`chgrp ${group} ${path}`;
+  }
+
+  /*
+  async readdir(path: string): Promise<string[]> {
+  }
+  */
+
+  async mv(source: string, destination: string) {
+    return this.$`mv ${source} ${destination}`;
   }
 
   async stat(path: string) {
@@ -76,38 +112,3 @@ export default class FS extends Module {
     return this.$`readlink -f ${path}`;
   }
 }
-
-/*
-// copy file from local to remote and put content in the file
-export async function uploadContent(connection: Connection, remotePath: string, content: string) {
-  // create a temporary file on the local machine
-  const localPath = await localTempFile(content);
-
-  try {
-    return await upload(connection, localPath, remotePath);
-  } finally {
-    // remove local file
-    await fs.unlink(localPath);
-  }
-}
-
-// upload temp content to remote
-export async function uploadTempContent(connection: Connection, content: string) {
-  // create a temporary file on the remote machine
-  const remotePath = await temp(connection);
-
-  try {
-    await uploadContent(connection, remotePath, content);
-    return remotePath;
-  } catch (error) {
-    // remove remote file
-    await rm(connection, remotePath);
-    throw error;
-  }
-}
-
-// copy file from remote to local
-export async function download(connection: Connection, remotePath: string, localPath: string) {
-  return connection.download(remotePath, localPath);
-}
-*/

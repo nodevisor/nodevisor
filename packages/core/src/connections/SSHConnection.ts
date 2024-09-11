@@ -149,6 +149,8 @@ export default class SSHConnection extends Connection {
   async put(localPath: string, remotePath: string, options?: PutOptions) {
     const sftp = await this.getSFTP();
 
+    // use
+
     try {
       await sftp.put(localPath, remotePath, {
         writeStreamOptions: {
@@ -179,6 +181,8 @@ export default class SSHConnection extends Connection {
 
   async get(remotePath: string, localPath: string, options?: GetOptions) {
     const sftp = await this.getSFTP();
+
+    // use standard cat if sftp is not available
 
     try {
       await sftp.get(remotePath, localPath, {
