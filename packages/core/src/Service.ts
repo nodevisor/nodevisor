@@ -1,8 +1,8 @@
 import Package from './Package';
 
 export default abstract class Service extends Package {
-  abstract start(): Promise<Service>;
-  abstract stop(): Promise<Service>;
+  abstract start(): Promise<this>;
+  abstract stop(): Promise<this>;
   abstract isRunning(): Promise<boolean>;
 
   async restart() {

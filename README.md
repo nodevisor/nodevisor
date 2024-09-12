@@ -17,6 +17,7 @@ Nodevisor **unifies** scripts across different platforms, helping you avoid the 
 - **Easy app deployment:** Deploy your applications smoothly, whether on one server or thousands.
 - **Safe and secure:** Keeps your sensitive info, like passwords, protected.
 - **All-in-one tool:** Manage all your server tasks from one place.
+- **Build-in integration:** Directly control Docker containers, Docker Swarm services, and orchestrate AWS cloud resources with Nodevisor.
 
 ## How you can use Nodevisor
 

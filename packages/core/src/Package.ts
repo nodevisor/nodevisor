@@ -47,8 +47,19 @@ export default abstract class Package extends Module {
   // New abstract method for subclasses to implement
   protected abstract installPackage(): Promise<void>;
 
-  abstract uninstall(): Promise<Package>;
-  abstract update(): Promise<Package>;
+  async uninstall() {
+    if (await this.isInstalled()) {
+      this.log('Not installed');
+      return;
+    }
+
+    await this.uninstallPackage();
+    return this;
+  }
+
+  protected abstract uninstallPackage(): Promise<void>;
+
+  abstract update(): Promise<this>;
 
   abstract isInstalled(): Promise<boolean>;
   abstract getVersion(): Promise<string>;

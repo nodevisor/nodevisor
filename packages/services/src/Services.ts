@@ -1,4 +1,4 @@
-import { Module, type Nodevisor, Platform } from '@nodevisor/core';
+import { Module, type Nodevisor } from '@nodevisor/core';
 
 export default class Services extends Module {
   constructor(nodevisor: Nodevisor) {
@@ -7,7 +7,42 @@ export default class Services extends Module {
     });
   }
 
+  async start(name: string) {
+    if (await this.isRunning(name)) {
+      return;
+    }
+
+    this.$`systemctl start ${name}`;
+  }
+
+  async stop(name: string) {
+    if (!(await this.isRunning(name))) {
+      return;
+    }
+
+    await this.$`systemctl stop ${name}`;
+
+    if (await this.isRunning(name)) {
+      throw new Error(`Failed to stop service ${name}`);
+    }
+  }
+
+  async isRunning(name: string) {
+    return this.$`systemctl is-active ${name}`.boolean(true);
+  }
+
   async restart(name: string) {
-    return this.$`systemctl restart ${name}`;
+    if (!(await this.isRunning(name))) {
+      return this.start(name);
+    }
+
+    await this.$`systemctl restart ${name}`;
+    if (!(await this.isRunning(name))) {
+      throw new Error(`Failed to restart service ${name}`);
+    }
+  }
+
+  async status(name: string) {
+    return this.$`systemctl --no-pager status ${name}`;
   }
 }

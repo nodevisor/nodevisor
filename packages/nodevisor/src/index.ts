@@ -25,3 +25,5 @@ export { default as users } from '@nodevisor/users';
 export * from '@nodevisor/users';
 
 // packages
+export { default as aws } from '@nodevisor/aws';
+export * from '@nodevisor/aws';

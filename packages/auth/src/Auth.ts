@@ -1,8 +1,6 @@
-import { Module, type Nodevisor, log as defaultLog } from '@nodevisor/core';
+import { Module, type Nodevisor } from '@nodevisor/core';
 // import { Users } from '@nodevisor/users';
 import { FS } from '@nodevisor/fs';
-
-const log = defaultLog.extend('auth');
 
 export default class Auth extends Module {
   constructor(nodevisor: Nodevisor) {

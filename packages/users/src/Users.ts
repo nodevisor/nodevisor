@@ -1,6 +1,4 @@
-import { Module, type Nodevisor, log as defaultLog } from '@nodevisor/core';
-
-const log = defaultLog.extend('users');
+import { Module, type Nodevisor } from '@nodevisor/core';
 
 export default class Users extends Module {
   constructor(nodevisor: Nodevisor) {
@@ -19,7 +17,7 @@ export default class Users extends Module {
 
   async add(username: string) {
     if (await this.exists(username)) {
-      log(`User ${username} already exists`);
+      this.log(`User ${username} already exists`);
       return;
     }
 

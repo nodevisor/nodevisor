@@ -1,6 +1,4 @@
-import { Module, type Nodevisor, log as defaultLog } from '@nodevisor/core';
-
-const log = defaultLog.extend('groups');
+import { Module, type Nodevisor } from '@nodevisor/core';
 
 export default class Groups extends Module {
   constructor(nodevisor: Nodevisor) {
