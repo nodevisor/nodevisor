@@ -51,19 +51,19 @@ const nodevisor = new Nodevisor({
 });
 
 // update and upgrade all system packages
-await packages.use(nodevisor).updateAndUpgrade(connection);
+await packages.use(nodevisor).updateAndUpgrade();
 
 // install ufw firewall
-await ufw.use(nodevisor).install(connection, {
+await ufw.use(nodevisor).install({
   allow: [services.ssh, services.web, services.webSecure],
   enable: true,
 });
 
 // assign local public key to the server
-await authorizedKeys.use(nodevisor).write(connection, SSH_PUBLIC_KEY);
+await authorizedKeys.use(nodevisor).write(SSH_PUBLIC_KEY);
 
 // create user named runner
-await users.use(nodevisor).add(connection, USER_USERNAME);
+await users.use(nodevisor).add(USER_USERNAME);
 
 // switch to user named runner
 const runner = nodevisor.as(USER_USERNAME);
@@ -72,7 +72,7 @@ const runner = nodevisor.as(USER_USERNAME);
 await authorizedKeys.use(runner).write(SSH_PUBLIC_KEY);
 
 // disable login with password
-await ssh.use(nodevisor).disablePasswordAuthentication(connection);
+await ssh.use(nodevisor).disablePasswordAuthentication();
 ```
 
 ### Local computer
