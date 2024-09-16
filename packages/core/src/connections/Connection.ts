@@ -1,11 +1,6 @@
 import EventEmitter from 'node:events';
 import { LRUCache } from 'lru-cache';
-import quote from '../quotes/quote';
-import powerShellQuote from '../quotes/powerShellQuote';
-import Platform from '../constants/Platform';
-import CommandBuilder, { type CommandBuilderOptions } from '../CommandBuilder';
-
-const platforms = Object.values(Platform) as string[];
+import CommandBuilder, { type CommandBuilderOptions } from '../commands/CommandBuilder';
 
 export type PutOptions = {
   flags?: 'w' | 'a';
@@ -38,23 +33,8 @@ export default abstract class Connection extends EventEmitter {
     this.config = config;
   }
 
-  async getQuote() {
-    const platform = await this.platform();
-
-    switch (platform) {
-      case Platform.WINDOWS:
-        return powerShellQuote;
-      default:
-        return quote;
-    }
-  }
-
-  cmd(options?: CommandBuilderOptions): CommandBuilder {
+  cmd(options: CommandBuilderOptions): CommandBuilder {
     return new CommandBuilder(this, options);
-  }
-
-  $(strings: TemplateStringsArray, ...values: any[]): CommandBuilder {
-    return this.cmd().$(strings, ...values);
   }
 
   async cached<T extends string>(key: string, fn: () => Promise<T>): Promise<T> {
@@ -82,38 +62,6 @@ export default abstract class Connection extends EventEmitter {
     this.cache.clear();
   }
 
-  async platform() {
-    return this.cached('platform', async () => {
-      try {
-        const platform = await this.$`uname -s`.shellQuote().toLowerCase();
-        if (platforms.includes(platform)) {
-          return platform as Platform;
-        }
-
-        if (platform.includes('mingw') || platform.includes('cygwin')) {
-          return Platform.WINDOWS;
-        }
-
-        throw new Error('Unsupported platform');
-      } catch (error) {
-        const platform = await this
-          .$`powershell -command "(Get-WmiObject Win32_OperatingSystem).Caption"`
-          .powerShellQuote()
-          .toLowerCase();
-
-        if (platforms.includes(platform)) {
-          return platform as Platform;
-        }
-
-        if (platform.includes('windows')) {
-          return Platform.WINDOWS;
-        }
-      }
-
-      throw new Error('Unsupported platform');
-    });
-  }
-
   abstract exec(cmd: string): Promise<string>;
 
   async waitForConnection() {
@@ -131,7 +79,7 @@ export default abstract class Connection extends EventEmitter {
   abstract putContent(
     content: string | Buffer,
     remotePath: string,
-    options?: PutOptions
+    options?: PutOptions,
   ): Promise<void>;
 
   abstract getContent(remotePath: string, options?: GetOptions): Promise<Buffer>;

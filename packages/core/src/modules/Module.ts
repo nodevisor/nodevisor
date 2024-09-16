@@ -2,7 +2,6 @@ import { type Debugger } from 'debug';
 import log from '../utils/log';
 import Nodevisor from '../Nodevisor';
 import type RunAs from '../@types/RunAs';
-import { type CommandBuilderOptions } from '../CommandBuilder';
 
 export type ModuleConfig = {
   name?: string;
@@ -22,12 +21,18 @@ export default abstract class Module {
     this.log = log.extend(name);
   }
 
+  use(nodevisor: Nodevisor): this {
+    const ModuleClass = this.constructor as new (...args: any[]) => this;
+
+    return new ModuleClass(nodevisor, this.config);
+  }
+
   get connection() {
     return this.nodevisor.connection;
   }
 
   async platform() {
-    return this.nodevisor.connection.platform();
+    return this.nodevisor.cmd().platform();
   }
 
   async cached<T extends string>(key: string, fn: () => Promise<T>): Promise<T> {
@@ -46,10 +51,6 @@ export default abstract class Module {
     const nodevisor = this.nodevisor.as(runAs);
 
     return new ModuleClass(nodevisor, this.config) as this;
-  }
-
-  cmd(options: CommandBuilderOptions = {}) {
-    return this.nodevisor.cmd(options);
   }
 
   $(strings: TemplateStringsArray, ...values: any[]) {

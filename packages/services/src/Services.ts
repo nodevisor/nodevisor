@@ -28,7 +28,7 @@ export default class Services extends Module {
   }
 
   async isRunning(name: string) {
-    return this.$`systemctl is-active ${name}`.boolean(true);
+    return this.$`systemctl is-active ${name}`.toBoolean(true);
   }
 
   async restart(name: string) {

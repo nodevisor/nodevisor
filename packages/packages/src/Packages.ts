@@ -49,7 +49,7 @@ export default class Packages extends Module {
   }
 
   async isInstalled(name: string) {
-    const lines = await this.$`apt-cache policy ${name} | grep Installed`.lines();
+    const lines = await this.$`apt-cache policy ${name} | grep Installed`.toLines();
     console.log('lines', lines);
 
     return !!lines.length;
@@ -63,7 +63,7 @@ export default class Packages extends Module {
   }
 
   async isUpgradable(name: string) {
-    const lines = await this.$`apt list --upgradable ${name}`.lines();
+    const lines = await this.$`apt list --upgradable ${name}`.toLines();
 
     return !!lines.length;
   }

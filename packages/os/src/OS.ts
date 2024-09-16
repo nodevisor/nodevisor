@@ -88,8 +88,4 @@ export default class OS extends Module {
         return value;
     }
   }
-
-  async platform() {
-    return this.nodevisor.connection.platform();
-  }
 }

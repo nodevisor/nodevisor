@@ -3,6 +3,7 @@ import Nodevisor from './Nodevisor';
 export * from './constants';
 export * from './connections';
 export * from './errors';
+export * from './envs';
 export * from './modules';
 
 export { default as Nodevisor } from './Nodevisor';
@@ -13,9 +14,6 @@ export * from './Package';
 
 export { default as Service } from './Service';
 export * from './Service';
-
-export { default as Env } from './Env';
-export * from './Env';
 
 export * from './utils';
 

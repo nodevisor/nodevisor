@@ -25,31 +25,32 @@ describe('Nodevisor', () => {
   it('should generate a command as another user with su', async () => {
     const nodevisor = new Nodevisor({ runAs: { username: 'testuser', method: 'su' } });
 
-    const cmd = await nodevisor.$`whoami`.toString();
+    const cmd = await nodevisor.$`whoami`.setShellQuote().toString();
 
-    expect(cmd).toBe("su - testuser -c whoami");
+    expect(cmd).toBe('su - testuser -c whoami');
   });
 
   it('should generate a command as another user with su and escape correctly', async () => {
     const nodevisor = new Nodevisor({ runAs: { username: 'testuser', method: 'runuser' } });
 
-    const cmd = await nodevisor.$`printf "Hello, world!"`.toString();
+    const cmd = await nodevisor.$`printf "Hello, world!"`.setShellQuote().toString();
 
-    expect(cmd).toBe("runuser -l testuser -c $'printf \"Hello, world!\"'");
+    expect(cmd).toBe('runuser -l testuser -c $\'printf "Hello, world!"\'');
+
+    const cmdPowerShell = await nodevisor.$`printf "Hello, world!"`.setPowerShellQuote().toString();
+
+    expect(cmdPowerShell).toBe('runuser -l testuser -c \'printf "Hello, world!"\'');
   });
-
 
   it('should generate a command as another user with su and escape correctly', async () => {
     const nodevisor = new Nodevisor({ runAs: { username: 'testuser', method: 'runuser' } });
 
-    const cmd = await nodevisor.$`printf "Hello, world!"`.boolean().toString();
+    const cmd = await nodevisor.$`printf "Hello, world!"`.setShellQuote().toBoolean().toString();
 
-    expect(cmd).toBe("runuser -l testuser -c $'printf \"Hello, world!\"'");
+    expect(cmd).toBe('runuser -l testuser -c $\'printf "Hello, world!"\'');
   });
 
   /*
-
-
   it('should execute a command with environment variables', async () => {
     const execSpy = jest.spyOn(sshConnectionMock, 'exec').mockResolvedValue('Success');
     const nodevisor = new Nodevisor({ connection: sshConnectionMock });

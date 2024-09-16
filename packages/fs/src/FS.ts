@@ -68,7 +68,7 @@ export default class FS extends Module {
       case Platform.WINDOWS:
         return this.$`powershell Test-Path ${path}`;
       default:
-        return this.$`test -e ${path}`.boolean(true);
+        return this.$`test -e ${path}`.toBoolean(true);
     }
   }
 

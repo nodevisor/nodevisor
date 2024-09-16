@@ -1,9 +1,9 @@
-import Env from './Env';
 import Connection from './connections/Connection';
 import SSHConnection, { type SSHConnectionConfig } from './connections/SSHConnection';
 import ShellConnection, { type ShellConnectionConfig } from './connections/ShellConnection';
-import CommandBuilder, { type CommandBuilderOptions } from './CommandBuilder';
+import CommandBuilder, { type CommandBuilderOptions } from './commands/CommandBuilder';
 import type RunAs from './@types/RunAs';
+import Env from './envs/Env';
 
 type Config = {
   runAs?: RunAs;
@@ -19,7 +19,7 @@ type Config = {
 export default class Nodevisor {
   readonly connection: Connection;
 
-  private env: Env;
+  readonly env: Env;
 
   private runAs?: RunAs;
 
@@ -30,8 +30,8 @@ export default class Nodevisor {
       'connection' in config
         ? config.connection
         : 'username' in connectionConfig
-        ? new SSHConnection(connectionConfig as SSHConnectionConfig)
-        : new ShellConnection(connectionConfig as ShellConnectionConfig);
+          ? new SSHConnection(connectionConfig as SSHConnectionConfig)
+          : new ShellConnection(connectionConfig as ShellConnectionConfig);
 
     this.env = new Env(env);
     this.runAs = runAs;
@@ -40,19 +40,29 @@ export default class Nodevisor {
     this.$ = this.$.bind(this);
   }
 
-  cmd(options: CommandBuilderOptions = {}): CommandBuilder {
+  cmd(options: Omit<CommandBuilderOptions, 'env'> = {}): CommandBuilder {
     return this.connection.cmd({
       runAs: this.runAs,
-      env: this.env,
+      env: new Env(this.env),
       ...options,
     });
   }
 
   $(strings: TemplateStringsArray, ...values: any[]): CommandBuilder {
-    return this.cmd().$(strings, ...values);
+    return this.cmd().append(strings, ...values);
   }
 
-  as(runAs: RunAs) {
+  as(runAs: RunAs | string) {
+    if (typeof runAs === 'string') {
+      return new Nodevisor({
+        connection: this.connection,
+        env: this.env,
+        runAs: {
+          username: runAs,
+        },
+      });
+    }
+
     return new Nodevisor({
       connection: this.connection,
       env: this.env,

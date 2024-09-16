@@ -8,7 +8,7 @@ export default class Groups extends Module {
   }
 
   async exists(name: string) {
-    return this.$`getent group ${name}`.boolean(true);
+    return this.$`getent group ${name}`.toBoolean(true);
   }
 
   async add(name: string): Promise<void> {
