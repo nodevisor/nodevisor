@@ -35,53 +35,61 @@ Nodevisor is still in the early stages, and we’re working on exciting new feat
 - **GitHub Actions integration:** Easily integrate with CI/CD pipelines for smoother deployment.
 - **YAML configuration:** Set up servers simply using YAML files.
 
-## Get started
+## Writing shell scripts with Nodevisor
 
-### Example 1: Initialize remote VPS
+Nodevisor allows you to write shell scripts with the simplicity of template literals, making it easier and safer to work with shell commands. Nodevisor automatically handles variable escaping and error management.
+
+### Installation
+
+Install Nodevisor as a standard Node.js library:
+
+```sh
+npm install nodevisor
+```
+
+### Local Usage
+
+To run commands locally, simply use the $ function provided by Nodevisor. No additional configuration is required for local execution.
 
 ```ts
-import { Nodevisor, authorizedKeys, packages, ufw, users, ssh } from 'nodevisor';
+import { $ } from 'nodevisor';
 
-const USER_USERNAME = 'runner';
-const SSH_PUBLIC_KEY = 'your-public-key';
+const result = await $`echo "Hello, World!"`;
 
-const nodevisor = new Nodevisor({
+console.log(result); // "Hello, World!"
+```
+
+### Remote Usage
+
+To run commands on a remote machine via SSH, you can create a new Nodevisor instance with remote connection options.
+
+```ts
+import { Nodevisor } from 'nodevisor';
+
+const { $ } = new Nodevisor({
   host: 'your-server-address',
-  username: 'root',
+  username: 'runner',
 });
 
-// update and upgrade all system packages
-await packages.use(nodevisor).updateAndUpgrade();
+const result = await $`echo "Hello, World!"`;
+console.log(result); // "Hello, World!"
 
-// install ufw firewall
-await ufw.use(nodevisor).install({
-  allow: [services.ssh, services.web, services.webSecure],
-  enable: true,
-});
-
-// assign local public key to the server
-await authorizedKeys.use(nodevisor).write(SSH_PUBLIC_KEY);
-
-// create user named runner
-await users.use(nodevisor).add(USER_USERNAME);
-
-// switch to user named runner
-const runner = nodevisor.as(USER_USERNAME);
-
-// allow user to login with public key
-await authorizedKeys.use(runner).write(SSH_PUBLIC_KEY);
-
-// disable login with password
-await ssh.use(nodevisor).disablePasswordAuthentication();
+const username = await nodevisor.$`whoami`;
+console.log(username); // runner
 ```
 
-### Local computer
+### Escape variables
+
+Nodevisor automatically escapes variables to prevent shell injection attacks. You can safely use variables in your commands without worrying about special characters:
 
 ```ts
-import nodevisor, { packages, Platform } from 'nodevisor';
+import { $ } from 'nodevisor';
 
-await packages.install('curl');
+const name = 'my-directory';
+await $`mkdir ${name}`;
 ```
+
+More information about escaping variables can be found [here](https://nodevisor.com/docs/quotes).
 
 ### Command Line - Comming Soon
 
@@ -89,6 +97,91 @@ To install Nodevisor, run this command:
 
 ```bash
 npm install -g nodevisor
+
+nodevisor --host your-server-address --username runner --command "echo 'Hello, World!'"
+```
+
+### YAML Configuration - Comming Soon
+
+You can also use YAML to configure your Nodevisor instance.
+
+```yaml
+
+- name: Prepare web servers
+  remote_user: root
+  hosts:
+    - '192.168.1.1'
+    - '192.168.1.2'
+    - '192.168.1.3'
+
+  tasks:
+  - name: Install packages
+    nodevisor.packages
+      install:
+        - curl
+        - git
+```
+
+## Guides
+
+### Initialize remote VPS
+
+```ts
+import { Nodevisor, authorizedKeys, packages, ufw, users, ssh } from 'nodevisor';
+
+const USER_USERNAME = 'runner';
+const SSH_PUBLIC_KEY = 'your-public-key';
+
+const hosts = ['192.168.1.1', '192.168.1.2', '192.168.1.3'];
+
+async function initialize(host: string) {
+  const nodevisor = new Nodevisor({
+    host,
+    username: 'root',
+  });
+
+  // update and upgrade all system packages
+  await packages.use(nodevisor).updateAndUpgrade();
+
+  // install ufw firewall
+  await ufw.use(nodevisor).install({
+    allow: [services.ssh, services.web, services.webSecure],
+    enable: true,
+  });
+
+  // assign local public key to the server
+  await authorizedKeys.use(nodevisor).write(SSH_PUBLIC_KEY);
+
+  // create user named runner
+  await users.use(nodevisor).add(USER_USERNAME);
+
+  // switch to user named runner
+  const runner = nodevisor.as(USER_USERNAME);
+
+  // allow user to login with public key
+  await authorizedKeys.use(runner).write(SSH_PUBLIC_KEY);
+
+  // disable login with password
+  await ssh.use(nodevisor).disablePasswordAuthentication();
+}
+
+const results = await Promise.all(hosts.map((host) => initialize(host)));
+```
+
+### Install packages on remote server
+
+Installing packages on a remote server is easy because will determine the package manager based on the operating system.
+It will use:
+
+- apt (Debian, Ubuntu)
+- yum (Fedora, CentOS, RHEL)
+- brew (macOS)
+- winget (Windows)
+
+```ts
+import nodevisor, { packages, Platform } from 'nodevisor';
+
+await packages.install('curl');
 ```
 
 ### Supported operating systems

@@ -32,7 +32,7 @@ export default abstract class Module {
   }
 
   async platform() {
-    return this.nodevisor.cmd().platform();
+    return this.nodevisor.platform();
   }
 
   async cached<T extends string>(key: string, fn: () => Promise<T>): Promise<T> {

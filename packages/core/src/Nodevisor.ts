@@ -70,6 +70,10 @@ export default class Nodevisor {
     });
   }
 
+  async platform() {
+    return this.cmd().platform();
+  }
+
   async close() {
     return this.connection.close();
   }

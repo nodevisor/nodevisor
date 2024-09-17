@@ -20,7 +20,8 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/core": "*"
+    "@nodevisor/core": "*",
+    "@nodevisor/os": "*"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

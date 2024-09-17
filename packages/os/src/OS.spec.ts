@@ -3,11 +3,10 @@ import OS from './OS';
 import Arch from './constants/Arch';
 import { Nodevisor } from '@nodevisor/core';
 
-
 describe('OS Module', () => {
   let os: OS;
   let nodevisor: Nodevisor;
-  
+
   beforeAll(() => {
     nodevisor = new Nodevisor();
     os = new OS(nodevisor);
@@ -19,7 +18,8 @@ describe('OS Module', () => {
 
     const diff = Math.abs(result - nodejsUptime);
 
-    expect(diff).toBeLessThan(1);
+    // uptime can be off by a few seconds
+    expect(diff).toBeLessThan(5);
   });
 
   it('should execute hostname command', async () => {
@@ -32,7 +32,7 @@ describe('OS Module', () => {
     const result = await os.arch();
 
     const archMap: Record<string, Arch> = {
-      'x86_64': Arch.X64,
+      x86_64: Arch.X64,
     };
 
     const converted = archMap[result] || result;
@@ -44,5 +44,17 @@ describe('OS Module', () => {
     const result = await os.platform();
 
     expect(result).toBe(platform());
+  });
+
+  it('should execute commandExists command', async () => {
+    const result = await os.commandExists('ls');
+
+    expect(result).toBe(true);
+  });
+
+  it('should execute commandExists command and return false', async () => {
+    const result = await os.commandExists('ls-not-exists');
+
+    expect(result).toBe(false);
   });
 });

@@ -17,4 +17,8 @@ export * from './Service';
 
 export * from './utils';
 
-export default new Nodevisor();
+const nodevisor = new Nodevisor();
+
+export const $ = nodevisor.$;
+
+export default nodevisor;

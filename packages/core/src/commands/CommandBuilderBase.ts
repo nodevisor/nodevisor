@@ -13,6 +13,7 @@ export type CommandBuilderBaseOptions = {
   command?: Command;
   transforms?: Transform[];
   quote?: Quote;
+  noThrow?: boolean;
 };
 
 export default class CommandBuilderBase implements PromiseLike<string> {
@@ -22,8 +23,10 @@ export default class CommandBuilderBase implements PromiseLike<string> {
   private quote?: Quote;
   private transforms: Transform[];
 
+  #noThrow: boolean;
+
   constructor(connection: Connection, options: CommandBuilderBaseOptions = {}) {
-    const { command = [], transforms = ['sanitize'], quote } = options;
+    const { command = [], transforms = ['sanitize'], quote, noThrow = false } = options;
 
     this.connection = connection;
 
@@ -31,6 +34,7 @@ export default class CommandBuilderBase implements PromiseLike<string> {
     this.quote = quote;
 
     this.transforms = cloneDeep(transforms);
+    this.#noThrow = noThrow;
   }
 
   getQuote() {
@@ -91,7 +95,11 @@ export default class CommandBuilderBase implements PromiseLike<string> {
           result = trueValues.includes(result.trim().toLowerCase());
           break;
         case 'lines':
-          result = result.split('\n');
+          if (result.trim() === '') {
+            result = [];
+          } else {
+            result = result.split('\n');
+          }
           break;
         default:
           throw new Error(`Unknown transform: ${transform}`);
@@ -103,8 +111,17 @@ export default class CommandBuilderBase implements PromiseLike<string> {
 
   async exec() {
     const command = this.toString();
-    const result = await this.connection.exec(command);
-    return this.applyTransforms(result);
+    try {
+      const result = await this.connection.exec(command);
+      return this.applyTransforms(result);
+    } catch (error) {
+      if (this.#noThrow) {
+        const result = (error as Error).message;
+        return this.applyTransforms(result);
+      }
+
+      throw error;
+    }
   }
 
   then<TResult1, TResult2 = never>(
@@ -212,6 +229,11 @@ export default class CommandBuilderBase implements PromiseLike<string> {
     return new CommandBuilderTransform<boolean>(this);
   }
 
+  noThrow(enable = true) {
+    this.#noThrow = enable;
+    return this;
+  }
+
   cached<T extends string>(key: string, fn: () => Promise<T>) {
     return this.connection.cached(key, fn);
   }
@@ -226,6 +248,7 @@ export default class CommandBuilderBase implements PromiseLike<string> {
       command: this.command,
       transforms: this.transforms,
       quote: this.quote,
+      noThrow: this.#noThrow,
     });
 
     return cloned;
@@ -233,6 +256,7 @@ export default class CommandBuilderBase implements PromiseLike<string> {
 
   clear() {
     this.command = [];
+    this.#noThrow = false;
     return this;
   }
 

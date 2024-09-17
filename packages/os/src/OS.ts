@@ -88,4 +88,16 @@ export default class OS extends Module {
         return value;
     }
   }
+
+  async commandExists(command: string) {
+    switch (await this.platform()) {
+      case Platform.WINDOWS:
+        return await this
+          .$`powershell -command "Get-Command ${command} -ErrorAction SilentlyContinue"`.toBoolean(
+          true,
+        );
+      default:
+        return await this.$`command -v ${command}`.toBoolean(true);
+    }
+  }
 }
