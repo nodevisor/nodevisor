@@ -52,7 +52,7 @@ npm install nodevisor
 To run commands locally, simply use the $ function provided by Nodevisor. No additional configuration is required for local execution.
 
 ```ts
-import { $ } from 'nodevisor';
+import $ from 'nodevisor';
 
 const result = await $`echo "Hello, World!"`;
 
@@ -64,17 +64,17 @@ console.log(result); // "Hello, World!"
 To run commands on a remote machine via SSH, you can create a new Nodevisor instance with remote connection options.
 
 ```ts
-import { Nodevisor } from 'nodevisor';
+import $ from 'nodevisor';
 
-const { $ } = new Nodevisor({
+const $con = $.connect({
   host: 'your-server-address',
   username: 'runner',
 });
 
-const result = await $`echo "Hello, World!"`;
+const result = await $con`echo "Hello, World!"`;
 console.log(result); // "Hello, World!"
 
-const username = await nodevisor.$`whoami`;
+const username = await $con`whoami`;
 console.log(username); // runner
 ```
 
@@ -83,7 +83,7 @@ console.log(username); // runner
 Nodevisor automatically escapes variables to prevent shell injection attacks. You can safely use variables in your commands without worrying about special characters:
 
 ```ts
-import { $ } from 'nodevisor';
+import $ from 'nodevisor';
 
 const name = 'my-directory';
 await $`mkdir ${name}`;
@@ -127,7 +127,7 @@ You can also use YAML to configure your Nodevisor instance.
 ### Initialize remote VPS
 
 ```ts
-import { Nodevisor, authorizedKeys, packages, ufw, users, ssh } from 'nodevisor';
+import $, { authorizedKeys, packages, ufw, users, ssh } from 'nodevisor';
 
 const USER_USERNAME = 'runner';
 const SSH_PUBLIC_KEY = 'your-public-key';
@@ -135,34 +135,34 @@ const SSH_PUBLIC_KEY = 'your-public-key';
 const hosts = ['192.168.1.1', '192.168.1.2', '192.168.1.3'];
 
 async function initialize(host: string) {
-  const nodevisor = new Nodevisor({
+  const $con = $.connect({
     host,
     username: 'root',
   });
 
   // update and upgrade all system packages
-  await packages.use(nodevisor).updateAndUpgrade();
+  await $con(packages).updateAndUpgrade();
 
   // install ufw firewall
-  await ufw.use(nodevisor).install({
+  await $con(ufw).install({
     allow: [services.ssh, services.web, services.webSecure],
     enable: true,
   });
 
   // assign local public key to the server
-  await authorizedKeys.use(nodevisor).write(SSH_PUBLIC_KEY);
+  await $con(authorizedKeys).write(SSH_PUBLIC_KEY);
 
   // create user named runner
-  await users.use(nodevisor).add(USER_USERNAME);
+  await $con(users).add(USER_USERNAME);
 
   // switch to user named runner
-  const runner = nodevisor.as(USER_USERNAME);
+  const $runner = $con.as(USER_USERNAME);
 
   // allow user to login with public key
-  await authorizedKeys.use(runner).write(SSH_PUBLIC_KEY);
+  await $runner(authorizedKeys).write(SSH_PUBLIC_KEY);
 
   // disable login with password
-  await ssh.use(nodevisor).disablePasswordAuthentication();
+  await $con(ssh).disablePasswordAuthentication();
 }
 
 const results = await Promise.all(hosts.map((host) => initialize(host)));
@@ -179,9 +179,15 @@ It will use:
 - winget (Windows)
 
 ```ts
-import nodevisor, { packages, Platform } from 'nodevisor';
+import $, { packages } from 'nodevisor';
 
-await packages.install('curl');
+const $con = $.connect({
+  host: 'server-address',
+  username: 'root',
+  password: 'password',
+});
+
+await $con(packages).install('curl');
 ```
 
 ### Supported operating systems

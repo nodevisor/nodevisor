@@ -1,16 +1,9 @@
-import { Service, type Nodevisor } from '@nodevisor/core';
+import { Service } from '@nodevisor/core';
 import Docker from './Docker';
 
 export default class DockerSwarm extends Service {
-  private docker: Docker;
-
-  constructor(nodevisor: Nodevisor) {
-    super(nodevisor, {
-      name: 'docker-swarm',
-    });
-
-    this.docker = this.getModule(Docker);
-  }
+  readonly name = 'docker-swarm';
+  readonly docker = this.module(Docker);
 
   // package
 

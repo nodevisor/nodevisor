@@ -1,11 +1,7 @@
-import { Module, type Nodevisor } from '@nodevisor/core';
+import { Module } from '@nodevisor/core';
 
 export default class Services extends Module {
-  constructor(nodevisor: Nodevisor) {
-    super(nodevisor, {
-      name: 'services',
-    });
-  }
+  readonly name = 'services';
 
   async start(name: string) {
     if (await this.isRunning(name)) {

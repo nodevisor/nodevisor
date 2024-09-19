@@ -1,13 +1,10 @@
-import { Module, Platform, type Nodevisor } from '@nodevisor/core';
-import { OS } from '@nodevisor/os';
+import { Module, Platform } from '@nodevisor/core';
+import os from '@nodevisor/os';
 import PackageManager from './constants/PackageManager';
 
 export default class Packages extends Module {
-  constructor(nodevisor: Nodevisor) {
-    super(nodevisor, {
-      name: 'packages',
-    });
-  }
+  readonly name = 'packages';
+  readonly os = this.module(os);
 
   async packageManager() {
     return this.cached('packageManager', async () => {
@@ -17,8 +14,7 @@ export default class Packages extends Module {
         case Platform.WINDOWS:
           return PackageManager.WINGET;
         default:
-          const os = new OS(this.nodevisor);
-          const hasYUM = await os.commandExists('yum');
+          const hasYUM = await this.os.commandExists('yum');
           if (hasYUM) {
             return PackageManager.YUM;
           }

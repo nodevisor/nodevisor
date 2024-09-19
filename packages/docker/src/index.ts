@@ -1,11 +1,9 @@
-import nodevisor from '@nodevisor/core';
 import Docker from './Docker';
 import DockerSwarm from './DockerSwarm';
 
-const docker = new Docker(nodevisor);
-const dockerSwarm = new DockerSwarm(nodevisor);
+const dockerSwarm = new DockerSwarm();
 
-export default docker;
+export default new Docker();
 
 export { Docker };
 export { DockerSwarm, dockerSwarm };

@@ -1,12 +1,11 @@
 import { tmpdir } from 'node:os';
-import nodevisor from '@nodevisor/core';
 import FS from './FS';
 
 describe('FS Module', () => {
   let fs: FS;
-  
+
   beforeAll(() => {
-    fs = new FS(nodevisor);
+    fs = new FS();
   });
 
   it('should execute exists command', async () => {

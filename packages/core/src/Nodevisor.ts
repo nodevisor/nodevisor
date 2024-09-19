@@ -1,77 +1,43 @@
 import Connection from './connections/Connection';
 import SSHConnection, { type SSHConnectionConfig } from './connections/SSHConnection';
-import ShellConnection, { type ShellConnectionConfig } from './connections/ShellConnection';
+import ShellConnection from './connections/ShellConnection';
 import CommandBuilder, { type CommandBuilderOptions } from './commands/CommandBuilder';
-import type RunAs from './@types/RunAs';
-import Env from './envs/Env';
-
-type Config = {
-  runAs?: RunAs;
-  env?: Env;
-} & (
-  | {}
-  | SSHConnectionConfig
-  | {
-      connection: Connection;
-    }
-);
+import type As from './@types/As';
 
 export default class Nodevisor {
+  static readonly local = new Nodevisor();
+
   readonly connection: Connection;
 
-  readonly env: Env;
+  private commandOptions: CommandBuilderOptions;
 
-  private runAs?: RunAs;
+  constructor(
+    connection: Connection | SSHConnectionConfig = new ShellConnection(),
+    commandOptions: CommandBuilderOptions = {},
+  ) {
+    this.connection = connection instanceof Connection ? connection : new SSHConnection(connection);
+    this.commandOptions = commandOptions;
 
-  constructor(config: Config = {}) {
-    const { runAs, env, ...connectionConfig } = config;
-
-    this.connection =
-      'connection' in config
-        ? config.connection
-        : 'username' in connectionConfig
-          ? new SSHConnection(connectionConfig as SSHConnectionConfig)
-          : new ShellConnection(connectionConfig as ShellConnectionConfig);
-
-    this.env = new Env(env);
-    this.runAs = runAs;
-
-    this.cmd = this.cmd.bind(this);
     this.$ = this.$.bind(this);
   }
 
-  cmd(options: Omit<CommandBuilderOptions, 'env'> = {}): CommandBuilder {
-    return this.connection.cmd({
-      runAs: this.runAs,
-      env: new Env(this.env),
+  $(strings: TemplateStringsArray, ...values: any[]) {
+    return new CommandBuilder(this.connection, this.commandOptions).append(strings, ...values);
+  }
+
+  clone(options: CommandBuilderOptions = {}) {
+    return new Nodevisor(this.connection, {
+      ...this.commandOptions,
       ...options,
     });
   }
 
-  $(strings: TemplateStringsArray, ...values: any[]): CommandBuilder {
-    return this.cmd().append(strings, ...values);
-  }
-
-  as(runAs: RunAs | string) {
-    if (typeof runAs === 'string') {
-      return new Nodevisor({
-        connection: this.connection,
-        env: this.env,
-        runAs: {
-          username: runAs,
-        },
-      });
-    }
-
-    return new Nodevisor({
-      connection: this.connection,
-      env: this.env,
-      runAs,
-    });
+  as(user?: string | As) {
+    return this.clone({ as: user });
   }
 
   async platform() {
-    return this.cmd().platform();
+    return this.$``.platform();
   }
 
   async close() {

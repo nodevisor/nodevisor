@@ -1,13 +1,10 @@
 import Packages from './Packages';
-import { Nodevisor } from '@nodevisor/core';
 
 describe('Packages Module', () => {
   let packages: Packages;
-  let nodevisor: Nodevisor;
 
   beforeAll(() => {
-    nodevisor = new Nodevisor();
-    packages = new Packages(nodevisor);
+    packages = new Packages();
   });
 
   it(

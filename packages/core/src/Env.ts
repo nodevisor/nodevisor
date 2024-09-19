@@ -1,25 +1,30 @@
-export default class EnvBase {
+export default class Env {
   protected env: Map<string, string> = new Map();
   protected files: Set<string> = new Set();
 
-  constructor(env?: EnvBase) {
-    if (env) {
+  constructor(env?: Env | Record<string, string>) {
+    if (env && env instanceof Env) {
       this.env = new Map(env.env);
       this.files = new Set(env.files);
+      return;
+    }
+
+    if (env) {
+      Object.entries(env).forEach(([k, v]) => this.set(k, v));
     }
   }
 
-  async get(key: string) {
-    if (await this.env.has(key)) {
+  get(key: string) {
+    if (this.env.has(key)) {
       return this.env.get(key);
     }
 
     return undefined;
   }
 
-  async set(key: Record<string, string | undefined>): Promise<void>;
-  async set(key: string, value: string | undefined): Promise<void>;
-  async set(key: string | Record<string, string | undefined>, value?: string | undefined) {
+  set(key: Record<string, string | undefined>): void;
+  set(key: string, value: string | undefined): void;
+  set(key: string | Record<string, string | undefined>, value?: string | undefined) {
     if (typeof key === 'object') {
       Object.entries(key).forEach(([k, v]) => this.set(k, v));
       return;
@@ -35,16 +40,16 @@ export default class EnvBase {
     this.env.set(key, value);
   }
 
-  async has(key: string) {
-    const value = await this.get(key);
+  has(key: string) {
+    const value = this.get(key);
     return value !== undefined;
   }
 
-  async delete(key: string) {
+  delete(key: string) {
     return this.set(key, undefined);
   }
 
-  async clear() {
+  clear() {
     this.env.clear();
     this.files.clear();
   }

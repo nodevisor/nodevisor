@@ -1,17 +1,16 @@
-import Module, { type ModuleConfig } from './modules/Module';
-import Nodevisor from './Nodevisor';
+import Module, { type ModuleConfig } from './Module';
 
 export type PackageConfig = ModuleConfig & {
-  dependencies?: (new (nodevisor: Nodevisor) => Package)[];
+  dependencies?: Package[];
 };
 
 export default abstract class Package extends Module {
-  protected dependencies: (new (nodevisor: Nodevisor) => Package)[];
+  protected dependencies: Package[];
 
-  constructor(nodevisor: Nodevisor, config: PackageConfig = {}) {
+  constructor(config: PackageConfig = {}) {
     const { dependencies = [], ...rest } = config;
 
-    super(nodevisor, rest);
+    super(rest);
 
     this.dependencies = dependencies;
   }
@@ -23,9 +22,8 @@ export default abstract class Package extends Module {
 
     this.log('Installing dependencies');
 
-    for (const Dependency of this.dependencies) {
-      const instance = new Dependency(this.nodevisor);
-      await instance.install();
+    for (const dependency of this.dependencies) {
+      await dependency.install();
     }
   }
 

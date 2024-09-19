@@ -1,4 +1,4 @@
-import { Module, type Nodevisor, Platform } from '@nodevisor/core';
+import { Module, Platform } from '@nodevisor/core';
 
 export type FSOptions<Flag = 'r'> = {
   encoding?: BufferEncoding | null;
@@ -7,11 +7,7 @@ export type FSOptions<Flag = 'r'> = {
 };
 
 export default class FS extends Module {
-  constructor(nodevisor: Nodevisor) {
-    super(nodevisor, {
-      name: 'fs',
-    });
-  }
+  readonly name = 'fs';
 
   async readFile(path: string, options: FSOptions<'r'> = {}): Promise<string | Buffer> {
     const { encoding = 'utf8', flag = 'r' } = options;

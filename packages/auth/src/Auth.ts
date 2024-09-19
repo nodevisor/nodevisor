@@ -1,13 +1,10 @@
-import { Module, type Nodevisor } from '@nodevisor/core';
+import { Module } from '@nodevisor/core';
 // import { Users } from '@nodevisor/users';
-import { FS } from '@nodevisor/fs';
+import fs from '@nodevisor/fs';
 
 export default class Auth extends Module {
-  constructor(nodevisor: Nodevisor) {
-    super(nodevisor, {
-      name: 'auth',
-    });
-  }
+  readonly name = 'auth';
+  readonly fs = this.module(fs);
 
   async logout() {
     return this.$`logout`;
@@ -30,16 +27,14 @@ export default class Auth extends Module {
   }
 
   async setPassword(username: string, password: string) {
-    const fs = this.getModule(FS);
-
-    const remotePath = await fs.temp();
+    const remotePath = await this.fs.temp();
 
     try {
-      await fs.writeFile(remotePath, `${username}:${password}`);
+      await this.fs.writeFile(remotePath, `${username}:${password}`);
 
       await this.$`chpasswd < "${remotePath}"`;
     } finally {
-      await fs.rm(remotePath);
+      await this.fs.rm(remotePath);
     }
   }
 }

@@ -9,12 +9,12 @@ describe('OS Module', () => {
 
   beforeAll(() => {
     nodevisor = new Nodevisor();
-    os = new OS(nodevisor);
+    os = new OS({ nodevisor });
   });
 
   it('should execute uptime command', async () => {
     const result = await os.uptime();
-    const nodejsUptime = await os.uptime();
+    const nodejsUptime = await uptime();
 
     const diff = Math.abs(result - nodejsUptime);
 

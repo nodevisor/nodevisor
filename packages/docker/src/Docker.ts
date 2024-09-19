@@ -1,15 +1,16 @@
-import { Service, type Nodevisor } from '@nodevisor/core';
-import { Groups } from '@nodevisor/groups';
-import { Packages } from '@nodevisor/packages';
-import { Services } from '@nodevisor/services';
-import { FS } from '@nodevisor/fs';
+import { Service } from '@nodevisor/core';
+import groups from '@nodevisor/groups';
+import packages from '@nodevisor/packages';
+import services from '@nodevisor/services';
+import fs from '@nodevisor/fs';
 
 export default class Docker extends Service {
-  constructor(nodevisor: Nodevisor) {
-    super(nodevisor, {
-      name: 'docker',
-    });
-  }
+  readonly name = 'docker';
+
+  readonly packages = this.module(packages);
+  readonly services = this.module(services);
+  readonly fs = this.module(fs);
+  readonly groups = this.module(groups);
 
   // package version methods
   async getVersion() {
@@ -28,11 +29,8 @@ export default class Docker extends Service {
   }
 
   async installPackage() {
-    const packages = this.getModule(Packages);
-    const fs = this.getModule(FS);
-
     // install docker
-    await packages.install([
+    await this.packages.install([
       'apt-transport-https',
       'ca-certificates',
       'software-properties-common',
@@ -40,7 +38,7 @@ export default class Docker extends Service {
       'curl',
     ]);
 
-    await fs.mkdir(`/etc/apt/keyrings`);
+    await this.fs.mkdir(`/etc/apt/keyrings`);
 
     await this
       .$`curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc`;
@@ -51,10 +49,10 @@ export default class Docker extends Service {
       .$`echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null`;
 
     // update the package database with the Docker packages from the newly added repo
-    await packages.update();
+    await this.packages.update();
 
     // install docker
-    await packages.install(['docker-ce', 'docker-ce-cli', 'containerd.io']);
+    await this.packages.install(['docker-ce', 'docker-ce-cli', 'containerd.io']);
 
     await this.start();
   }
@@ -65,34 +63,30 @@ export default class Docker extends Service {
 
   // service methods
   async isRunning() {
-    const services = this.getModule(Services);
-    const status = await services.status('docker');
+    const status = await this.services.status('docker');
 
     return !!status?.includes('active (running)');
   }
 
   async start() {
-    const services = this.getModule(Services);
-    await services.start('docker');
+    await this.services.start('docker');
     return this;
   }
 
   async stop() {
-    const services = this.getModule(Services);
-    await services.stop('docker');
+    await this.services.stop('docker');
     return this;
   }
 
   // user methods
   // allow username to run docker commands without sudo
   async allowUser(username: string) {
-    const groups = this.getModule(Groups);
-    const isUserInGroup = await groups.hasUser(username, 'docker');
+    const isUserInGroup = await this.groups.hasUser(username, 'docker');
     if (isUserInGroup) {
       this.log(`User ${username} is already in docker group`);
       return;
     }
 
-    await groups.addUser(username, 'docker');
+    await this.groups.addUser(username, 'docker');
   }
 }

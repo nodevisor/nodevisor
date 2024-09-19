@@ -4,11 +4,7 @@ import Arch from './constants/Arch';
 const archs = Object.values(Arch) as string[];
 
 export default class OS extends Module {
-  constructor(nodevisor: Nodevisor) {
-    super(nodevisor, {
-      name: 'os',
-    });
-  }
+  readonly name = 'os';
 
   async reboot() {
     switch (await this.platform()) {

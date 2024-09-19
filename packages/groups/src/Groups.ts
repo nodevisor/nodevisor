@@ -1,11 +1,7 @@
-import { Module, type Nodevisor } from '@nodevisor/core';
+import { Module } from '@nodevisor/core';
 
 export default class Groups extends Module {
-  constructor(nodevisor: Nodevisor) {
-    super(nodevisor, {
-      name: 'groups',
-    });
-  }
+  readonly name = 'groups';
 
   async exists(name: string) {
     return this.$`getent group ${name}`.toBoolean(true);

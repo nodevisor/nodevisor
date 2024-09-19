@@ -1,4 +1,6 @@
-import Package from './Package';
+import Package, { type PackageConfig } from './Package';
+
+export type ServiceConfig = PackageConfig;
 
 export default abstract class Service extends Package {
   abstract start(): Promise<this>;

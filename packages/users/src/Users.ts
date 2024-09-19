@@ -1,11 +1,7 @@
-import { Module, type Nodevisor } from '@nodevisor/core';
+import { Module } from '@nodevisor/core';
 
 export default class Users extends Module {
-  constructor(nodevisor: Nodevisor) {
-    super(nodevisor, {
-      name: 'users',
-    });
-  }
+  readonly name = 'users';
 
   async whoami() {
     return this.$`whoami`;

@@ -10,8 +10,9 @@ describe('Nodevisor', () => {
 
   it('should create an SSHConnection if username is provided', () => {
     const nodevisor = new Nodevisor({
-      username: 'testuser',
+      username: 'runner',
     });
+
     expect(nodevisor.connection).toBeInstanceOf(SSHConnection);
   });
 
@@ -23,15 +24,15 @@ describe('Nodevisor', () => {
   });
 
   it('should generate a command as another user with su', async () => {
-    const nodevisor = new Nodevisor({ runAs: { username: 'testuser', method: 'su' } });
+    const nodevisor = new Nodevisor().clone({ as: 'runner' });
 
     const cmd = await nodevisor.$`whoami`.setShellQuote().toString();
 
-    expect(cmd).toBe('su - testuser -c whoami');
+    expect(cmd).toBe('su - runner -c whoami');
   });
 
-  it('should generate a command as another user with su and escape correctly', async () => {
-    const nodevisor = new Nodevisor({ runAs: { username: 'testuser', method: 'runuser' } });
+  it('should generate a command as another user and escape correctly', async () => {
+    const nodevisor = new Nodevisor().as({ user: 'testuser', method: 'runuser' });
 
     const cmd = await nodevisor.$`printf "Hello, world!"`.setShellQuote().toString();
 
@@ -42,8 +43,18 @@ describe('Nodevisor', () => {
     expect(cmdPowerShell).toBe('runuser -l testuser -c \'printf "Hello, world!"\'');
   });
 
+  it('should be able to change user on the fly', async () => {
+    const nodevisor = new Nodevisor();
+
+    const nodevisorRunner = nodevisor.as('runner');
+
+    const cmd = await nodevisorRunner.$`whoami`.setShellQuote().toString();
+
+    expect(cmd).toBe('su - runner -c whoami');
+  });
+
   it('should generate a command as another user with su and escape correctly', async () => {
-    const nodevisor = new Nodevisor({ runAs: { username: 'testuser', method: 'runuser' } });
+    const nodevisor = new Nodevisor().as({ user: 'testuser', method: 'runuser' });
 
     const cmd = await nodevisor.$`printf "Hello, world!"`.setShellQuote().toBoolean().toString();
 

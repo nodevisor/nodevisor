@@ -1,9 +1,9 @@
-import CommandBuilderBase from './CommandBuilderBase';
+import CommandBuilder from './CommandBuilder';
 
 export default class CommandBuilderTransform<ReturnValue> implements PromiseLike<ReturnValue> {
   private commandBuilder: PromiseLike<string>;
 
-  constructor(commandBuilder: CommandBuilderBase) {
+  constructor(commandBuilder: CommandBuilder) {
     this.commandBuilder = commandBuilder;
   }
 

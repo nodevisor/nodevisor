@@ -1,11 +1,7 @@
-import { Module, raw, type Nodevisor } from '@nodevisor/core';
+import { Module, raw } from '@nodevisor/core';
 
 export default class Env extends Module {
-  constructor(nodevisor: Nodevisor) {
-    super(nodevisor, {
-      name: 'env',
-    });
-  }
+  readonly name = 'env';
 
   async get(name: string) {
     return this.$`echo $${raw(name)}`;
@@ -25,16 +21,8 @@ export default class Env extends Module {
   }
 
   async load(path: string) {
-    const { $, execEnv } = connection;
-
-    if (!connection.isOriginal()) {
-      const absPath = await fs.abs(connection, path);
-      execEnv.addFile(absPath);
-      return;
-    }
-
-    await $`set -a`;
-    await $`source ${path}`;
-    await $`set +a`;
+    await this.$`set -a`;
+    await this.$`source ${path}`;
+    await this.$`set +a`;
   }
 }

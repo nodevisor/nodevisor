@@ -1,13 +1,11 @@
-import { Package, type Nodevisor } from '@nodevisor/core';
-import { Packages } from '@nodevisor/packages';
-import { FS } from '@nodevisor/fs';
+import { Package } from '@nodevisor/core';
+import packages from '@nodevisor/packages';
+import fs from '@nodevisor/fs';
 
 export default class AWS extends Package {
-  constructor(nodevisor: Nodevisor) {
-    super(nodevisor, {
-      name: 'aws',
-    });
-  }
+  readonly name = 'aws';
+  readonly packages = this.module(packages);
+  readonly fs = this.module(fs);
 
   async getVersion() {
     return this.$`aws --version`;
@@ -30,23 +28,20 @@ export default class AWS extends Package {
   }
 
   async installPackage() {
-    const packages = this.getModule(Packages);
-    const fs = this.getModule(FS);
+    await this.packages.install(['unzip', 'curl']);
 
-    await packages.install(['unzip', 'curl']);
-
-    const tempFile = await fs.temp();
+    const tempFile = await this.fs.temp();
 
     await this
       .$`curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o ${tempFile} --silent`;
 
-    const tempDir = await fs.tempDir();
+    const tempDir = await this.fs.tempDir();
 
     await this.$`unzip ${tempFile} -d ${tempDir}`;
     await this.$`${tempDir}/aws/install`;
 
-    await fs.rm(tempFile);
-    await fs.rmdir(tempDir, { recursive: true });
+    await this.fs.rm(tempFile);
+    await this.fs.rmdir(tempDir, { recursive: true });
   }
 
   async uninstallPackage() {
