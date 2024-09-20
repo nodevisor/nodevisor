@@ -20,17 +20,17 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/auth": "*",
-    "@nodevisor/aws": "*",
-    "@nodevisor/core": "*",
-    "@nodevisor/docker": "*",
-    "@nodevisor/endpoint": "*",
-    "@nodevisor/groups": "*",
-    "@nodevisor/fs": "*",
-    "@nodevisor/os": "*",
-    "@nodevisor/packages": "*",
-    "@nodevisor/services": "*",
-    "@nodevisor/users": "*"
+    "@nodevisor/auth": "^0.0.1",
+    "@nodevisor/aws": "^0.0.1",
+    "@nodevisor/core": "^0.0.1",
+    "@nodevisor/docker": "^0.0.1",
+    "@nodevisor/endpoint": "^0.0.1",
+    "@nodevisor/fs": "^0.0.1",
+    "@nodevisor/groups": "^0.0.1",
+    "@nodevisor/os": "^0.0.1",
+    "@nodevisor/packages": "^0.0.1",
+    "@nodevisor/services": "^0.0.1",
+    "@nodevisor/users": "^0.0.1"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

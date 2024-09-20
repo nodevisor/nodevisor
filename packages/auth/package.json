@@ -21,9 +21,9 @@
     "publish": "npm publish --access public"
   },
   "dependencies": {
-    "@nodevisor/core": "*",
-    "@nodevisor/fs": "*",
-    "@nodevisor/users": "*"
+    "@nodevisor/core": "^0.0.1",
+    "@nodevisor/fs": "^0.0.1",
+    "@nodevisor/users": "^0.0.1"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
