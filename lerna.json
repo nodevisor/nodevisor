@@ -1,8 +1,10 @@
 {
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
-  "version": "0.0.5",
-  "packages": [
-    "packages/*",
-    "apps/*"
-  ]
+  "version": "0.0.6",
+  "command": {
+    "publish": {
+      "registry": "https://registry.npmjs.org/"
+    }
+  },
+  "packages": ["packages/*", "apps/*"]
 }
