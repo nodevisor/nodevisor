@@ -4,6 +4,9 @@
   "version": "0.0.2",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "exports": {
     ".": {
       "import": "./dist/esm/index.js",
