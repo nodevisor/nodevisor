@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/auth",
   "description": "Module provides ability to authenticate users",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -24,9 +24,9 @@
     "publish": "npm publish --access public"
   },
   "dependencies": {
-    "@nodevisor/core": "^0.0.2",
-    "@nodevisor/fs": "^0.0.2",
-    "@nodevisor/users": "^0.0.2"
+    "@nodevisor/core": "^0.0.3",
+    "@nodevisor/fs": "^0.0.3",
+    "@nodevisor/users": "^0.0.3"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
