@@ -19,7 +19,7 @@
     "test:ubuntu": "docker run --rm -v $(pwd):/workspace -w /workspace ubuntu:latest /bin/bash -c 'apt-get update && apt-get install -y build-essential curl && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && apt-get install -y nodejs && npm install && npm test'",
     "test:centos": "docker run --rm --dns 8.8.8.8 --dns 8.8.4.4 -v $(pwd):/workspace -w /workspace centos:7 /bin/bash -c 'yum update -y && yum groupinstall -y \"Development Tools\" && yum install -y curl && curl -fsSL https://rpm.nodesource.com/setup_18.x | bash - && yum install -y nodejs && npm install && npm test'",
     "test:fedora": "docker run --rm -v $(pwd):/workspace -w /workspace fedora:latest /bin/bash -c 'dnf update -y && dnf groupinstall -y \"Development Tools\" && dnf install -y curl && curl -fsSL https://rpm.nodesource.com/setup_18.x | bash - && dnf install -y nodejs && npm install && npm test'",
-    "publish:force": "lerna publish from-git --force-publish --yes --no-private",
+    "publish:force": "lerna publish from-git --force-publish=* --yes --no-private",
     "version:patch": "lerna version patch --no-private --yes"
   },
   "dependencies": {},
