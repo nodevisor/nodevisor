@@ -5,6 +5,7 @@
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
+    "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "exports": {
@@ -21,7 +22,7 @@
     "build:cjs": "tsc -p tsconfig-cjs.json",
     "test": "jest --passWithNoTests",
     "valid": "tsc --noEmit",
-    "publish": "npm publish --access public"
+    "publish": "npm publish"
   },
   "dependencies": {
     "@nodevisor/auth": "^0.0.6",
@@ -42,5 +43,6 @@
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
     "typescript": "5.5.4"
-  }
+  },
+  "gitHead": "36b13f1c5639d5dc83b28c43fdefe590a4644294"
 }
