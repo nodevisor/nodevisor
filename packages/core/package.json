@@ -15,7 +15,8 @@
     "build:esm": "tsc -p tsconfig.json",
     "build:cjs": "tsc -p tsconfig-cjs.json",
     "test": "jest --passWithNoTests",
-    "valid": "tsc --noEmit"
+    "valid": "tsc --noEmit",
+    "publish": "npm publish --access public"
   },
   "dependencies": {
     "debug": "^4.3.7",
