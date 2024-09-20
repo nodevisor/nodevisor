@@ -1,4 +1,4 @@
-import { Module, type Nodevisor, Platform } from '@nodevisor/core';
+import { Module, Platform } from '@nodevisor/core';
 import Arch from './constants/Arch';
 
 const archs = Object.values(Arch) as string[];

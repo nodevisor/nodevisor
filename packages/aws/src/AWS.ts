@@ -1,11 +1,11 @@
 import { Package } from '@nodevisor/core';
-import packages from '@nodevisor/packages';
-import fs from '@nodevisor/fs';
+import Packages from '@nodevisor/packages';
+import FS from '@nodevisor/fs';
 
 export default class AWS extends Package {
   readonly name = 'aws';
-  readonly packages = this.module(packages);
-  readonly fs = this.module(fs);
+  readonly packages = this.module(Packages);
+  readonly fs = this.module(FS);
 
   async getVersion() {
     return this.$`aws --version`;

@@ -1,4 +1,2 @@
-import AWS from './AWS';
-
-export default new AWS();
-export { AWS };
+export { default } from './AWS';
+export * from './AWS';

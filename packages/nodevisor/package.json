@@ -23,6 +23,7 @@
     "@nodevisor/auth": "*",
     "@nodevisor/aws": "*",
     "@nodevisor/core": "*",
+    "@nodevisor/docker": "*",
     "@nodevisor/endpoint": "*",
     "@nodevisor/groups": "*",
     "@nodevisor/fs": "*",

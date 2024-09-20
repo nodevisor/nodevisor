@@ -49,7 +49,7 @@ npm install nodevisor
 
 ### Local Usage
 
-To run commands locally, simply use the $ function provided by Nodevisor. No additional configuration is required for local execution.
+To run commands locally, simply use the `$` function provided by Nodevisor. No additional configuration is required for local execution.
 
 ```ts
 import $ from 'nodevisor';
@@ -59,6 +59,8 @@ const result = await $`echo "Hello, World!"`;
 console.log(result); // "Hello, World!"
 ```
 
+_Explanation:_ This code snippet demonstrates how to run a local shell command using Nodevisor. The $ function allows you to execute shell commands within template literals and returns the output of the command.
+
 ### Remote Usage
 
 To run commands on a remote machine via SSH, you can create a new Nodevisor instance with remote connection options.
@@ -66,17 +68,21 @@ To run commands on a remote machine via SSH, you can create a new Nodevisor inst
 ```ts
 import $ from 'nodevisor';
 
+// Connect to the server as the 'runner' user
 const $con = $.connect({
   host: 'your-server-address',
   username: 'runner',
 });
 
+// Run a command on the server
 const result = await $con`echo "Hello, World!"`;
 console.log(result); // "Hello, World!"
 
 const username = await $con`whoami`;
 console.log(username); // runner
 ```
+
+_Explanation:_ This code shows how to connect to a remote server using SSH and execute commands. The $.connect() function is used to establish a connection to the server, and the returned $con function allows you to run commands remotely.
 
 ### Escape variables
 
@@ -89,6 +95,8 @@ const name = 'my-directory';
 await $`mkdir ${name}`;
 ```
 
+_Explanation:_ In this example, the ${name} variable is safely included in the shell command to create a new directory. Nodevisor ensures that any special characters in the variable are properly escaped, preventing potential security issues.
+
 More information about escaping variables can be found [here](https://nodevisor.com/docs/quotes).
 
 ### Command Line - Comming Soon
@@ -100,6 +108,8 @@ npm install -g nodevisor
 
 nodevisor --host your-server-address --username runner --command "echo 'Hello, World!'"
 ```
+
+_Explanation:_ This snippet shows how to install Nodevisor globally and run commands directly from the command line. This feature is still under development.
 
 ### YAML Configuration - Comming Soon
 
@@ -122,12 +132,85 @@ You can also use YAML to configure your Nodevisor instance.
         - git
 ```
 
+_Explanation:_ This YAML configuration defines a list of tasks to be executed on a set of servers. It's a simple and structured way to manage server setups, but this feature is still in development.
+
+## Packages
+
+Nodevisor is trying to simplify non-unified commands across different operating systems. Therefore, we created unified packages for common tasks.
+
+- [Packages](./packages/packages/README.md) - Install or remove software packages
+- [OS](./packages/os/README.md) - Manage operating system settings and configurations
+- [FS](./packages/fs/README.md) - Perform file system operations such as copying, moving, and deleting files and directories
+
+- [Auth](./packages/auth/README.md) - Set or update user passwords.
+- [Users](./packages/users/README.md) - Manage system users (e.g., adding or removing users)
+- [Groups](./packages/groups/README.md) - Manage user groups
+
+- [AuthorizedKeys](./packages/authorized-keys/README.md) - Manage SSH authorized keys for users
+- [SSH](./packages/ssh/README.md)
+- [UFW](./packages/ufw/README.md) - Manage Uncomplicated Firewall (UFW) settings
+
+- [AWS](./packages/aws/README.md) - Interact with AWS services and manage cloud infrastructure
+- [Docker](./packages/docker/README.md) - Manage Docker containers and Swarm clusters
+
+### Using packages
+
+Nodevisor provides a straightforward API to interact with various system components. Here is a basic example demonstrating how to use the Packages and AuthorizedKeys packages:
+
+```ts
+import $, { AuthorizedKeys, Packages } from 'nodevisor';
+
+// Establish connection to the server as root
+const $con = $.connect({
+  host: 'server-address',
+  username: 'root',
+});
+
+// Install 'curl' and 'git' packages as root
+await $con(Packages).install(['curl', 'git']);
+
+// Create a new connection context as the 'runner' user
+const $runner = $con.as('runner');
+
+// Add a public SSH key to the 'runner' user's authorized keys
+await $runner(AuthorizedKeys).write(process.env.SSH_PUBLIC_KEY);
+```
+
+In the above example, the $ function is used to establish a connection to the server and execute commands in a unified way. The AuthorizedKeys package manages the authorized_keys file, while the Packages package handles package installations.
+
+#### Detailed usage example
+
+For more complex use cases, you can create and manage instances of specific packages directly:
+
+```ts
+import $, { AuthorizedKeys } from 'nodevisor';
+
+// Establish connection to the server as root
+const $con = $.connect({
+  host: 'server-address',
+  username: 'root',
+});
+
+// Create an instance of the Packages class and install packages
+const packages = new Packages($con);
+await packages.write(process.env.SSH_PUBLIC_KEY);
+
+// Switch to the 'runner' user context
+const $runner = $con.as('runner');
+
+// Create an instance of the AuthorizedKeys class for the 'runner' user
+const authorizedKeys = new AuthorizedKeys($runner);
+
+// Write the public SSH key to the authorized_keys file
+await authorizedKeys.write(process.env.SSH_PUBLIC_KEY);
+```
+
 ## Guides
 
 ### Initialize remote VPS
 
 ```ts
-import $, { authorizedKeys, packages, ufw, users, ssh } from 'nodevisor';
+import $, { AuthorizedKeys, Packages, UFW, Users, SSH } from 'nodevisor';
 
 const USER_USERNAME = 'runner';
 const SSH_PUBLIC_KEY = 'your-public-key';
@@ -140,31 +223,32 @@ async function initialize(host: string) {
     username: 'root',
   });
 
-  // update and upgrade all system packages
-  await $con(packages).updateAndUpgrade();
+  // Update and upgrade all system packages
+  await $con(Packages).updateAndUpgrade();
 
-  // install ufw firewall
-  await $con(ufw).install({
+  // Install UFW firewall and configure basic rules
+  await $con(UFW).install({
     allow: [services.ssh, services.web, services.webSecure],
     enable: true,
   });
 
-  // assign local public key to the server
-  await $con(authorizedKeys).write(SSH_PUBLIC_KEY);
+  // Assign local public key to the server
+  await $con(AuthorizedKeys).write(SSH_PUBLIC_KEY);
 
-  // create user named runner
-  await $con(users).add(USER_USERNAME);
+  // Create a new user named 'runner'
+  await $con(Users).add(USER_USERNAME);
 
-  // switch to user named runner
+  // Switch to the 'runner' user context
   const $runner = $con.as(USER_USERNAME);
 
-  // allow user to login with public key
-  await $runner(authorizedKeys).write(SSH_PUBLIC_KEY);
+  // Allow the 'runner' user to log in with a public key
+  await $runner(AuthorizedKeys).write(SSH_PUBLIC_KEY);
 
-  // disable login with password
-  await $con(ssh).disablePasswordAuthentication();
+  // Disable password authentication for SSH
+  await $con(SSH).disablePasswordAuthentication();
 }
 
+// Initialize all specified hosts concurrently
 const results = await Promise.all(hosts.map((host) => initialize(host)));
 ```
 

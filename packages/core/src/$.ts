@@ -7,9 +7,15 @@ import isTemplateStringsArray from './utils/isTemplateStringsArray';
 
 type NodevisorConfig = ConstructorParameters<typeof Nodevisor>[0];
 
+export type Newable<T> = { new (...args: any[]): T };
+
 interface NodevisorProxyType extends Function {
   (input: TemplateStringsArray, ...values: any[]): CommandBuilder;
-  <TModule extends Module>(input: TModule): TModule;
+  // <TModule extends Module>(input: TModule): TModule;
+  <TClass extends typeof Module>(
+    input: TClass,
+    config?: ConstructorParameters<TClass>[0],
+  ): InstanceType<TClass>;
   (input: CommandBuilderOptions): ReturnType<typeof nodevisorProxy>;
   connect(config: NodevisorConfig): ReturnType<typeof nodevisorProxy>;
   as: (user?: As | string) => ReturnType<typeof nodevisorProxy>;
@@ -19,12 +25,18 @@ interface NodevisorProxyType extends Function {
 function nodevisorProxy(nodevisor: Nodevisor = Nodevisor.local) {
   // template strings
   function executor(input: TemplateStringsArray, ...values: any[]): CommandBuilder;
-  // clone module
-  function executor<TModule extends Module>(input: TModule): TModule;
   // clone nodevisor
   function executor(input: CommandBuilderOptions): ReturnType<typeof nodevisorProxy>;
-  function executor<TModule extends Module>(
-    input: TemplateStringsArray | TModule | CommandBuilderOptions,
+  // clone module - deprecated because can be confusing related to whitch connection is used
+  function executor<TModule extends Module>(input: TModule): TModule;
+  // clone module class
+  function executor<TClass extends typeof Module>(
+    input: TClass,
+    config?: ConstructorParameters<TClass>[0],
+  ): InstanceType<TClass>;
+
+  function executor<TClass extends typeof Module, TModule extends Module>(
+    input: TemplateStringsArray | CommandBuilderOptions | TClass | TModule,
     ...values: any[]
   ) {
     if (isTemplateStringsArray(input)) {
@@ -37,6 +49,13 @@ function nodevisorProxy(nodevisor: Nodevisor = Nodevisor.local) {
 
     if (typeof input === 'object') {
       return nodevisorProxy(nodevisor.clone(input));
+    }
+
+    if (typeof input === 'function') {
+      const [config] = values;
+
+      const ModuleClass = input;
+      return new ModuleClass({ ...config, nodevisor });
     }
 
     throw new Error('Invalid input');

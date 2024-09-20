@@ -9,7 +9,7 @@ export type ModuleConfig = {
 type AbstractConstructorHelper<T> = (new (...args: any) => { [x: string]: any }) & T;
 type AbstractContructorParameters<T> = ConstructorParameters<AbstractConstructorHelper<T>>;
 
-export default abstract class Module {
+export default class Module {
   protected nodevisor: Nodevisor;
   protected log: Debugger;
   readonly name: string = 'moudle';

@@ -1,10 +1,11 @@
 import { Module } from '@nodevisor/core';
-// import { Users } from '@nodevisor/users';
-import fs from '@nodevisor/fs';
+// import Users from '@nodevisor/users';
+import FS from '@nodevisor/fs';
 
 export default class Auth extends Module {
   readonly name = 'auth';
-  readonly fs = this.module(fs);
+  readonly fs = this.module(FS);
+  // readonly users = this.module(Users);
 
   async logout() {
     return this.$`logout`;
@@ -13,14 +14,13 @@ export default class Auth extends Module {
   async login(username: string) {
     throw new Error('Not implemented');
     /*
-    const users = this.getModule(Users);
-    if ((await users.whoami()) === username) {
+    if ((await this.users.whoami()) === username) {
       return;
     }
 
     await this.$`su - ${username}`;
 
-    if ((await users.whoami()) !== username) {
+    if ((await this.users.whoami()) !== username) {
       throw new Error('Failed to login');
     }
       */

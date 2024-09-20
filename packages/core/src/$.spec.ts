@@ -1,25 +1,25 @@
 import $ from './$';
-import Module, { ModuleConfig } from './Module';
+import Module, { type ModuleConfig } from './Module';
 
 class MyModule extends Module {
   readonly name = 'MyModule';
+  private value: string;
 
-  constructor(config: ModuleConfig & { lala: string }) {
-    super(config);
+  constructor(
+    config: ModuleConfig & {
+      value: string;
+    },
+  ) {
+    const { value, ...rest } = config;
+    super(rest);
+
+    this.value = value;
   }
 
   test() {
-    return this.$`echo "Hello, world!"`;
+    return this.$`echo ${this.value}`;
   }
 }
-
-const myModule = new MyModule({
-  lala: 'lala',
-});
-
-myModule.clone({
-  lala: 'lala2',
-});
 
 describe('Shell execution', () => {
   it('should execute a command', async () => {
@@ -32,16 +32,24 @@ describe('Shell execution', () => {
     const resultSimple = await $`echo "Hello, world!"`;
     expect(resultSimple).toBe('Hello, world!');
 
-    const testResult = await $(myModule).test();
-    expect(testResult).toBe('Hello, world!');
+    const testResult = await $(MyModule, { value: 'Hello, world! Test' }).test();
+    expect(testResult).toBe('Hello, world! Test');
 
     const resultWithAs = $({ as: 'runner' })`echo 'omg'`.setShellQuote().toString();
     expect(resultWithAs).toBe("su - runner -c $'echo \\'omg\\''");
 
-    $.connect({
+    const $con = $.connect({
       host: '127.0.0.1',
       username: 'runner',
       password: 'test',
     });
+
+    expect($con).toBeDefined();
+
+    const $runner = $({ as: 'runner' });
+
+    const myModule = $runner(MyModule, { value: 'Hello, world! Runner' });
+    const cmd = myModule.test().setShellQuote().toString();
+    expect(cmd).toBe("su - runner -c $'echo $\\'Hello, world! Runner\\''");
   });
 });

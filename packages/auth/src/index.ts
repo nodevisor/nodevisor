@@ -1,4 +1,2 @@
-import Auth from './Auth';
-
-export default new Auth();
-export { Auth };
+export { default } from './Auth';
+export * from './Auth';

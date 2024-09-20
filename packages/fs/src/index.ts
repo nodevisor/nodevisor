@@ -1,4 +1,2 @@
-import FS from './FS';
-
-export default new FS();
-export { FS };
+export { default } from './FS';
+export * from './FS';

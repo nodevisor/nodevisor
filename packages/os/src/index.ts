@@ -1,6 +1,2 @@
-import OS from './OS';
-
-export * from './constants';
-export { OS };
-
-export default new OS();
+export { default } from './OS';
+export * from './OS';

@@ -1,4 +1,2 @@
-import Users from './Users';
-
-export default new Users();
-export { Users };
+export { default } from './Users';
+export * from './Users';

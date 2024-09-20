@@ -1,10 +1,10 @@
 import { Module, Platform } from '@nodevisor/core';
-import os from '@nodevisor/os';
+import OS from '@nodevisor/os';
 import PackageManager from './constants/PackageManager';
 
 export default class Packages extends Module {
   readonly name = 'packages';
-  readonly os = this.module(os);
+  readonly os = this.module(OS);
 
   async packageManager() {
     return this.cached('packageManager', async () => {
