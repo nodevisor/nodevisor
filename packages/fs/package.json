@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/fs",
   "description": "Module provides file system-related utility methods and properties",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -24,8 +24,8 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/core": "^0.0.7",
-    "@nodevisor/os": "^0.0.7"
+    "@nodevisor/core": "^0.0.9",
+    "@nodevisor/os": "^0.0.9"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
