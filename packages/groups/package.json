@@ -21,8 +21,7 @@
     "build:esm": "tsc -p tsconfig.json",
     "build:cjs": "tsc -p tsconfig-cjs.json",
     "test": "jest --passWithNoTests",
-    "valid": "tsc --noEmit",
-    "publish": "npm publish"
+    "valid": "tsc --noEmit"
   },
   "dependencies": {
     "@nodevisor/core": "^0.0.6"
@@ -34,5 +33,5 @@
     "ts-jest": "^29.2.5",
     "typescript": "5.5.4"
   },
-  "gitHead": "36b13f1c5639d5dc83b28c43fdefe590a4644294"
+  "gitHead": "9d54b26867ef1fa66a832f040bf12101e0c9d62a"
 }
