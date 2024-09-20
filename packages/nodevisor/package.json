@@ -1,7 +1,7 @@
 {
   "name": "nodevisor",
   "description": "Server Management and Scalable Application Deployment",
-  "version": "0.0.10",
+  "version": "0.0.13",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -24,17 +24,17 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/auth": "^0.0.10",
-    "@nodevisor/aws": "^0.0.10",
-    "@nodevisor/core": "^0.0.10",
-    "@nodevisor/docker": "^0.0.10",
-    "@nodevisor/endpoint": "^0.0.10",
-    "@nodevisor/fs": "^0.0.10",
-    "@nodevisor/groups": "^0.0.10",
-    "@nodevisor/os": "^0.0.10",
-    "@nodevisor/packages": "^0.0.10",
-    "@nodevisor/services": "^0.0.10",
-    "@nodevisor/users": "^0.0.10"
+    "@nodevisor/auth": "^0.0.13",
+    "@nodevisor/aws": "^0.0.13",
+    "@nodevisor/core": "^0.0.13",
+    "@nodevisor/docker": "^0.0.13",
+    "@nodevisor/endpoint": "^0.0.13",
+    "@nodevisor/fs": "^0.0.13",
+    "@nodevisor/groups": "^0.0.13",
+    "@nodevisor/os": "^0.0.13",
+    "@nodevisor/packages": "^0.0.13",
+    "@nodevisor/services": "^0.0.13",
+    "@nodevisor/users": "^0.0.13"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
