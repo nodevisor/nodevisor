@@ -1,18 +1,14 @@
-import Module, { type ModuleConfig } from './Module';
+import Module, { type NodevisorArg, type ModuleConfig } from './Module';
 
 export type PackageConfig = ModuleConfig & {
   dependencies?: Package[];
 };
 
-export default abstract class Package extends Module {
-  protected dependencies: Package[];
-
-  constructor(config: PackageConfig = {}) {
-    const { dependencies = [], ...rest } = config;
-
-    super(rest);
-
-    this.dependencies = dependencies;
+export default abstract class Package extends Module<{
+  dependencies?: Package[];
+}> {
+  get dependencies() {
+    return this.config.dependencies || [];
   }
 
   protected async installDependencies() {

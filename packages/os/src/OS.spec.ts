@@ -9,7 +9,7 @@ describe('OS Module', () => {
 
   beforeAll(() => {
     nodevisor = new Nodevisor();
-    os = new OS({ nodevisor });
+    os = new OS(nodevisor);
   });
 
   it('should execute uptime command', async () => {

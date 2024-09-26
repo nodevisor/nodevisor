@@ -1,23 +1,13 @@
 import $ from './$';
-import Module, { type ModuleConfig } from './Module';
+import Module from './Module';
 
-class MyModule extends Module {
+class MyModule extends Module<{
+  value: string;
+}> {
   readonly name = 'MyModule';
-  private value: string;
-
-  constructor(
-    config: ModuleConfig & {
-      value: string;
-    },
-  ) {
-    const { value, ...rest } = config;
-    super(rest);
-
-    this.value = value;
-  }
 
   test() {
-    return this.$`echo ${this.value}`;
+    return this.$`echo ${this.config.value}`;
   }
 }
 
@@ -51,5 +41,11 @@ describe('Shell execution', () => {
     const myModule = $runner(MyModule, { value: 'Hello, world! Runner' });
     const cmd = myModule.test().setShellQuote().toString();
     expect(cmd).toBe("su - runner -c $'echo $\\'Hello, world! Runner\\''");
+
+    const myModuleRunner = new MyModule($runner);
+    myModuleRunner.test();
+    // myModuleRunner.test2();
+
+    $runner(myModuleRunner).test();
   });
 });

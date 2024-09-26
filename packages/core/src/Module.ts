@@ -1,28 +1,27 @@
 import { type Debugger } from 'debug';
 import log from './utils/log';
 import Nodevisor from './Nodevisor';
+import type NodevisorProxy from './@types/NodevisorProxy';
 
-export type ModuleConfig = {
-  nodevisor?: Nodevisor;
-};
+export type NodevisorArg = Nodevisor | NodevisorProxy;
+export type ModuleConfig = {};
 
 type AbstractConstructorHelper<T> = (new (...args: any) => { [x: string]: any }) & T;
 type AbstractContructorParameters<T> = ConstructorParameters<AbstractConstructorHelper<T>>;
 
-export default class Module {
+export default class Module<TConfig extends ModuleConfig = ModuleConfig> {
   protected nodevisor: Nodevisor;
+  protected config: TConfig;
+
   protected log: Debugger;
-  readonly name: string = 'moudle';
+  readonly name: string = 'module';
 
-  protected config: ModuleConfig;
-
-  constructor(config: ModuleConfig = {}) {
-    const { nodevisor = Nodevisor.local } = config;
-
-    this.nodevisor = nodevisor;
+  constructor(
+    nodevisor: Nodevisor | NodevisorProxy = Nodevisor.local,
+    config: TConfig = {} as TConfig,
+  ) {
+    this.nodevisor = nodevisor instanceof Nodevisor ? nodevisor : nodevisor.nodevisor;
     this.config = config;
-
-    this.name = 'module';
 
     this.log = log.extend(this.name);
   }
@@ -39,48 +38,18 @@ export default class Module {
     return this.nodevisor.connection.cached(key, fn);
   }
 
-  clone<TClass extends this>(config: Partial<AbstractContructorParameters<TClass>[0]> = {}): this {
-    const { nodevisor = this.nodevisor, ...moduleConfig } = {
+  clone<TClass extends this>(config: Partial<AbstractContructorParameters<TClass>[1]> = {}): this {
+    const ModuleClass = this.constructor as {
+      new (nodevisor: NodevisorArg, config: AbstractContructorParameters<TClass>[1]): TClass;
+    };
+
+    return new ModuleClass(this.nodevisor, {
       ...this.config,
       ...config,
-    };
-
-    const ModuleClass = this.constructor as {
-      new (config: AbstractContructorParameters<TClass>[0]): TClass;
-    };
-
-    return new ModuleClass({
-      nodevisor,
-      ...moduleConfig,
     });
   }
 
   $(strings: TemplateStringsArray, ...values: any[]) {
     return this.nodevisor.$(strings, ...values);
-  }
-
-  // create a new module instance
-  module<TClass extends typeof Module>(
-    moduleClass: TClass,
-    config?: ConstructorParameters<TClass>[0],
-  ): InstanceType<TClass>;
-  // create a new module instance from an existing module
-  module<TModule extends Module>(
-    module: TModule,
-    config?: Partial<AbstractContructorParameters<TModule>[0]>,
-  ): TModule;
-  module(module: any, config?: any) {
-    if (module instanceof Module) {
-      return module.clone(config);
-    }
-
-    const ModuleClass = module as {
-      new (config: ModuleConfig): Module;
-    };
-
-    return new ModuleClass({
-      nodevisor: this.nodevisor,
-      ...config,
-    });
   }
 }

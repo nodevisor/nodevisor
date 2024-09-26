@@ -7,10 +7,10 @@ import FS from '@nodevisor/fs';
 export default class Docker extends Service {
   readonly name = 'docker';
 
-  readonly packages = this.module(Packages);
-  readonly services = this.module(Services);
-  readonly fs = this.module(FS);
-  readonly groups = this.module(Groups);
+  readonly packages = new Packages(this.nodevisor);
+  readonly services = new Services(this.nodevisor);
+  readonly fs = new FS(this.nodevisor);
+  readonly groups = new Groups(this.nodevisor);
 
   // package version methods
   async getVersion() {

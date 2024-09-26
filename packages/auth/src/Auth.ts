@@ -4,8 +4,8 @@ import FS from '@nodevisor/fs';
 
 export default class Auth extends Module {
   readonly name = 'auth';
-  readonly fs = this.module(FS);
-  // readonly users = this.module(Users);
+  readonly fs = new FS(this.nodevisor);
+  // readonly users = new Users(this.nodevisor);
 
   async logout() {
     return this.$`logout`;

@@ -2,7 +2,7 @@
   <img alt="Nodevisor Logo" width="150px" src="https://github.com/nodevisor/logo/raw/main/nodevisor.png">
 </picture>
 
-# Nodevisor
+# Nodevisor - Infrastructure as code
 
 Easily manage servers and deploy applications, all under your control.
 Nodevisor **unifies** scripts across different platforms, helping you avoid common problems when managing servers and scaling apps.
@@ -138,9 +138,9 @@ _Explanation:_ This YAML configuration defines a list of tasks to be executed on
 
 Nodevisor is trying to simplify non-unified commands across different operating systems. Therefore, we created unified packages for common tasks.
 
-- [Packages](./packages/packages/README.md) - Install or remove software packages
 - [OS](./packages/os/README.md) - Manage operating system settings and configurations
 - [FS](./packages/fs/README.md) - Perform file system operations such as copying, moving, and deleting files and directories
+- [Packages](./packages/packages/README.md) - Install or remove software packages
 
 - [Auth](./packages/auth/README.md) - Set or update user passwords.
 - [Users](./packages/users/README.md) - Manage system users (e.g., adding or removing users)
@@ -167,43 +167,24 @@ const $con = $.connect({
 });
 
 // Install 'curl' and 'git' packages as root
+const packages = new Packages($con);
+await packages.install(['curl', 'git']);
+
+// or using the shorthand
 await $con(Packages).install(['curl', 'git']);
 
 // Create a new connection context as the 'runner' user
 const $runner = $con.as('runner');
 
 // Add a public SSH key to the 'runner' user's authorized keys
+const authorizedKeys = new AuthorizedKeys($runner);
+await authorizedKeys.write(process.env.SSH_PUBLIC_KEY);
+
+// or using the shorthand
 await $runner(AuthorizedKeys).write(process.env.SSH_PUBLIC_KEY);
 ```
 
 In the above example, the $ function is used to establish a connection to the server and execute commands in a unified way. The AuthorizedKeys package manages the authorized_keys file, while the Packages package handles package installations.
-
-#### Detailed usage example
-
-For more complex use cases, you can create and manage instances of specific packages directly:
-
-```ts
-import $, { AuthorizedKeys } from 'nodevisor';
-
-// Establish connection to the server as root
-const $con = $.connect({
-  host: 'server-address',
-  username: 'root',
-});
-
-// Create an instance of the Packages class and install packages
-const packages = new Packages($con);
-await packages.write(process.env.SSH_PUBLIC_KEY);
-
-// Switch to the 'runner' user context
-const $runner = $con.as('runner');
-
-// Create an instance of the AuthorizedKeys class for the 'runner' user
-const authorizedKeys = new AuthorizedKeys($runner);
-
-// Write the public SSH key to the authorized_keys file
-await authorizedKeys.write(process.env.SSH_PUBLIC_KEY);
-```
 
 ## Guides
 

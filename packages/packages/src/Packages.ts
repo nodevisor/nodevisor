@@ -4,7 +4,7 @@ import PackageManager from './constants/PackageManager';
 
 export default class Packages extends Module {
   readonly name = 'packages';
-  readonly os = this.module(OS);
+  readonly os = new OS(this.nodevisor);
 
   async packageManager() {
     return this.cached('packageManager', async () => {

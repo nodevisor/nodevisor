@@ -3,7 +3,7 @@ import Docker from './Docker';
 
 export default class DockerSwarm extends Service {
   readonly name = 'docker-swarm';
-  readonly docker = this.module(Docker);
+  readonly docker = new Docker(this.nodevisor);
 
   // package
 

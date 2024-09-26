@@ -4,8 +4,9 @@ import FS from '@nodevisor/fs';
 
 export default class AWS extends Package {
   readonly name = 'aws';
-  readonly packages = this.module(Packages);
-  readonly fs = this.module(FS);
+
+  readonly packages = new Packages(this.nodevisor);
+  readonly fs = new FS(this.nodevisor);
 
   async getVersion() {
     return this.$`aws --version`;
