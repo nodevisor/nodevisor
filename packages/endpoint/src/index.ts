@@ -1,3 +1,3 @@
 export * from './@types';
 export * from './constants';
-export * from './endpoints';
+export * as endpoints from './endpoints';

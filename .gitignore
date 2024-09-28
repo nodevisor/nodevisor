@@ -1,6 +1,8 @@
 node_modules/
+.nodevisor/
 .next/
 dist/
 .DS_Store
 lerna-debug.log
 .env
+my/

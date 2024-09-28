@@ -93,6 +93,7 @@ export default class OS extends Module {
           true,
         );
       default:
+        // can be replaced with `which ${command}`.toBoolean(true)
         return await this.$`command -v ${command}`.toBoolean(true);
     }
   }

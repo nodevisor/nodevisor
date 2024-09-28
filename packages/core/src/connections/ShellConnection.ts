@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { platform } from 'node:os';
 import shell from 'shelljs';
 import baseLog from '../utils/log';
 import Connection, {
@@ -14,16 +15,22 @@ const logExec = log.extend('exec');
 const logResponse = log.extend('response');
 const logError = log.extend('error');
 
+const isWindows = platform() === 'win32';
+
 async function exec(cmd: string) {
   return new Promise<string>((resolve, reject) => {
-    shell.exec(cmd, { silent: true }, (code: number, stdout: string, stderr: string) => {
-      if (code !== 0) {
-        reject(new Error(stderr));
-        return;
-      }
+    shell.exec(
+      cmd,
+      { silent: true, shell: isWindows ? undefined : '/bin/bash' },
+      (code: number, stdout: string, stderr: string) => {
+        if (code !== 0) {
+          reject(new Error(stderr));
+          return;
+        }
 
-      resolve(stdout);
-    });
+        resolve(stdout);
+      },
+    );
   });
 }
 

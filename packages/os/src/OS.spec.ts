@@ -33,6 +33,7 @@ describe('OS Module', () => {
 
     const archMap: Record<string, Arch> = {
       x86_64: Arch.X64,
+      aarch64: Arch.ARM64,
     };
 
     const converted = archMap[result] || result;

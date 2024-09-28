@@ -70,6 +70,9 @@ export default class Packages extends Module {
       return;
     }
 
+    // update package list before installing, to avoid errors
+    await this.update();
+
     switch (await this.packageManager()) {
       case PackageManager.BREW:
         await this.$`brew install ${notInstalled}`;
@@ -123,8 +126,17 @@ export default class Packages extends Module {
         const yumLines = await this.$`yum list installed ${name}`.noThrow().toLines();
         return yumLines.some((line) => line.includes(name));
       case PackageManager.APT:
+        /*
+        // we can use dpkg to check if the package is installed
+        const aptLines = await this.$`dpkg -s ${name} | grep Status`.toLines();
+        // filter out lines that contain "install ok installed"
+        const aptLinesFiltered = aptLines.filter((line) => line.includes('install ok installed'));
+        return !!aptLinesFiltered.length;
+        */
         const aptLines = await this.$`apt-cache policy ${name} | grep Installed`.toLines();
-        return !!aptLines.length;
+        // filter out lines that contain "Installed: (none)"
+        const aptLinesFiltered = aptLines.filter((line) => !line.includes('Installed: (none)'));
+        return !!aptLinesFiltered.length;
     }
   }
 

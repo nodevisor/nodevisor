@@ -1,3 +1,4 @@
+import { platform } from 'os';
 import CommandBuilder from './CommandBuilder';
 import ShellConnection from '../connections/ShellConnection';
 
@@ -14,5 +15,15 @@ describe('CommandBuilder', () => {
     const commandBuilder = new ExtendedCommandBuilder(connection);
 
     expect(commandBuilder).toBeInstanceOf(ExtendedCommandBuilder);
+  });
+
+  it('should detect same platform', async () => {
+    const connection = new ShellConnection();
+
+    const commandBuilder = new CommandBuilder(connection);
+
+    const detectedPlatform = await commandBuilder.platform();
+
+    expect(detectedPlatform).toBe(platform());
   });
 });

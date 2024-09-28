@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["windows-2019", "macos-12", "ubuntu-latest"]
+        os: ['windows-2019', 'macos-12', 'ubuntu-20.04']
         node-version: [20.x]
 
     runs-on: ${{ matrix.os }}
@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["debian:bullseye", "ubuntu:focal", "fedora:39"]
+        os: ['debian:bullseye', 'ubuntu:focal', 'fedora:39']
         node-version: [18.x]
 
     runs-on: ubuntu-latest
@@ -51,37 +51,37 @@ jobs:
       - name: Set up Docker container
         shell: bash
         run: |
-            docker run -v ${{ github.workspace }}:/workspace \
-                      -w /workspace \
-                      ${{ matrix.os }} \
-                      /bin/bash -c "
-                        # Update and install essential packages
-                        if [[ '${{ matrix.os }}' == debian:* ]] || [[ '${{ matrix.os }}' == ubuntu:* ]]; then
-                          apt-get update && apt-get install -y build-essential curl;
-                        elif [[ '${{ matrix.os }}' == centos:* ]]; then
-                          yum update -y && yum groupinstall -y 'Development Tools' && yum install -y curl;
-                        elif [[ '${{ matrix.os }}' == fedora:* ]]; then
-                          dnf update -y && dnf groupinstall -y 'Development Tools' && dnf install -y curl;
-                        fi;
+          docker run -v ${{ github.workspace }}:/workspace \
+                    -w /workspace \
+                    ${{ matrix.os }} \
+                    /bin/bash -c "
+                      # Update and install essential packages
+                      if [[ '${{ matrix.os }}' == debian:* ]] || [[ '${{ matrix.os }}' == ubuntu:* ]]; then
+                        apt-get update && apt-get install -y build-essential curl;
+                      elif [[ '${{ matrix.os }}' == centos:* ]]; then
+                        yum update -y && yum groupinstall -y 'Development Tools' && yum install -y curl;
+                      elif [[ '${{ matrix.os }}' == fedora:* ]]; then
+                        dnf update -y && dnf groupinstall -y 'Development Tools' && dnf install -y curl;
+                      fi;
 
-                        # Install Node.js
-                        if [[ '${{ matrix.os }}' == debian:* ]] || [[ '${{ matrix.os }}' == ubuntu:* ]]; then
-                          curl -fsSL https://deb.nodesource.com/setup_${{ matrix.node-version }} | bash -;
-                          apt-get install -y nodejs;
-                        elif [[ '${{ matrix.os }}' == centos:* ]]; then
-                          curl -fsSL https://rpm.nodesource.com/setup_${{ matrix.node-version }} | bash -;
-                          yum install -y nodejs;
-                        elif [[ '${{ matrix.os }}' == fedora:* ]]; then
-                          curl -fsSL https://rpm.nodesource.com/setup_${{ matrix.node-version }} | bash -;
-                          dnf install -y nodejs;
-                        fi;
+                      # Install Node.js
+                      if [[ '${{ matrix.os }}' == debian:* ]] || [[ '${{ matrix.os }}' == ubuntu:* ]]; then
+                        curl -fsSL https://deb.nodesource.com/setup_${{ matrix.node-version }} | bash -;
+                        apt-get install -y nodejs;
+                      elif [[ '${{ matrix.os }}' == centos:* ]]; then
+                        curl -fsSL https://rpm.nodesource.com/setup_${{ matrix.node-version }} | bash -;
+                        yum install -y nodejs;
+                      elif [[ '${{ matrix.os }}' == fedora:* ]]; then
+                        curl -fsSL https://rpm.nodesource.com/setup_${{ matrix.node-version }} | bash -;
+                        dnf install -y nodejs;
+                      fi;
 
-                        # Step 3: Install project dependencies
-                        npm install;
+                      # Step 3: Install project dependencies
+                      npm install;
 
-                        # Step 4: Build the project
-                        npm run build;
+                      # Step 4: Build the project
+                      npm run build;
 
-                        # Step 5: Run tests
-                        npm test;
-                      "
+                      # Step 5: Run tests
+                      npm test;
+                    "

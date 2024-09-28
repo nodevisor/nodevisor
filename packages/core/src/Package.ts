@@ -1,12 +1,12 @@
-import Module, { type NodevisorArg, type ModuleConfig } from './Module';
+import Module, { type ModuleConfig } from './Module';
 
 export type PackageConfig = ModuleConfig & {
-  dependencies?: Package[];
+  dependencies?: Package<any>[];
 };
 
-export default abstract class Package extends Module<{
-  dependencies?: Package[];
-}> {
+export default abstract class Package<
+  TConfig extends PackageConfig = PackageConfig,
+> extends Module<TConfig> {
   get dependencies() {
     return this.config.dependencies || [];
   }
