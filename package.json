@@ -19,7 +19,7 @@
     "command:fedora": "docker run --rm -v $(pwd):/workspace -w /workspace fedora:latest /bin/bash -c",
     "command:powershell": "docker run --rm -v $(pwd):/workspace -w /workspace mcr.microsoft.com/powershell pwsh -Command",
     "command:windows": "docker run --rm -v %cd%:/workspace -w /workspace mcr.microsoft.com/windows/servercore:ltsc2022 powershell.exe -Command",
-    "test": "lerna run test",
+    "test": "cross-env DEBUG=nodevisor* lerna run test",
     "test:nodevisor": "lerna run test --scope=nodevisor --include-dependencies",
     "test:debian": "docker run --rm -v $(pwd):/workspace -w /workspace debian:latest /bin/bash -c 'apt-get update && apt-get install -y build-essential curl && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && apt-get install -y nodejs && npm install && DEBUG=nodevisor* npm test'",
     "test:ubuntu": "docker run --rm -v $(pwd):/workspace -w /workspace ubuntu:latest /bin/bash -c 'apt-get update && apt-get install -y build-essential curl && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && apt-get install -y nodejs && npm install && DEBUG=nodevisor* npm test'",
@@ -30,6 +30,7 @@
   },
   "dependencies": {},
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "lerna": "^8.1.8",
     "prettier": "^3.3.3"
   }
