@@ -28,6 +28,9 @@ export default class CommandBuilder implements PromiseLike<string> {
 
   private command: Command;
   private quote?: Quote;
+  private shell?: string;
+  private prefix: string = '';
+  private suffix: string = '';
   private transforms: Transform[];
   private env: Env;
   private as?: As;
@@ -66,6 +69,34 @@ export default class CommandBuilder implements PromiseLike<string> {
     return this.setQuote(quote);
   }
 
+  // shell methods
+  setShell(shell: string) {
+    this.shell = shell;
+    return this;
+  }
+
+  getShell() {
+    return this.shell;
+  }
+
+  setPrefix(prefix: string) {
+    this.prefix = prefix;
+    return this;
+  }
+
+  getPrefix() {
+    return this.prefix;
+  }
+
+  setSuffix(suffix: string) {
+    this.suffix = suffix;
+    return this;
+  }
+
+  getSuffix() {
+    return this.suffix;
+  }
+
   // command methods
   append(strings: TemplateStringsArray, ...values: any[]) {
     this.command.push({ strings: strings, values });
@@ -78,7 +109,7 @@ export default class CommandBuilder implements PromiseLike<string> {
   }
 
   toString() {
-    const { quote } = this;
+    const { quote, shell } = this;
     if (!quote) {
       throw new Error('Quote is not set');
     }
@@ -108,10 +139,14 @@ export default class CommandBuilder implements PromiseLike<string> {
 
     cloned.merge(this);
 
-    const cmd = commandToString(cloned.command, quote);
+    let cmd = commandToString(cloned.command, quote);
 
     if (this.as) {
-      return this.applyAs(cmd);
+      cmd = this.applyAs(cmd);
+    }
+
+    if (this.shell) {
+      cmd = this.applyShell(cmd);
     }
 
     return cmd;
@@ -171,6 +206,14 @@ export default class CommandBuilder implements PromiseLike<string> {
     }
   }
 
+  private applyShell(cmd: string): string {
+    if (!this.prefix) {
+      return cmd;
+    }
+
+    return `${this.prefix}${cmd}${this.suffix}`;
+  }
+
   // execution methods
   async exec(): Promise<string> {
     if (this.quote) {
@@ -190,7 +233,7 @@ export default class CommandBuilder implements PromiseLike<string> {
 
     switch (await this.platform()) {
       case Platform.WINDOWS:
-        return this.clone().setPowerShellQuote().exec();
+        return this.clone().setPowerShellQuote().setPrefix('pwsh -Command "').setSuffix('"').exec();
       default:
         return this.clone().setShellQuote().exec();
     }
