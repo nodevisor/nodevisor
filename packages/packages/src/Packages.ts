@@ -27,27 +27,34 @@ export default class Packages extends Module {
   async update() {
     switch (await this.packageManager()) {
       case PackageManager.BREW:
-        return this.$`brew update`;
+        await this.$`brew update`;
+        break;
       case PackageManager.WINGET:
         // winget doesn't have a dedicated update command, upgrade covers it
         return;
       case PackageManager.YUM:
-        return this.$`yum check-update`;
+        await this.$`yum check-update`;
+        break;
       default:
-        return this.$`DEBIAN_FRONTEND=noninteractive apt-get update`;
+        await this.$`DEBIAN_FRONTEND=noninteractive apt-get update`;
+        break;
     }
   }
 
   async upgrade() {
     switch (await this.packageManager()) {
       case PackageManager.BREW:
-        return this.$`brew upgrade`;
+        await this.$`brew upgrade`;
+        break;
       case PackageManager.WINGET:
-        return this.$`winget upgrade --all`;
+        await this.$`winget upgrade --all`;
+        break;
       case PackageManager.YUM:
-        return this.$`yum upgrade -y`;
+        await this.$`yum upgrade -y`;
+        break;
       default:
-        return this.$`DEBIAN_FRONTEND=noninteractive apt-get upgrade -y`;
+        await this.$`DEBIAN_FRONTEND=noninteractive apt-get upgrade -y`;
+        break;
     }
   }
 
@@ -117,13 +124,13 @@ export default class Packages extends Module {
   async isInstalled(name: string) {
     switch (await this.packageManager()) {
       case PackageManager.BREW:
-        const darwinLines = await this.$`brew ls --versions ${name}`.noThrow().toLines();
+        const darwinLines = await this.$`brew ls --versions ${name}`.noThrow().lines();
         return !!darwinLines.length;
       case PackageManager.WINGET:
-        const wingetResponse = await this.$`winget list ${name}`.toLines();
+        const wingetResponse = await this.$`winget list ${name}`.lines();
         return wingetResponse.some((line) => line.includes(name));
       case PackageManager.YUM:
-        const yumLines = await this.$`yum list installed ${name}`.noThrow().toLines();
+        const yumLines = await this.$`yum list installed ${name}`.noThrow().lines();
         return yumLines.some((line) => line.includes(name));
       case PackageManager.APT:
         /*
@@ -133,7 +140,7 @@ export default class Packages extends Module {
         const aptLinesFiltered = aptLines.filter((line) => line.includes('install ok installed'));
         return !!aptLinesFiltered.length;
         */
-        const aptLines = await this.$`apt-cache policy ${name} | grep Installed`.toLines();
+        const aptLines = await this.$`apt-cache policy ${name} | grep Installed`.lines();
         // filter out lines that contain "Installed: (none)"
         const aptLinesFiltered = aptLines.filter((line) => !line.includes('Installed: (none)'));
         return !!aptLinesFiltered.length;
@@ -150,12 +157,12 @@ export default class Packages extends Module {
 
         Warning: Treating httpie as a formula. For the cask, use homebrew/cask/httpie or specify the `--cask` flag. To silence this message, use the `--formula` flag.
         */
-        const darwinLines = await this.$`brew outdated ${name} --formula`.toLines();
+        const darwinLines = await this.$`brew outdated ${name} --formula`.lines();
         const relevantLines = darwinLines.filter((line) => !line.includes('Downloading'));
 
         return !!relevantLines.length;
       case PackageManager.WINGET:
-        const wingetUpgradeCheck = await this.$`winget upgrade --source winget`.toLines();
+        const wingetUpgradeCheck = await this.$`winget upgrade --source winget`.lines();
         return wingetUpgradeCheck.some((line) => line.includes(name));
       /*
         const wingetResponse = await this
@@ -163,10 +170,10 @@ export default class Packages extends Module {
         return !!wingetResponse.length;
         */
       case PackageManager.YUM:
-        const yumUpgradable = await this.$`yum list updates ${name}`.noThrow().toLines();
+        const yumUpgradable = await this.$`yum list updates ${name}`.noThrow().lines();
         return !!yumUpgradable.length;
       case PackageManager.APT:
-        const aptUpgradable = await this.$`apt list --upgradable ${name}`.toLines();
+        const aptUpgradable = await this.$`apt list --upgradable ${name}`.lines();
         return !!aptUpgradable.length;
     }
   }

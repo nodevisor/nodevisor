@@ -2,9 +2,9 @@ import $ from './index';
 
 describe('$', () => {
   it('should be able to use $ as a function', async () => {
-    const response = await $`echo ${'Hello World'}`;
+    const response = await $`echo ${'Hello World'}`.text();
 
-    expect(response).toBe('Hello World');
+    expect(response).toEqual('Hello World');
   });
 });
 

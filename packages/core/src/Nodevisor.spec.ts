@@ -18,7 +18,7 @@ describe('Nodevisor', () => {
 
   it('should execute a command using the connection', async () => {
     const nodevisor = new Nodevisor();
-    const result = await nodevisor.$`printf "Hello, world!"`;
+    const result = await nodevisor.$`printf "Hello, world!"`.text();
 
     expect(result).toBe('Hello, world!');
   });
@@ -56,7 +56,7 @@ describe('Nodevisor', () => {
   it('should generate a command as another user with su and escape correctly', async () => {
     const nodevisor = new Nodevisor().as({ user: 'testuser', method: 'runuser' });
 
-    const cmd = await nodevisor.$`printf "Hello, world!"`.setShellQuote().toBoolean().toString();
+    const cmd = await nodevisor.$`printf "Hello, world!"`.setShellQuote().toString();
 
     expect(cmd).toBe('runuser -l testuser -c $\'printf "Hello, world!"\'');
   });

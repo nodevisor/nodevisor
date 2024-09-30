@@ -13,16 +13,16 @@ class MyModule extends Module<{
 
 describe('Shell execution', () => {
   it('should execute a command', async () => {
-    const result = await $`echo ${'Hello, world!'}`;
+    const result = await $`echo ${'Hello, world!'}`.text();
     expect(result).toBe('Hello, world!');
 
     const resultWithMultuple = $`echo ${'Hello, world!'} as ${'runner'}`.setShellQuote().toString();
     expect(resultWithMultuple).toBe("echo $'Hello, world!' as runner");
 
-    const resultSimple = await $`echo "Hello, world!"`;
+    const resultSimple = await $`echo "Hello, world!"`.text();
     expect(resultSimple).toBe('Hello, world!');
 
-    const testResult = await $(MyModule, { value: 'Hello, world! Test' }).test();
+    const testResult = await $(MyModule, { value: 'Hello, world! Test' }).test().text();
     expect(testResult).toBe('Hello, world! Test');
 
     const resultWithAs = $({ as: 'runner' })`echo 'omg'`.setShellQuote().toString();

@@ -1,4 +1,5 @@
-import { trimEnd, cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
+import { type Encoding } from 'node:crypto';
 import type As from '../@types/As';
 import Env from '../Env';
 import Platform from '../constants/Platform';
@@ -8,22 +9,22 @@ import type Command from '../@types/Command';
 import commandToString from '../utils/commandToString';
 import quote from '../quotes/quote';
 import powerShellQuote from '../quotes/powerShellQuote';
-import CommandBuilderTransform from './CommandBuilderTransform';
 import raw from '../utils/raw';
+import type CommandOutput from './CommandOutput';
+import CommandOutputBuilder from './CommandOutputBuilder';
+import CommandOutputError from '../errors/CommandOutputError';
 
-type Transform = 'sanitize' | 'trim' | 'trimEnd' | 'toLowerCase' | 'boolean' | 'lines';
 const platforms = Object.values(Platform) as string[];
 
 export type CommandBuilderOptions = {
   command?: Command;
-  transforms?: Transform[];
   quote?: Quote;
   noThrow?: boolean;
   env?: Env | Record<string, string>;
   as?: As | string;
 };
 
-export default class CommandBuilder implements PromiseLike<string> {
+export default class CommandBuilder implements PromiseLike<CommandOutput> {
   readonly connection: Connection;
 
   private command: Command;
@@ -31,21 +32,19 @@ export default class CommandBuilder implements PromiseLike<string> {
   private shell?: string;
   private prefix: string = '';
   private suffix: string = '';
-  private transforms: Transform[];
   private env: Env;
   private as?: As;
 
   #noThrow: boolean;
 
   constructor(connection: Connection, options: CommandBuilderOptions = {}) {
-    const { command = [], transforms = ['sanitize'], quote, noThrow = false, env, as } = options;
+    const { command = [], quote, noThrow = false, env, as } = options;
 
     this.connection = connection;
 
     this.command = cloneDeep(command);
     this.quote = quote;
 
-    this.transforms = cloneDeep(transforms);
     this.#noThrow = noThrow;
     this.env = new Env(env);
     this.as = typeof as === 'string' ? { user: as } : as;
@@ -152,43 +151,6 @@ export default class CommandBuilder implements PromiseLike<string> {
     return cmd;
   }
 
-  // output transformation methods
-  async applyTransforms(value: string) {
-    let result: any = value;
-
-    for (const transform of this.transforms) {
-      switch (transform) {
-        case 'sanitize':
-          result = result.replace(/[\r\n]+$/, '');
-          break;
-        case 'trim':
-          result = result.trim();
-          break;
-        case 'trimEnd':
-          result = trimEnd(result);
-          break;
-        case 'toLowerCase':
-          result = result.toLowerCase();
-          break;
-        case 'boolean':
-          const trueValues = ['true', 'yes', '1'];
-          result = trueValues.includes(result.trim().toLowerCase());
-          break;
-        case 'lines':
-          if (result.trim() === '') {
-            result = [];
-          } else {
-            result = result.split('\n');
-          }
-          break;
-        default:
-          throw new Error(`Unknown transform: ${transform}`);
-      }
-    }
-
-    return result;
-  }
-
   private applyAs(cmd: string): string {
     if (!this.as) {
       return cmd;
@@ -215,16 +177,16 @@ export default class CommandBuilder implements PromiseLike<string> {
   }
 
   // execution methods
-  async exec(): Promise<string> {
+  async exec(): Promise<CommandOutput> {
     if (this.quote) {
       const command = this.toString();
       try {
-        const result = await this.connection.exec(command);
-        return this.applyTransforms(result);
+        return await this.connection.exec(command);
       } catch (error) {
         if (this.#noThrow) {
-          const result = (error as Error).message;
-          return this.applyTransforms(result);
+          if (error instanceof CommandOutputError) {
+            return error;
+          }
         }
 
         throw error;
@@ -239,9 +201,12 @@ export default class CommandBuilder implements PromiseLike<string> {
     }
   }
 
-  then<TResult1, TResult2 = never>(
-    onfulfilled?: ((value: string) => TResult1 | PromiseLike<TResult1>) | undefined | null,
-    onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null,
+  then<TResult1 = CommandOutput, TResult2 = never>(
+    onfulfilled?: ((value: CommandOutput) => PromiseLike<TResult1> | TResult1) | undefined | null,
+    onrejected?:
+      | ((reason: CommandOutputError) => PromiseLike<TResult2> | TResult2)
+      | undefined
+      | null,
   ): Promise<TResult1 | TResult2> {
     return this.exec().then(onfulfilled, onrejected);
   }
@@ -285,65 +250,6 @@ export default class CommandBuilder implements PromiseLike<string> {
     return this.append` > /dev/null`;
   }
 
-  // transformation methods
-  private removeTransformation(transform: Transform): this {
-    const index = this.transforms.indexOf(transform);
-    if (index > -1) {
-      this.transforms.splice(index, 1);
-    }
-
-    return this;
-  }
-
-  private addTransformation(transform: Transform): this {
-    if (!this.transforms.includes(transform)) {
-      this.transforms.push(transform);
-    }
-
-    return this;
-  }
-
-  private transform(transform: Transform, enable = true): this {
-    if (enable) {
-      return this.addTransformation(transform);
-    }
-
-    return this.removeTransformation(transform);
-  }
-
-  // transform methods
-  sanitize(enable = true): this {
-    return this.transform('sanitize', enable);
-  }
-
-  trim(enable = true): this {
-    return this.transform('trim', enable);
-  }
-
-  trimEnd(enable = true): this {
-    return this.transform('trimEnd', enable);
-  }
-
-  toLowerCase(enable = true): this {
-    return this.transform('toLowerCase', enable);
-  }
-
-  toLines(enable = true) {
-    this.transform('lines', enable);
-
-    return new CommandBuilderTransform<string[]>(this);
-  }
-
-  toBoolean(test = false) {
-    if (test) {
-      this.quiet().and`echo ${'true'}`.or`echo ${'false'}`;
-    }
-
-    this.transform('boolean', true);
-
-    return new CommandBuilderTransform<boolean>(this);
-  }
-
   noThrow(enable = true) {
     this.#noThrow = enable;
     return this;
@@ -361,7 +267,6 @@ export default class CommandBuilder implements PromiseLike<string> {
 
     const cloned = new Constructor(this.connection, {
       command: this.command,
-      transforms: this.transforms,
       quote: this.quote,
       noThrow: this.#noThrow,
       env: this.env,
@@ -390,7 +295,7 @@ export default class CommandBuilder implements PromiseLike<string> {
   async platform() {
     return this.cached('platform', async () => {
       try {
-        const platform = await this.$`uname -s`.setShellQuote().toLowerCase();
+        const platform = await this.$`uname -s`.setShellQuote().toLowerCase().text();
         if (platforms.includes(platform)) {
           return platform as Platform;
         }
@@ -404,7 +309,8 @@ export default class CommandBuilder implements PromiseLike<string> {
         const platform = await this
           .$`powershell -command "(Get-WmiObject Win32_OperatingSystem).Caption"`
           .setPowerShellQuote()
-          .toLowerCase();
+          .toLowerCase()
+          .text();
 
         if (platforms.includes(platform)) {
           return platform as Platform;
@@ -461,5 +367,48 @@ export default class CommandBuilder implements PromiseLike<string> {
           return await this.$`unset ${raw(key)}`;
       }
     }
+  }
+
+  // output type builders
+  text(encoding: Encoding = 'utf8') {
+    return new CommandOutputBuilder(this.exec()).text(encoding);
+  }
+
+  buffer() {
+    return new CommandOutputBuilder(this.exec()).buffer();
+  }
+
+  json<T = any>() {
+    return new CommandOutputBuilder(this.exec()).json<T>();
+  }
+
+  blob(type = 'text/plain') {
+    return new CommandOutputBuilder(this.exec()).blob(type);
+  }
+
+  lines() {
+    return new CommandOutputBuilder(this.exec()).lines();
+  }
+
+  boolean(useCode?: boolean) {
+    const promise = useCode ? this.noThrow().exec() : this.exec();
+    return new CommandOutputBuilder(promise).boolean(useCode);
+  }
+
+  // output transformation methods
+  sanitize(enable?: boolean) {
+    return new CommandOutputBuilder(this.then((output) => output.sanitize(enable)));
+  }
+
+  trim(enable?: boolean) {
+    return new CommandOutputBuilder(this.then((output) => output.trim(enable)));
+  }
+
+  trimEnd(enable?: boolean) {
+    return new CommandOutputBuilder(this.then((output) => output.trimEnd(enable)));
+  }
+
+  toLowerCase(enable?: boolean) {
+    return new CommandOutputBuilder(this.then((output) => output.toLowerCase(enable)));
   }
 }

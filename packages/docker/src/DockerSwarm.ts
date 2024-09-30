@@ -35,7 +35,7 @@ export default class DockerSwarm extends Service {
       return false;
     }
 
-    const response = await this.$`docker info`;
+    const response = await this.$`docker info`.text();
     return response?.includes('Swarm: active');
   }
 

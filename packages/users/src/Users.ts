@@ -8,7 +8,7 @@ export default class Users extends Module {
   }
 
   async exists(username: string) {
-    return this.$`id -u ${username}`.toBoolean();
+    return this.$`id -u ${username}`.boolean();
   }
 
   async add(username: string) {

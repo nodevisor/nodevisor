@@ -19,6 +19,7 @@
     "build:esm": "tsc -p tsconfig.json",
     "build:cjs": "tsc -p tsconfig-cjs.json",
     "test": "jest --passWithNoTests",
+    "test:file": "jest ./src/connections/SSHConnection.spec.ts --passWithNoTests --verbose",
     "valid": "tsc --noEmit"
   },
   "dependencies": {

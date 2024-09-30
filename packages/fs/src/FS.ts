@@ -62,9 +62,9 @@ export default class FS extends Module {
   async exists(path: string) {
     switch (await this.platform()) {
       case Platform.WINDOWS:
-        return this.$`powershell Test-Path ${path}`;
+        return this.$`powershell Test-Path ${path}`.boolean(true);
       default:
-        return this.$`test -e ${path}`.toBoolean(true);
+        return this.$`test -e ${path}`.boolean(true);
     }
   }
 
@@ -91,20 +91,20 @@ export default class FS extends Module {
   }
 
   async stat(path: string) {
-    return this.$`stat ${path}`;
+    return this.$`stat ${path}`.text();
   }
 
   async temp() {
-    return this.$`mktemp`;
+    return this.$`mktemp`.text();
   }
 
   async tempDir() {
-    return this.$`mktemp -d`;
+    return this.$`mktemp -d`.text();
   }
 
   // get absolute path
   // todo move to path.resolve
   async abs(path: string) {
-    return this.$`readlink -f ${path}`;
+    return this.$`readlink -f ${path}`.text();
   }
 }

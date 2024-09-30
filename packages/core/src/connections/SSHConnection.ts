@@ -12,6 +12,8 @@ import Connection, {
   type GetOptions,
 } from './Connection';
 import InMemoryWriteStream from '../utils/InMemoryWriteStream';
+import CommandOutputError from '../errors/CommandOutputError';
+import CommandOutput from '../commands/CommandOutput';
 
 const log = baseLog.extend('ssh-connection');
 const logExec = log.extend('exec');
@@ -107,25 +109,29 @@ export default class SSHConnection extends Connection {
     try {
       await this.waitForConnection();
 
+      const start = Date.now();
+
       logExec(cmd);
-      const result = await this.ssh.execCommand(cmd);
-      if (typeof result === 'undefined') {
-        throw new Error('No response');
+      const { stdout, stderr, code } = await this.ssh.execCommand(cmd);
+      logResponse(`stdout: ${stdout}, stderr: ${stderr}, code: ${code}`);
+
+      const outputConfig = {
+        stdout,
+        stderr,
+        code,
+        duration: Date.now() - start,
+      };
+
+      if (code !== 0) {
+        throw new CommandOutputError(outputConfig);
       }
 
-      if (result.stdout) {
-        logResponse(result.stdout);
-      } else {
-        logResponse('No response');
-      }
-
-      if (result.stderr) {
-        logError(result.stderr);
-        throw new Error(result.stderr);
-      }
-
-      return result.stdout;
+      return new CommandOutput(outputConfig);
     } catch (error) {
+      if (error instanceof CommandOutputError) {
+        throw error;
+      }
+
       logError(`Error executing command '${cmd}':`, error);
       throw error;
     }

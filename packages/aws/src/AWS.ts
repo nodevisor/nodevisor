@@ -9,11 +9,11 @@ export default class AWS extends Package {
   readonly fs = new FS(this.nodevisor);
 
   async getVersion() {
-    return this.$`aws --version`;
+    return this.$`aws --version`.text();
   }
 
   async isInstalled() {
-    const response = await this.$`aws --version`;
+    const response = await this.$`aws --version`.text();
 
     return response.includes('aws-cli');
   }

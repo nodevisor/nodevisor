@@ -29,7 +29,7 @@ export default class OS extends Module {
 
     switch (await this.platform()) {
       case Platform.DARWIN:
-        const macValue = await this.$`sysctl -n kern.boottime`;
+        const macValue = await this.$`sysctl -n kern.boottime`.text();
 
         const match = macValue.match(/sec\s*=\s*(\d+)/);
         if (!match) {
@@ -41,12 +41,12 @@ export default class OS extends Module {
         return now - macBootTime;
       case Platform.WINDOWS:
         const winValue = await this
-          .$`powershell -command "(Get-CimInstance Win32_OperatingSystem).LastBootUpTime"`;
+          .$`powershell -command "(Get-CimInstance Win32_OperatingSystem).LastBootUpTime"`.text();
         const winBootTime = new Date(winValue).getTime() / 1000;
 
         return now - winBootTime;
       default:
-        const value = await this.$`cat /proc/uptime`;
+        const value = await this.$`cat /proc/uptime`.text();
 
         const [seconds] = value.split(' ');
         if (!seconds) {
@@ -60,11 +60,11 @@ export default class OS extends Module {
   async hostname() {
     switch (await this.platform()) {
       case Platform.DARWIN:
-        return this.$`hostname`;
+        return this.$`hostname`.text();
       case Platform.WINDOWS:
-        return this.$`powershell -command "[System.Net.Dns]::GetHostName()"`;
+        return this.$`powershell -command "[System.Net.Dns]::GetHostName()"`.text();
       default:
-        return this.$`cat /proc/sys/kernel/hostname`;
+        return this.$`cat /proc/sys/kernel/hostname`.text();
     }
   }
 
@@ -72,10 +72,12 @@ export default class OS extends Module {
     switch (await this.platform()) {
       case Platform.WINDOWS:
         const winValue = await this
-          .$`powershell -command "(Get-WmiObject Win32_OperatingSystem).OSArchitecture"`.toLowerCase();
+          .$`powershell -command "(Get-WmiObject Win32_OperatingSystem).OSArchitecture"`
+          .toLowerCase()
+          .text();
         return winValue.includes('64') ? 'x64' : 'x86';
       default:
-        const value = await this.$`uname -m`.toLowerCase();
+        const value = await this.$`uname -m`.toLowerCase().text();
 
         if (archs.includes(value)) {
           return value as Arch;
@@ -89,12 +91,12 @@ export default class OS extends Module {
     switch (await this.platform()) {
       case Platform.WINDOWS:
         return await this
-          .$`powershell -command "Get-Command ${command} -ErrorAction SilentlyContinue"`.toBoolean(
+          .$`powershell -command "Get-Command ${command} -ErrorAction SilentlyContinue"`.boolean(
           true,
         );
       default:
         // can be replaced with `which ${command}`.toBoolean(true)
-        return await this.$`command -v ${command}`.toBoolean(true);
+        return await this.$`command -v ${command}`.boolean(true);
     }
   }
 }

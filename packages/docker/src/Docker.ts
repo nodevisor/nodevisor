@@ -14,11 +14,11 @@ export default class Docker extends Service {
 
   // package version methods
   async getVersion() {
-    return this.$`aws --version`;
+    return this.$`aws --version`.text();
   }
 
   async isInstalled() {
-    const response = await this.$`docker --version`;
+    const response = await this.$`docker --version`.text();
 
     return response.includes('Docker version');
   }

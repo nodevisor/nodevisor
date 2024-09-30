@@ -1,6 +1,7 @@
 import EventEmitter from 'node:events';
 import { LRUCache } from 'lru-cache';
 import CommandBuilder, { type CommandBuilderOptions } from '../commands/CommandBuilder';
+import CommandOutput from '../commands/CommandOutput';
 
 export type PutOptions = {
   flags?: 'w' | 'a';
@@ -62,7 +63,7 @@ export default abstract class Connection extends EventEmitter {
     this.cache.clear();
   }
 
-  abstract exec(cmd: string): Promise<string>;
+  abstract exec(cmd: string): Promise<CommandOutput>;
 
   async waitForConnection() {
     if (!this.isConnected()) {

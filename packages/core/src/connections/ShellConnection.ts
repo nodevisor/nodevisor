@@ -9,6 +9,8 @@ import Connection, {
   defaultPutOptions,
   defaultGetOptions,
 } from './Connection';
+import CommandOutput from '../commands/CommandOutput';
+import CommandOutputError from '../errors/CommandOutputError';
 
 const log = baseLog.extend('shell-connection');
 const logExec = log.extend('exec');
@@ -18,17 +20,29 @@ const logError = log.extend('error');
 const isWindows = platform() === 'win32';
 
 async function exec(cmd: string) {
-  return new Promise<string>((resolve, reject) => {
+  return new Promise<CommandOutput>((resolve, reject) => {
+    const start = Date.now();
+
+    logExec(cmd);
     shell.exec(
       cmd,
       { silent: true, shell: isWindows ? undefined : '/bin/bash' },
       (code: number, stdout: string, stderr: string) => {
+        logResponse(`stdout: ${stdout}, stderr: ${stderr}, code: ${code}`);
+
+        const outputConfig = {
+          stdout: stdout,
+          stderr: stderr,
+          code: code,
+          duration: Date.now() - start,
+        };
+
         if (code !== 0) {
-          reject(new Error(stderr));
+          reject(new CommandOutputError(outputConfig));
           return;
         }
 
-        resolve(stdout);
+        resolve(new CommandOutput(outputConfig));
       },
     );
   });
@@ -57,11 +71,12 @@ export default class ShellConnection extends Connection {
     try {
       await this.waitForConnection();
 
-      logExec(cmd);
-      const stdout = await exec(cmd);
-
-      return stdout;
+      return exec(cmd);
     } catch (error) {
+      if (error instanceof CommandOutputError) {
+        throw error;
+      }
+
       logError(`Error executing command '${cmd}':`, error);
       throw error;
     }

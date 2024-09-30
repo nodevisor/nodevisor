@@ -24,7 +24,7 @@ export default class Services extends Module {
   }
 
   async isRunning(name: string) {
-    return this.$`systemctl is-active ${name}`.toBoolean(true);
+    return this.$`systemctl is-active ${name}`.boolean(true);
   }
 
   async restart(name: string) {
@@ -39,6 +39,6 @@ export default class Services extends Module {
   }
 
   async status(name: string) {
-    return this.$`systemctl --no-pager status ${name}`;
+    return this.$`systemctl --no-pager status ${name}`.text();
   }
 }

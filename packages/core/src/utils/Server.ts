@@ -19,7 +19,7 @@ enum STATUS_CODE {
 const logServer = log.extend('server');
 const logExec = logServer.extend('exec');
 
-type ServerOptions = { 
+type ServerOptions = {
   username: string;
   password: string;
   port?: number;
@@ -61,9 +61,12 @@ qdRhT+r5i7qcwIXkY3eJUybSkhb5To2Szoi/pvz+SWe7TPGG76tUCMdoqgBuB3CUXko6BD
 MQd/p9Q2fR/Rt2afAAAAInNlZWRlbkBabGF0a29zLU1hY0Jvb2stUHJvLTIubG9jYWw=
 -----END OPENSSH PRIVATE KEY-----`;
 
-    this.server = new ServerOG({
-      hostKeys: [HOST_KEY],
-    }, (client) => this.prepareServer(client));
+    this.server = new ServerOG(
+      {
+        hostKeys: [HOST_KEY],
+      },
+      (client) => this.prepareServer(client),
+    );
   }
 
   get listening() {
@@ -129,13 +132,11 @@ MQd/p9Q2fR/Rt2afAAAAInNlZWRlbkBabGF0a29zLU1hY0Jvb2stUHJvLTIubG9jYWw=
           try {
             logExec(info.command);
             const response = await shell.exec(info.command);
-            if (!response) {
-              throw new Error('No response from shell execution');
-            }
 
-            stream.stdout.write(response);
-            stream.exit(0);
-          } catch(error) {
+            stream.stderr.write(response.stderr);
+            stream.stdout.write(response.stdout);
+            stream.exit(response.code || 0);
+          } catch (error) {
             stream.stderr.write(`Error executing command: ${(error as Error).message}\n`);
             stream.exit(1); // Indicate failure in execution
           } finally {
@@ -145,63 +146,68 @@ MQd/p9Q2fR/Rt2afAAAAInNlZWRlbkBabGF0a29zLU1hY0Jvb2stUHJvLTIubG9jYWw=
 
         session.on('sftp', (accept, reject) => {
           const sftpStream = accept();
-        
+
           const files: Map<string, { filename: string; mode: 'r' | 'w' }> = new Map();
 
           sftpStream.on('OPEN', async (reqid, filename, flags, attrs) => {
             let mode: 'r' | 'w';
-        
+
             // Determine the mode based on flags
             if (flags & fs.constants.O_WRONLY || flags & fs.constants.O_RDWR) {
-              mode = 'w';  // Open file for writing
+              mode = 'w'; // Open file for writing
             } else if (flags & fs.constants.O_RDONLY) {
-              mode = 'r';  // Open file for reading
+              mode = 'r'; // Open file for reading
             } else {
               // Unsupported flags
               sftpStream.status(reqid, STATUS_CODE.FAILURE);
               return;
             }
-        
+
             // Create a unique handle using nanoid
             const handle = nanoid(8);
-            files.set(handle, { filename, mode });  // Store the file and its mode in the map
-        
+            files.set(handle, { filename, mode }); // Store the file and its mode in the map
+
             // Respond with the handle
             sftpStream.handle(reqid, Buffer.from(handle, 'utf8'));
           });
-        
+
           sftpStream.on('WRITE', async (reqid, handle, offset, data) => {
             const fileInfo = files.get(handle.toString('utf8'));
             if (!fileInfo || fileInfo.mode !== 'w') {
               sftpStream.status(reqid, STATUS_CODE.FAILURE);
               return;
             }
-        
+
             try {
               // Write data to the file at the specified offset
               const fileHandle = await fs.open(fileInfo.filename, 'r+');
               await fileHandle.write(data, 0, data.length, offset);
               await fileHandle.close();
-        
+
               sftpStream.status(reqid, STATUS_CODE.OK);
             } catch (err) {
               console.error('Write error:', err);
               sftpStream.status(reqid, STATUS_CODE.FAILURE);
             }
           });
-        
+
           sftpStream.on('READ', async (reqid, handle, offset, length) => {
             const fileInfo = files.get(handle.toString('utf8'));
             if (!fileInfo) {
               sftpStream.status(reqid, STATUS_CODE.FAILURE);
               return;
             }
-        
+
             try {
               // Read data from the file
-  
+
               const fileHandle = await fs.open(fileInfo.filename, 'r');
-              const { buffer, bytesRead } = await fileHandle.read(Buffer.alloc(length), 0, length, offset);
+              const { buffer, bytesRead } = await fileHandle.read(
+                Buffer.alloc(length),
+                0,
+                length,
+                offset,
+              );
               await fileHandle.close();
 
               // Send the read data back
@@ -211,7 +217,7 @@ MQd/p9Q2fR/Rt2afAAAAInNlZWRlbkBabGF0a29zLU1hY0Jvb2stUHJvLTIubG9jYWw=
               sftpStream.status(reqid, STATUS_CODE.FAILURE);
             }
           });
-        
+
           sftpStream.on('CLOSE', (reqid, handle) => {
             const fileInfo = files.get(handle.toString('utf8'));
             if (fileInfo) {

@@ -75,10 +75,10 @@ const $con = $.connect({
 });
 
 // Run a command on the server
-const result = await $con`echo "Hello, World!"`;
+const result = await $con`echo "Hello, World!"`.text();
 console.log(result); // "Hello, World!"
 
-const username = await $con`whoami`;
+const username = await $con`whoami`.text();
 console.log(username); // runner
 ```
 

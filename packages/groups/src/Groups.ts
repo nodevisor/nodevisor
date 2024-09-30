@@ -4,7 +4,7 @@ export default class Groups extends Module {
   readonly name = 'groups';
 
   async exists(name: string) {
-    return this.$`getent group ${name}`.toBoolean(true);
+    return this.$`getent group ${name}`.boolean(true);
   }
 
   async add(name: string): Promise<void> {
@@ -48,7 +48,7 @@ export default class Groups extends Module {
   }
 
   async userGroups(username: string) {
-    const items = await this.$`id -Gn ${username}`;
+    const items = await this.$`id -Gn ${username}`.text();
 
     return items.split(' ').map((item: string) => item.trim());
   }
