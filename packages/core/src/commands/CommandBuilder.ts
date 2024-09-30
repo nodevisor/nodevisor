@@ -320,7 +320,8 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
 
         throw new Error('Unsupported platform');
       } catch (error) {
-        const platform = await this.$`pwsh -command "(Get-WmiObject Win32_OperatingSystem).Caption"`
+        const platform = await this
+          .$`pwsh -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Caption"`
           .setPowerShellQuote()
           .toLowerCase()
           .text();
