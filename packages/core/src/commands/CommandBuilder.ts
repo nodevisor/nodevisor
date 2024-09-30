@@ -9,6 +9,7 @@ import type Command from '../@types/Command';
 import commandToString from '../utils/commandToString';
 import quote from '../quotes/quote';
 import powerShellQuote from '../quotes/powerShellQuote';
+import quoteSimple from '../quotes/quoteSimple';
 import raw from '../utils/raw';
 import type CommandOutput from './CommandOutput';
 import CommandOutputBuilder from './CommandOutputBuilder';
@@ -144,8 +145,12 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
       cmd = this.applyAs(cmd);
     }
 
-    if (this.shell) {
-      cmd = this.applyShell(cmd);
+    if (this.prefix) {
+      cmd = `${this.prefix}${cmd}`;
+    }
+
+    if (this.suffix) {
+      cmd = `${cmd}${this.suffix}`;
     }
 
     return cmd;
@@ -168,6 +173,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     }
   }
 
+  /*
   private applyShell(cmd: string): string {
     if (!this.prefix) {
       return cmd;
@@ -175,6 +181,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
 
     return `${this.prefix}${cmd}${this.suffix}`;
   }
+  */
 
   // execution methods
   async exec(): Promise<CommandOutput> {
@@ -195,7 +202,10 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
 
     switch (await this.platform()) {
       case Platform.WINDOWS:
-        return this.clone().setPowerShellQuote().setPrefix('pwsh -Command "').setSuffix('"').exec();
+        return this.$`pwsh -Command "${this.clone().setPowerShellQuote().toString()}"`
+          .setQuote(quoteSimple)
+          .exec();
+      //return this.clone().setPowerShellQuote().setPrefix('pwsh -Command "').setSuffix('"').exec();
       default:
         return this.clone().setShellQuote().exec();
     }
@@ -300,14 +310,17 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
           return platform as Platform;
         }
 
-        if (platform.includes('mingw') || platform.includes('cygwin')) {
+        if (
+          platform.includes('mingw') ||
+          platform.includes('cygwin') ||
+          platform.includes('MSYS_NT')
+        ) {
           return Platform.WINDOWS;
         }
 
         throw new Error('Unsupported platform');
       } catch (error) {
-        const platform = await this
-          .$`powershell -command "(Get-WmiObject Win32_OperatingSystem).Caption"`
+        const platform = await this.$`pwsh -command "(Get-WmiObject Win32_OperatingSystem).Caption"`
           .setPowerShellQuote()
           .toLowerCase()
           .text();
@@ -333,7 +346,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
 
     switch (await this.platform()) {
       case Platform.WINDOWS:
-        return await this.$`powershell -command "echo $env:${key}"`.setPowerShellQuote();
+        return await this.$`pwsh -command "echo $env:${key}"`.setPowerShellQuote();
       default:
         return await this.$`echo $${raw(key)}`.setShellQuote();
     }
@@ -349,7 +362,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     if (propagate) {
       switch (await this.platform()) {
         case Platform.WINDOWS:
-          return await this.$`powershell -command "set-item -path env:${key} -value ${value}"`;
+          return await this.$`pwsh -command "set-item -path env:${key} -value ${value}"`;
         default:
           return await this.$`export ${raw(key)}=${value}`;
       }
@@ -362,7 +375,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     if (propagate) {
       switch (await this.platform()) {
         case Platform.WINDOWS:
-          return await this.$`powershell -command "remove-item -path env:${key}"`;
+          return await this.$`pwsh -command "remove-item -path env:${key}"`;
         default:
           return await this.$`unset ${raw(key)}`;
       }

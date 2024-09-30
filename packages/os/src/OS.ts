@@ -41,7 +41,7 @@ export default class OS extends Module {
         return now - macBootTime;
       case Platform.WINDOWS:
         const winValue = await this
-          .$`powershell -command "(Get-CimInstance Win32_OperatingSystem).LastBootUpTime"`.text();
+          .$`pwsh -command "(Get-CimInstance Win32_OperatingSystem).LastBootUpTime"`.text();
         const winBootTime = new Date(winValue).getTime() / 1000;
 
         return now - winBootTime;
@@ -62,7 +62,7 @@ export default class OS extends Module {
       case Platform.DARWIN:
         return this.$`hostname`.text();
       case Platform.WINDOWS:
-        return this.$`powershell -command "[System.Net.Dns]::GetHostName()"`.text();
+        return this.$`pwsh -command "[System.Net.Dns]::GetHostName()"`.text();
       default:
         return this.$`cat /proc/sys/kernel/hostname`.text();
     }
@@ -72,7 +72,7 @@ export default class OS extends Module {
     switch (await this.platform()) {
       case Platform.WINDOWS:
         const winValue = await this
-          .$`powershell -command "(Get-WmiObject Win32_OperatingSystem).OSArchitecture"`
+          .$`pwsh -command "(Get-WmiObject Win32_OperatingSystem).OSArchitecture"`
           .toLowerCase()
           .text();
         return winValue.includes('64') ? 'x64' : 'x86';
@@ -91,9 +91,7 @@ export default class OS extends Module {
     switch (await this.platform()) {
       case Platform.WINDOWS:
         return await this
-          .$`powershell -command "Get-Command ${command} -ErrorAction SilentlyContinue"`.boolean(
-          true,
-        );
+          .$`pwsh -command "Get-Command ${command} -ErrorAction SilentlyContinue"`.boolean(true);
       default:
         // can be replaced with `which ${command}`.toBoolean(true)
         return await this.$`command -v ${command}`.boolean(true);

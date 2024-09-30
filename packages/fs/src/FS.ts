@@ -62,7 +62,7 @@ export default class FS extends Module {
   async exists(path: string) {
     switch (await this.platform()) {
       case Platform.WINDOWS:
-        return this.$`powershell Test-Path ${path}`.boolean(true);
+        return this.$`pwsh Test-Path ${path}`.boolean(true);
       default:
         return this.$`test -e ${path}`.boolean(true);
     }
