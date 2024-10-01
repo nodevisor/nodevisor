@@ -9,7 +9,6 @@ import type Command from '../@types/Command';
 import commandToString from '../utils/commandToString';
 import quote from '../quotes/quote';
 import powerShellQuote from '../quotes/powerShellQuote';
-import quoteSimple from '../quotes/quoteSimple';
 import raw from '../utils/raw';
 import type CommandOutput from './CommandOutput';
 import CommandOutputBuilder from './CommandOutputBuilder';
@@ -173,16 +172,6 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     }
   }
 
-  /*
-  private applyShell(cmd: string): string {
-    if (!this.prefix) {
-      return cmd;
-    }
-
-    return `${this.prefix}${cmd}${this.suffix}`;
-  }
-  */
-
   // execution methods
   async exec(): Promise<CommandOutput> {
     if (this.quote) {
@@ -202,10 +191,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
 
     switch (await this.platform()) {
       case Platform.WINDOWS:
-        return this.$`pwsh -Command "${this.clone().setPowerShellQuote().toString()}"`
-          .setQuote(quoteSimple)
-          .exec();
-      //return this.clone().setPowerShellQuote().setPrefix('pwsh -Command "').setSuffix('"').exec();
+        return this.clone().setPowerShellQuote().exec();
       default:
         return this.clone().setShellQuote().exec();
     }
