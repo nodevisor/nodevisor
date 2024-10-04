@@ -1,9 +1,9 @@
 import { type Quote, type QuoteArg } from '../@types';
 import { Raw } from '../utils/raw';
 
-const pwshArgQuote: Quote = (arg: QuoteArg | QuoteArg[]): string | Raw => {
+const doubleQuote: Quote = (arg: QuoteArg | QuoteArg[]): string | Raw => {
   if (Array.isArray(arg)) {
-    return arg.map((a) => pwshArgQuote(a)).join(' ');
+    return arg.map((a) => doubleQuote(a)).join(' ');
   }
 
   if (arg instanceof Raw) {
@@ -15,4 +15,4 @@ const pwshArgQuote: Quote = (arg: QuoteArg | QuoteArg[]): string | Raw => {
   return `"${arg.replace(/`/g, '``').replace(/"/g, '`"')}"`;
 };
 
-export default pwshArgQuote;
+export default doubleQuote;

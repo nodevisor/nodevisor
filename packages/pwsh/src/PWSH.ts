@@ -1,4 +1,4 @@
-import { Module, pwshArgQuote } from '@nodevisor/core';
+import { Module, doubleQuote } from '@nodevisor/core';
 
 export default class PWSH extends Module {
   readonly name = 'pwsh';
@@ -8,6 +8,6 @@ export default class PWSH extends Module {
       .setPowerShellQuote()
       .toString();
 
-    return this.$`pwsh -Command ${command} -NonInteractive`.setQuote(pwshArgQuote);
+    return this.$`pwsh -Command ${command} -NonInteractive`.setQuote(doubleQuote);
   }
 }

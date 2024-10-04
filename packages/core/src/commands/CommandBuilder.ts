@@ -14,6 +14,7 @@ import Shell from '../constants/Shell';
 import type CommandOutput from './CommandOutput';
 import CommandOutputBuilder from './CommandOutputBuilder';
 import CommandOutputError from '../errors/CommandOutputError';
+import { doubleQuote } from '../quotes';
 
 const platforms = Object.values(Platform) as string[];
 
@@ -60,12 +61,17 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     return this;
   }
 
+  // C-Style Quoting
+  setShellQuote() {
+    return this.setQuote(quote);
+  }
+
   setPowerShellQuote() {
     return this.setQuote(powerShellQuote);
   }
 
-  setShellQuote() {
-    return this.setQuote(quote);
+  setDoubleQuote() {
+    return this.setQuote(doubleQuote);
   }
 
   setPrefix(prefix: string) {
@@ -179,11 +185,16 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
       }
     }
 
+    return this.clone()
+      .setQuote(await this.determineQuote())
+      .exec();
+    /*
     if (await this.isBashCompatible()) {
       return this.clone().setShellQuote().exec();
     }
 
     return this.clone().setPowerShellQuote().exec();
+    */
   }
 
   then<TResult1 = CommandOutput, TResult2 = never>(
@@ -276,6 +287,24 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
       .append(strings, ...values);
   }
 
+  // use quote based on platform
+  async determineQuote() {
+    const platform = await this.platform();
+    const kernelName = await this.kernelName();
+
+    if (platform === Platform.WINDOWS) {
+      if (kernelName.includes('cygwin') || kernelName.includes('mingw')) {
+        return quote;
+      } else if (kernelName.includes('msys_nt')) {
+        // msys_nt do not have support for c-style quoting
+        return doubleQuote;
+      }
+      return powerShellQuote;
+    }
+
+    return quote;
+  }
+
   async isBashCompatible() {
     const platform = await this.platform();
     const kernelName = await this.kernelName();
@@ -306,7 +335,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
       }
     });
   }
-    */
+  */
 
   async kernelName() {
     return this.cached('kernelName', async () => {
