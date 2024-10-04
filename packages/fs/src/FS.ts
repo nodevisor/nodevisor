@@ -1,5 +1,6 @@
 import { Module, Platform } from '@nodevisor/core';
 import PWSH from '@nodevisor/pwsh';
+import path from 'path';
 
 export type FSOptions<Flag = 'r'> = {
   encoding?: BufferEncoding | null;
@@ -98,7 +99,13 @@ export default class FS extends Module {
   }
 
   async temp() {
-    return this.$`mktemp`.text();
+    switch (await this.platform()) {
+      case Platform.WINDOWS:
+        // pwsh returns exit code 0 for true and false as well
+        return this.pwsh.command`[System.IO.Path]::GetTempFileName()`.text();
+      default:
+        return this.$`mktemp`.text();
+    }
   }
 
   async tempDir() {
