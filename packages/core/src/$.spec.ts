@@ -40,7 +40,7 @@ describe('Shell execution', () => {
 
     const myModule = $runner(MyModule, { value: 'Hello, world! Runner' });
     const cmd = myModule.test().setShellQuote().toString();
-    expect(cmd).toBe("su - runner -c $'echo $\\'Hello, world! Runner\\''");
+    expect(cmd).toBe("su - runner -c $'printf $\\'Hello, world! Runner\\''");
 
     const myModuleRunner = new MyModule($runner);
     myModuleRunner.test();
