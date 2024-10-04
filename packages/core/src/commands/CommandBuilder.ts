@@ -284,7 +284,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
       if (
         kernelName.includes('cygwin') ||
         kernelName.includes('mingw') ||
-        kernelName.includes('MSYS_NT')
+        kernelName.includes('msys_nt')
       ) {
         return true;
       }
@@ -336,7 +336,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     if (
       kernelName.includes('mingw') ||
       kernelName.includes('cygwin') ||
-      kernelName.includes('MSYS_NT') ||
+      kernelName.includes('msys_nt') ||
       kernelName.includes('windows')
     ) {
       return Platform.WINDOWS;
