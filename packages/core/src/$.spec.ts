@@ -7,7 +7,7 @@ class MyModule extends Module<{
   readonly name = 'MyModule';
 
   test() {
-    return this.$`echo ${this.config.value}`;
+    return this.$`printf ${this.config.value}`;
   }
 }
 
