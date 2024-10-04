@@ -64,7 +64,8 @@ export default class FS extends Module {
   async exists(path: string) {
     switch (await this.platform()) {
       case Platform.WINDOWS:
-        return this.pwsh.command`Test-Path ${path}`.boolean(true);
+        // pwsh returns exit code 0 for true and false as well
+        return this.pwsh.command`Test-Path ${path}`.boolean();
       default:
         return this.$`test -e ${path}`.boolean(true);
     }
