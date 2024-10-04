@@ -4,6 +4,8 @@ import Packages from './Packages';
 const isWindows = platform() === 'win32';
 const packageName = isWindows ? 'ntop' : 'htop';
 
+const itIfSafe = process.env.SAFE === 'true' ? it : xit;
+
 describe('Packages Module', () => {
   let packages: Packages;
 
@@ -11,7 +13,8 @@ describe('Packages Module', () => {
     packages = new Packages();
   });
 
-  it(
+  // skip when env variable is not set
+  itIfSafe(
     'should be able to install a package',
     async () => {
       await packages.install(packageName);
@@ -23,7 +26,7 @@ describe('Packages Module', () => {
     60 * 1000,
   );
 
-  it(
+  itIfSafe(
     'should be able to uninstall a package',
     async () => {
       await packages.uninstall(packageName);

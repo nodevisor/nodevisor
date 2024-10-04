@@ -10,6 +10,7 @@ import commandToString from '../utils/commandToString';
 import quote from '../quotes/quote';
 import powerShellQuote from '../quotes/powerShellQuote';
 import raw from '../utils/raw';
+import Shell from '../constants/Shell';
 import type CommandOutput from './CommandOutput';
 import CommandOutputBuilder from './CommandOutputBuilder';
 import CommandOutputError from '../errors/CommandOutputError';
@@ -29,7 +30,6 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
 
   private command: Command;
   private quote?: Quote;
-  private shell?: string;
   private prefix: string = '';
   private suffix: string = '';
   private env: Env;
@@ -68,16 +68,6 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     return this.setQuote(quote);
   }
 
-  // shell methods
-  setShell(shell: string) {
-    this.shell = shell;
-    return this;
-  }
-
-  getShell() {
-    return this.shell;
-  }
-
   setPrefix(prefix: string) {
     this.prefix = prefix;
     return this;
@@ -108,7 +98,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
   }
 
   toString() {
-    const { quote, shell } = this;
+    const { quote } = this;
     if (!quote) {
       throw new Error('Quote is not set');
     }
@@ -189,12 +179,11 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
       }
     }
 
-    switch (await this.platform()) {
-      case Platform.WINDOWS:
-        return this.clone().setPowerShellQuote().exec();
-      default:
-        return this.clone().setShellQuote().exec();
+    if (await this.isBashCompatible()) {
+      return this.clone().setShellQuote().exec();
     }
+
+    return this.clone().setPowerShellQuote().exec();
   }
 
   then<TResult1 = CommandOutput, TResult2 = never>(
@@ -287,42 +276,73 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
       .append(strings, ...values);
   }
 
-  // helpers
-  async platform() {
-    return this.cached('platform', async () => {
-      try {
-        const platform = await this.$`uname -s`.setShellQuote().toLowerCase().text();
-        if (platforms.includes(platform)) {
-          return platform as Platform;
-        }
+  async isBashCompatible() {
+    const platform = await this.platform();
+    const kernelName = await this.kernelName();
 
-        if (
-          platform.includes('mingw') ||
-          platform.includes('cygwin') ||
-          platform.includes('MSYS_NT')
-        ) {
-          return Platform.WINDOWS;
-        }
-
-        throw new Error('Unsupported platform');
-      } catch (error) {
-        const platform = await this
-          .$`pwsh -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Caption"`
-          .setPowerShellQuote()
-          .toLowerCase()
-          .text();
-
-        if (platforms.includes(platform)) {
-          return platform as Platform;
-        }
-
-        if (platform.includes('windows')) {
-          return Platform.WINDOWS;
-        }
+    if (platform === Platform.WINDOWS) {
+      if (
+        kernelName.includes('cygwin') ||
+        kernelName.includes('mingw') ||
+        kernelName.includes('MSYS_NT')
+      ) {
+        return true;
       }
 
-      throw new Error('Unsupported platform');
+      return false;
+    }
+
+    return true;
+  }
+  /*
+  async shell() {
+    return this.cached('shell', async () => {
+      const platform = await this.platform();
+      switch (platform) {
+        case Platform.WINDOWS:
+          return Shell.PWSH;
+        default:
+          return Shell.BASH;
+      }
     });
+  }
+    */
+
+  async kernelName() {
+    return this.cached('kernelName', async () => {
+      try {
+        try {
+          return await this.$`uname -s`.setShellQuote().toLowerCase().text();
+        } catch (error) {
+          return await this
+            .$`pwsh -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Caption"`
+            .setPowerShellQuote()
+            .toLowerCase()
+            .text();
+        }
+      } catch (error) {
+        throw new Error('Unsupported platform');
+      }
+    });
+  }
+
+  async platform() {
+    const kernelName = await this.kernelName();
+
+    if (platforms.includes(kernelName)) {
+      return kernelName as Platform;
+    }
+
+    if (
+      kernelName.includes('mingw') ||
+      kernelName.includes('cygwin') ||
+      kernelName.includes('MSYS_NT') ||
+      kernelName.includes('windows')
+    ) {
+      return Platform.WINDOWS;
+    }
+
+    throw new Error('Unsupported platform');
   }
 
   // env variable

@@ -83,5 +83,5 @@ jobs:
                       npm run build;
 
                       # Step 5: Run tests
-                      npm test;
+                      SAFE=true npm test;
                     "
