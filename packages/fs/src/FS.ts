@@ -1,4 +1,5 @@
 import { Module, Platform } from '@nodevisor/core';
+import PWSH from '@nodevisor/pwsh';
 
 export type FSOptions<Flag = 'r'> = {
   encoding?: BufferEncoding | null;
@@ -8,6 +9,7 @@ export type FSOptions<Flag = 'r'> = {
 
 export default class FS extends Module {
   readonly name = 'fs';
+  readonly pwsh = new PWSH(this.nodevisor);
 
   async readFile(path: string, options: FSOptions<'r'> = {}): Promise<string | Buffer> {
     const { encoding = 'utf8', flag = 'r' } = options;
@@ -62,7 +64,7 @@ export default class FS extends Module {
   async exists(path: string) {
     switch (await this.platform()) {
       case Platform.WINDOWS:
-        return this.$`pwsh Test-Path ${path}`.boolean(true);
+        return this.pwsh.command`Test-Path ${path}`.boolean(true);
       default:
         return this.$`test -e ${path}`.boolean(true);
     }
