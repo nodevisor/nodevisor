@@ -8,6 +8,6 @@ export default class PWSH extends Module {
       .setPowerShellQuote()
       .toString();
 
-    return this.$`pwsh -Command ${command} -NonInteractive`.setQuote(doubleQuote);
+    return this.$`pwsh -Command ${command}`.setQuote(doubleQuote);
   }
 }
