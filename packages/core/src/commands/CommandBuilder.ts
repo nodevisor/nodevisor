@@ -296,8 +296,9 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
       if (kernelName.includes('cygwin') || kernelName.includes('mingw')) {
         return quote;
       } else if (kernelName.includes('msys_nt')) {
+        return quote;
         // msys_nt do not have support for c-style quoting
-        return doubleQuote;
+        // return doubleQuote;
       }
       return powerShellQuote;
     }
