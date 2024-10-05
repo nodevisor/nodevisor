@@ -109,7 +109,14 @@ export default class FS extends Module {
   }
 
   async tempDir() {
-    return this.$`mktemp -d`.text();
+    switch (await this.platform()) {
+      case Platform.WINDOWS:
+        // pwsh returns exit code 0 for true and false as well
+        return this.pwsh
+          .command`$tempDir = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath() + [System.IO.Path]::GetRandomFileName()); $tempDir.FullName`.text();
+      default:
+        return this.$`mktemp -d`.text();
+    }
   }
 
   // get absolute path
