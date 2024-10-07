@@ -21,7 +21,7 @@ describe('Env Module', () => {
 
     expect(currentValue).toBeUndefined();
 
-    const printEnv = (await env.$`echo ${raw('$TEST_VAR')}`.text()) || undefined;
+    const printEnv = (await env.$`printf "%s" $TEST_VAR`.text()) || undefined;
     expect(printEnv).toBeUndefined();
 
     // random value
