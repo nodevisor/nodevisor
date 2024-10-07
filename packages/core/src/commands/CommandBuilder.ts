@@ -374,8 +374,8 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
   }
 
   // env variable
-  async getEnv(key: string) {
-    if (this.env.has(key)) {
+  async getEnv(key: string, readFromSystem = false) {
+    if (this.env.has(key) && !readFromSystem) {
       return this.env.get(key);
     }
 

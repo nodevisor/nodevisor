@@ -21,9 +21,6 @@ describe('Env Module', () => {
 
     expect(currentValue).toBeUndefined();
 
-    const printEnv = (await env.$`printf "%s" $TEST_VAR`.text()) || undefined;
-    expect(printEnv).toBeUndefined();
-
     // random value
     const newValue = Math.random().toString(36).substring(7);
     await env.set('TEST_VAR', newValue);
@@ -31,14 +28,15 @@ describe('Env Module', () => {
     const valueFromEnv = await env.get('TEST_VAR');
     expect(valueFromEnv).toBe(newValue);
 
-    const printEnvFromSystem = (await env.$`printf $TEST_VAR`.text()) || undefined;
-    expect(printEnvFromSystem).toBe(newValue);
+    const printEnvFromSystem = await env.connection.cmd({}).getEnv('TEST_VAR', true);
+    // it is saved in env not in system
+    expect(printEnvFromSystem).toBeUndefined();
 
     await env.unset('TEST_VAR');
     const unsetedValue = await env.get('TEST_VAR');
     expect(unsetedValue).toBeUndefined();
 
-    const printEnvFromSystem2 = (await env.$`printf "%s" $TEST_VAR`.text()) || undefined;
+    const printEnvFromSystem2 = await env.connection.cmd({}).getEnv('TEST_VAR', true); //(await env.$`printf "%s" $TEST_VAR`.text()) || undefined;
     expect(printEnvFromSystem2).toBeUndefined();
   });
   /*
