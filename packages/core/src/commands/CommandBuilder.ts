@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 import { type Encoding } from 'node:crypto';
 import type As from '../@types/As';
-import Env from '../Env';
+import Env, { type EnvOptions } from '../Env';
 import Platform from '../constants/Platform';
 import type Connection from '../connections/Connection';
 import type Quote from '../@types/Quote';
@@ -10,7 +10,6 @@ import commandToString from '../utils/commandToString';
 import quote from '../quotes/quote';
 import powerShellQuote from '../quotes/powerShellQuote';
 import raw from '../utils/raw';
-import Shell from '../constants/Shell';
 import type CommandOutput from './CommandOutput';
 import CommandOutputBuilder from './CommandOutputBuilder';
 import CommandOutputError from '../errors/CommandOutputError';
@@ -19,35 +18,38 @@ import { doubleQuote } from '../quotes';
 const platforms = Object.values(Platform) as string[];
 
 export type CommandBuilderOptions = {
+  env?: EnvOptions;
   command?: Command;
   quote?: Quote;
   noThrow?: boolean;
-  env?: Env | Record<string, string>;
   as?: As | string;
 };
 
 export default class CommandBuilder implements PromiseLike<CommandOutput> {
   readonly connection: Connection;
+  private env: Env;
 
   private command: Command;
   private quote?: Quote;
   private prefix: string = '';
   private suffix: string = '';
-  private env: Env;
+
   private as?: As;
 
   #noThrow: boolean;
 
   constructor(connection: Connection, options: CommandBuilderOptions = {}) {
-    const { command = [], quote, noThrow = false, env, as } = options;
+    const { command = [], quote, noThrow = false, as, env } = options;
 
     this.connection = connection;
+    // command has own env, we need to clone it
+    this.env = new Env(env);
 
     this.command = cloneDeep(command);
     this.quote = quote;
 
     this.#noThrow = noThrow;
-    this.env = new Env(env);
+
     this.as = typeof as === 'string' ? { user: as } : as;
   }
 
@@ -92,14 +94,24 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     return this.suffix;
   }
 
+  appendOperator(operator: string) {
+    this.command.push({ type: 'operator', strings: [operator], values: [] });
+    return this;
+  }
+
+  prependOperator(operator: string) {
+    this.command.unshift({ type: 'operator', strings: [operator], values: [] });
+    return this;
+  }
+
   // command methods
   append(strings: TemplateStringsArray, ...values: any[]) {
-    this.command.push({ strings: strings, values });
+    this.command.push({ type: 'token', strings: [...strings.raw], values });
     return this;
   }
 
   prepend(strings: TemplateStringsArray, ...values: any[]) {
-    this.command.unshift({ strings: strings, values });
+    this.command.unshift({ type: 'token', strings: [...strings.raw], values });
     return this;
   }
 
@@ -109,7 +121,8 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
       throw new Error('Quote is not set');
     }
 
-    const cloned = this.clone().clear();
+    // copy command builder without env, as, command and noThrow
+    const cloned = this.clone(true);
 
     // add env variables
     const envVariables = this.env.toObject();
@@ -130,6 +143,10 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
         cloned.and`source ${file}`;
       });
       cloned.and`set +a`;
+    }
+
+    if (cloned.command.length > 1) {
+      cloned.appendOperator('&&');
     }
 
     cloned.merge(this);
@@ -160,9 +177,9 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
 
     switch (method) {
       case 'su':
-        return this.$`su - ${user} -c ${cmd}`.toString();
+        return this.clone(true).append`su - ${user} -c ${cmd}`.toString();
       case 'runuser':
-        return this.$`runuser -l ${user} -c ${cmd}`.toString();
+        return this.clone(true).append`runuser -l ${user} -c ${cmd}`.toString();
       default:
         throw new Error(`Unsupported user switch: ${method}`);
     }
@@ -188,13 +205,6 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     return this.clone()
       .setQuote(await this.determineQuote())
       .exec();
-    /*
-    if (await this.isBashCompatible()) {
-      return this.clone().setShellQuote().exec();
-    }
-
-    return this.clone().setPowerShellQuote().exec();
-    */
   }
 
   then<TResult1 = CommandOutput, TResult2 = never>(
@@ -209,25 +219,25 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
 
   // logical operators
   and(strings: TemplateStringsArray, ...values: any[]) {
-    this.append` && `;
+    this.appendOperator('&&');
 
     return this.append(strings, ...values);
   }
 
   or(strings: TemplateStringsArray, ...values: any[]) {
-    this.append` || `;
+    this.appendOperator('||');
 
     return this.append(strings, ...values);
   }
 
   andPrepend(strings: TemplateStringsArray, ...values: any[]) {
-    this.prepend` && `;
+    this.prependOperator('&&');
 
     return this.prepend(strings, ...values);
   }
 
   orPrepend(strings: TemplateStringsArray, ...values: any[]) {
-    this.prepend` || `;
+    this.prependOperator('||');
 
     return this.prepend(strings, ...values);
   }
@@ -237,7 +247,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
       throw new Error('Can only concat with another CommandBuilder instance');
     }
 
-    this.command = cloneDeep(this.command.concat(commandBuilder.command));
+    this.command = cloneDeep([...this.command, ...commandBuilder.command]);
 
     return this;
   }
@@ -255,36 +265,25 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     return this.connection.cached(key, fn);
   }
 
-  clone() {
+  clone(clear = false) {
     const Constructor = this.constructor as new (
       connection: Connection,
       options: CommandBuilderOptions,
     ) => this;
 
-    const cloned = new Constructor(this.connection, {
-      command: this.command,
-      quote: this.quote,
-      noThrow: this.#noThrow,
-      env: this.env,
-      as: this.as,
-    });
+    const options = clear
+      ? {
+          quote: this.quote,
+        }
+      : {
+          quote: this.quote,
+          command: cloneDeep(this.command),
+          noThrow: this.#noThrow,
+          as: this.as,
+          env: this.env,
+        };
 
-    return cloned;
-  }
-
-  clear() {
-    this.command = [];
-    this.#noThrow = false;
-    this.as = undefined;
-    this.env = new Env();
-
-    return this;
-  }
-
-  $(strings: TemplateStringsArray, ...values: any[]) {
-    return this.clone()
-      .clear()
-      .append(strings, ...values);
+    return new Constructor(this.connection, options);
   }
 
   // use quote based on platform
@@ -341,10 +340,10 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     return this.cached('kernelName', async () => {
       try {
         try {
-          return await this.$`uname -s`.setShellQuote().toLowerCase().text();
+          return await this.clone(true).append`uname -s`.setShellQuote().toLowerCase().text();
         } catch (error) {
-          return await this
-            .$`pwsh -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Caption"`
+          return await this.clone(true)
+            .append`pwsh -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Caption"`
             .setPowerShellQuote()
             .toLowerCase()
             .text();
@@ -382,40 +381,26 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
 
     switch (await this.platform()) {
       case Platform.WINDOWS:
-        return await this.$`pwsh -command "echo $env:${key}"`.setPowerShellQuote();
+        return (
+          (await this.clone(true).append`pwsh -command "echo $env:${key}"`
+            .setPowerShellQuote()
+            .text()) || undefined
+        );
       default:
-        return await this.$`echo $${raw(key)}`.setShellQuote();
+        return (
+          (await this.clone(true).append`echo $${raw(key)}`.setShellQuote().text()) || undefined
+        );
     }
   }
 
-  async setEnv(key: string, value: string | undefined, propagate = true) {
-    if (value === undefined) {
-      return this.unsetEnv(key, propagate);
-    }
-
+  async setEnv(key: string, value: string | undefined) {
     this.env.set(key, value);
-
-    if (propagate) {
-      switch (await this.platform()) {
-        case Platform.WINDOWS:
-          return await this.$`pwsh -command "set-item -path env:${key} -value ${value}"`;
-        default:
-          return await this.$`export ${raw(key)}=${value}`;
-      }
-    }
+    return this;
   }
 
-  async unsetEnv(key: string, propagate = true) {
-    this.env.delete(key);
-
-    if (propagate) {
-      switch (await this.platform()) {
-        case Platform.WINDOWS:
-          return await this.$`pwsh -command "remove-item -path env:${key}"`;
-        default:
-          return await this.$`unset ${raw(key)}`;
-      }
-    }
+  async unsetEnv(key: string) {
+    this.env.set(key, undefined);
+    return this;
   }
 
   // output type builders

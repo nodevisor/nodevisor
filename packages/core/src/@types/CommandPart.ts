@@ -1,5 +1,6 @@
 type CommandPart = {
-  readonly strings: TemplateStringsArray;
+  readonly type: 'operator' | 'token';
+  readonly strings: string[];
   readonly values: any[];
 };
 

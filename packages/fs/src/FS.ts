@@ -1,6 +1,5 @@
 import { Module, Platform } from '@nodevisor/core';
 import PWSH from '@nodevisor/pwsh';
-import path from 'path';
 
 export type FSOptions<Flag = 'r'> = {
   encoding?: BufferEncoding | null;

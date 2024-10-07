@@ -1,14 +1,20 @@
-import { Module, raw } from '@nodevisor/core';
+import { Module } from '@nodevisor/core';
 
 export default class Env extends Module {
   readonly name = 'env';
 
   async get(name: string) {
-    return this.$`echo $${raw(name)}`;
+    // read env from nodevisor command because it will read value from system
+    return this.nodevisor.cmd().getEnv(name);
   }
 
-  async set(name: string, value: string) {
-    await this.$`export ${raw(name)}=${value}`;
+  async set(name: string, value: string | undefined) {
+    // we set value in nodevisor directly, it will be passed to each command
+    await this.nodevisor.env.set(name, value);
+  }
+
+  async unset(name: string) {
+    await this.set(name, undefined);
   }
 
   async home() {

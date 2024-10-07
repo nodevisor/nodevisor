@@ -35,7 +35,9 @@ export default abstract class Connection extends EventEmitter {
   }
 
   cmd(options: CommandBuilderOptions): CommandBuilder {
-    return new CommandBuilder(this, options);
+    return new CommandBuilder(this, {
+      ...options,
+    });
   }
 
   async cached<T extends string>(key: string, fn: () => Promise<T>): Promise<T> {

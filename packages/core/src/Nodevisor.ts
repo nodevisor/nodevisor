@@ -1,13 +1,15 @@
 import Connection from './connections/Connection';
 import SSHConnection, { type SSHConnectionConfig } from './connections/SSHConnection';
 import ShellConnection from './connections/ShellConnection';
-import CommandBuilder, { type CommandBuilderOptions } from './commands/CommandBuilder';
+import { type CommandBuilderOptions } from './commands/CommandBuilder';
 import type As from './@types/As';
+import Env from './Env';
 
 export default class Nodevisor {
   static readonly local = new Nodevisor();
 
   readonly connection: Connection;
+  readonly env: Env;
 
   private commandOptions: CommandBuilderOptions;
 
@@ -18,16 +20,28 @@ export default class Nodevisor {
     this.connection = connection instanceof Connection ? connection : new SSHConnection(connection);
     this.commandOptions = commandOptions;
 
+    // clone env from command options
+    this.env = new Env(commandOptions.env);
+
     this.$ = this.$.bind(this);
   }
 
+  cmd() {
+    return this.connection.cmd({
+      ...this.commandOptions,
+      env: this.env,
+    });
+  }
+
   $(strings: TemplateStringsArray, ...values: any[]) {
-    return new CommandBuilder(this.connection, this.commandOptions).append(strings, ...values);
+    return this.cmd().append(strings, ...values);
   }
 
   clone(options: CommandBuilderOptions = {}) {
     return new Nodevisor(this.connection, {
       ...this.commandOptions,
+      // clone env from current instance
+      env: this.env,
       ...options,
     });
   }
@@ -37,7 +51,7 @@ export default class Nodevisor {
   }
 
   async platform() {
-    return this.$``.platform();
+    return this.cmd().platform();
   }
 
   async close() {

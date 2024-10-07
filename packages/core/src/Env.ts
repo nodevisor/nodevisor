@@ -1,8 +1,10 @@
+export type EnvOptions = Env | Record<string, string | undefined>;
+
 export default class Env {
-  protected env: Map<string, string> = new Map();
+  protected env: Map<string, string | undefined> = new Map();
   protected files: Set<string> = new Set();
 
-  constructor(env?: Env | Record<string, string>) {
+  constructor(env?: EnvOptions) {
     if (env && env instanceof Env) {
       this.env = new Map(env.env);
       this.files = new Set(env.files);
@@ -30,19 +32,11 @@ export default class Env {
       return;
     }
 
-    if (typeof value === 'undefined') {
-      if (this.env.has(key)) {
-        this.env.delete(key);
-      }
-      return;
-    }
-
     this.env.set(key, value);
   }
 
   has(key: string) {
-    const value = this.get(key);
-    return value !== undefined;
+    return this.env.has(key);
   }
 
   delete(key: string) {

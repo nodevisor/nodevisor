@@ -27,7 +27,7 @@ function nodevisorProxy(nodevisor: Nodevisor = Nodevisor.local) {
     ...values: any[]
   ) {
     if (isTemplateStringsArray(input)) {
-      return nodevisor.$``.append(input as TemplateStringsArray, ...values);
+      return nodevisor.cmd().append(input as TemplateStringsArray, ...values);
     }
 
     if (isModule(input)) {
