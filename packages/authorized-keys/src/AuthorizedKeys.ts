@@ -1,38 +1,81 @@
+import fs from 'fs/promises';
 import { Module } from '@nodevisor/core';
 import Env from '@nodevisor/env';
 import FS from '@nodevisor/fs';
+import path from 'path';
 
-export default class AuthorizedKeys extends Module {
+export default class AuthorizedKeys extends Module<{
+  sshDir: string;
+  authorizedKeysFile: string;
+}> {
   readonly name = 'authorizedKeys';
+
   readonly fs = new FS(this.nodevisor);
   readonly env = new Env(this.nodevisor);
 
+  get sshDir() {
+    return this.config.sshDir || '.ssh';
+  }
+
+  get authorizedKeysFile() {
+    return this.config.authorizedKeysFile || 'authorized_keys';
+  }
+
+  async getAuthorizedKeysPath() {
+    const homeDir = await this.env.home();
+    return path.join(homeDir, this.sshDir, this.authorizedKeysFile);
+  }
+
+  async ensureSSHDirectory(): Promise<void> {
+    const homeDir = await this.env.home();
+    const sshPath = path.join(homeDir, this.sshDir);
+    await this.fs.mkdir(sshPath, { recursive: true });
+  }
+
   async append(publicKey: string) {
-    if (!publicKey) {
-      throw new Error('Public key is required');
+    const trimmedKey = publicKey.trim();
+    if (!trimmedKey) {
+      throw new Error('Public key is required and cannot be empty.');
     }
 
-    // Append the public key to the authorized_keys file on the server
-    const home = await this.env.home();
+    const authorizedKeysPath = await this.getAuthorizedKeysPath();
+    const currentContent = await this.fs.readFile(authorizedKeysPath);
+    const contentToAppend = currentContent ? `\n${trimmedKey}` : trimmedKey;
 
-    let content = publicKey.trim();
-
-    // add new line if file is not empty
-    const currentContent = await this.fs.readFile(`${home}/.ssh/authorized_keys`);
-    if (currentContent.length > 0) {
-      content = `\n${content}`;
-    }
-
-    await this.fs.appendFile(`${home}/.ssh/authorized_keys`, content);
+    await this.fs.appendFile(authorizedKeysPath, contentToAppend);
   }
 
   async write(publicKey: string) {
-    const home = await this.env.home();
+    const trimmedKey = publicKey.trim();
+    if (!trimmedKey) {
+      throw new Error('Public key is required and cannot be empty.');
+    }
 
-    // create .ssh directory if it doesn't exist
-    await this.fs.mkdir(`${home}/.ssh`, { recursive: true });
+    await this.ensureSSHDirectory();
 
-    // Append the public key to the authorized_keys file on the server
-    await this.fs.writeFile(`${home}/.ssh/authorized_keys`, publicKey.trim());
+    const authorizedKeysPath = await this.getAuthorizedKeysPath();
+    await this.fs.writeFile(authorizedKeysPath, trimmedKey);
+  }
+
+  async appendFromFile(publicKeyPath: string, localPath = true) {
+    if (!publicKeyPath) {
+      throw new Error('Public key file path is required');
+    }
+
+    const publicKey = localPath
+      ? await fs.readFile(publicKeyPath)
+      : await this.fs.readFile(publicKeyPath);
+    await this.append(publicKey.toString());
+  }
+
+  async writeFromFile(publicKeyPath: string, localPath = true) {
+    if (!publicKeyPath) {
+      throw new Error('Public key file path is required');
+    }
+
+    const publicKey = localPath
+      ? await fs.readFile(publicKeyPath)
+      : await this.fs.readFile(publicKeyPath);
+    await this.write(publicKey.toString());
   }
 }
