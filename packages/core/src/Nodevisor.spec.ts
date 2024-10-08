@@ -61,6 +61,30 @@ describe('Nodevisor', () => {
     expect(cmd).toBe('runuser -l testuser -c $\'printf "Hello, world!"\'');
   });
 
+  it('should set environment variables and generate a command', async () => {
+    const nodevisor = new Nodevisor();
+
+    const cmd = nodevisor.$`printf "Hello, world!"`
+      .setShellQuote()
+      .setEnv('FILE_TEST_VAR', 'test-file-value')
+      .toString();
+
+    expect(cmd).toBe('export FILE_TEST_VAR=test-file-value && printf "Hello, world!"');
+  });
+
+  it('should set environment variables from file', async () => {
+    const nodevisor = new Nodevisor();
+    nodevisor.env.set('FILE_TEST_VAR', 'test-file-value');
+    nodevisor.env.addFile('/tmp/tmp-test-file');
+    nodevisor.env.addFile('/tmp/tmp-test-file2');
+
+    const cmd = nodevisor.$`printf "Hello, world!"`.setShellQuote().toString();
+
+    expect(cmd).toBe(
+      'export FILE_TEST_VAR=test-file-value && set -a && source /tmp/tmp-test-file && source /tmp/tmp-test-file2 && set +a && printf "Hello, world!"',
+    );
+  });
+
   /*
   it('should execute a command with environment variables', async () => {
     const execSpy = jest.spyOn(sshConnectionMock, 'exec').mockResolvedValue('Success');

@@ -68,4 +68,10 @@ export default class Env {
   public getFiles() {
     return Array.from(this.files);
   }
+
+  public cloneWithFiles() {
+    const env = new Env();
+    env.files = new Set(this.files);
+    return env;
+  }
 }

@@ -27,8 +27,6 @@ export default class Env extends Module {
   }
 
   async load(path: string) {
-    await this.$`set -a`;
-    await this.$`source ${path}`;
-    await this.$`set +a`;
+    await this.nodevisor.env.addFile(path);
   }
 }

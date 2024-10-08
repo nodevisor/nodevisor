@@ -1,4 +1,4 @@
-import { raw } from '@nodevisor/core';
+import path from 'path';
 import Env from './Env';
 
 describe('Env Module', () => {
@@ -38,6 +38,13 @@ describe('Env Module', () => {
 
     const printEnvFromSystem2 = await env.connection.cmd({}).getEnv('TEST_VAR', true); //(await env.$`printf "%s" $TEST_VAR`.text()) || undefined;
     expect(printEnvFromSystem2).toBeUndefined();
+  });
+
+  it('should load the environment variables from the file .test', async () => {
+    await env.load(path.join(__dirname, '.test'));
+
+    const value = await env.get('FILE_TEST_VAR');
+    expect(value).toBe('test-file-value');
   });
   /*
   it('should unset the environment variable', async () => {

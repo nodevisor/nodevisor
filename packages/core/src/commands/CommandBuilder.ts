@@ -1,4 +1,4 @@
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isObject } from 'lodash';
 import { type Encoding } from 'node:crypto';
 import type As from '../@types/As';
 import Env, { type EnvOptions } from '../Env';
@@ -27,7 +27,7 @@ export type CommandBuilderOptions = {
 
 export default class CommandBuilder implements PromiseLike<CommandOutput> {
   readonly connection: Connection;
-  private env: Env;
+  readonly env: Env;
 
   private command: Command;
   private quote?: Quote;
@@ -265,7 +265,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     return this.connection.cached(key, fn);
   }
 
-  clone(clear = false) {
+  clone(clear: boolean = false, override: { env?: Env } = {}) {
     const Constructor = this.constructor as new (
       connection: Connection,
       options: CommandBuilderOptions,
@@ -273,6 +273,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
 
     const options = clear
       ? {
+          ...override,
           quote: this.quote,
         }
       : {
@@ -379,27 +380,41 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
       return this.env.get(key);
     }
 
+    // clone env with files only
+    const env = this.env.cloneWithFiles();
+
     switch (await this.platform()) {
       case Platform.WINDOWS:
         return (
-          (await this.clone(true).append`pwsh -command "echo $env:${key}"`
+          (await this.clone(true, {
+            env,
+          }).append`pwsh -command "echo $env:${key}"`
             .setPowerShellQuote()
             .text()) || undefined
         );
       default:
         return (
-          (await this.clone(true).append`echo $${raw(key)}`.setShellQuote().text()) || undefined
+          (await this.clone(true, {
+            env,
+          }).append`echo $${raw(key)}`
+            .setShellQuote()
+            .text()) || undefined
         );
     }
   }
 
-  async setEnv(key: string, value: string | undefined) {
+  setEnv(key: string, value: string | undefined) {
     this.env.set(key, value);
     return this;
   }
 
-  async unsetEnv(key: string) {
+  unsetEnv(key: string) {
     this.env.set(key, undefined);
+    return this;
+  }
+
+  addEnvFile(filepath: string) {
+    this.env.addFile(filepath);
     return this;
   }
 
