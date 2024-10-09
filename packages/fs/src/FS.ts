@@ -1,4 +1,4 @@
-import { Module, Platform } from '@nodevisor/core';
+import { Module, Platform, raw } from '@nodevisor/core';
 import PWSH from '@nodevisor/pwsh';
 
 export type FSOptions<Flag = 'r'> = {
@@ -52,13 +52,13 @@ export default class FS extends Module {
   async mkdir(path: string, options: { recursive?: boolean } = {}): Promise<void> {
     const { recursive = false } = options;
 
-    await this.$`mkdir ${recursive ? '-p' : ''} ${path}`;
+    await this.$`mkdir ${recursive ? raw('-p') : ''} ${path}`;
   }
 
   async rmdir(path: string, options: { recursive?: boolean } = {}): Promise<void> {
     const { recursive = false } = options;
 
-    await this.$`rm -r${recursive ? '-f' : ''} ${path}`;
+    await this.$`rm ${recursive ? raw('-rf') : raw('-r')} ${path}`;
   }
 
   async exists(path: string) {

@@ -1,12 +1,12 @@
 import Module, { type ModuleConfig } from './Module';
 
-export type PackageConfig = ModuleConfig & {
-  dependencies?: Package<any>[];
-};
+export type PackageConfig = ModuleConfig & {};
 
-export default abstract class Package<
-  TConfig extends PackageConfig = PackageConfig,
-> extends Module<TConfig> {
+export default abstract class Package<TConfig extends PackageConfig = PackageConfig> extends Module<
+  TConfig & {
+    dependencies?: Package<any>[];
+  }
+> {
   get dependencies() {
     return this.config.dependencies || [];
   }

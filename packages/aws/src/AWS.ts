@@ -1,21 +1,48 @@
-import { Package } from '@nodevisor/core';
-import Packages from '@nodevisor/packages';
+import { Package, raw } from '@nodevisor/core';
+import Packages, { PackageManager } from '@nodevisor/packages';
 import FS from '@nodevisor/fs';
+import OS from '@nodevisor/os';
 
-export default class AWS extends Package {
+function getLink(arch: string) {
+  if (arch.includes('arch')) {
+    return 'https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip';
+  }
+
+  return 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip';
+}
+
+export default class AWS extends Package<{
+  command?: string;
+}> {
   readonly name = 'aws';
 
   readonly packages = new Packages(this.nodevisor);
   readonly fs = new FS(this.nodevisor);
+  readonly os = new OS(this.nodevisor);
+  get command() {
+    return this.config.command || 'aws';
+  }
+
+  private $aws(strings: TemplateStringsArray, ...values: string[]) {
+    return this.$`${raw(this.command)} `.append(strings, ...values);
+  }
 
   async getVersion() {
-    return this.$`aws --version`.text();
+    if (!(await this.isInstalled())) {
+      throw new Error('AWS CLI is not installed');
+    }
+
+    return this.$aws`--version`.text();
   }
 
   async isInstalled() {
-    const response = await this.$`aws --version`.text();
+    try {
+      const response = await this.$aws`--version`.text();
 
-    return response.includes('aws-cli');
+      return response.includes('aws-cli');
+    } catch (error) {
+      return false;
+    }
   }
 
   async update() {
@@ -23,26 +50,39 @@ export default class AWS extends Package {
       return this;
     }
 
-    await this.$`aws --update`;
+    await this.$aws`--update`;
 
     return this;
   }
 
   async installPackage() {
-    await this.packages.install(['unzip', 'curl']);
+    switch (await this.packages.packageManager()) {
+      case PackageManager.BREW:
+        await this.packages.install('awscli');
+        return;
+      case PackageManager.WINGET:
+        await this.packages.install('Amazon.AWSCLI');
+        return;
+      default:
+        await this.packages.install(['unzip', 'curl']);
 
-    const tempFile = await this.fs.temp();
+        const tempFile = await this.fs.temp();
 
-    await this
-      .$`curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o ${tempFile} --silent`;
+        const arch = await this.os.arch();
 
-    const tempDir = await this.fs.tempDir();
+        const link = getLink(arch);
 
-    await this.$`unzip ${tempFile} -d ${tempDir}`;
-    await this.$`${tempDir}/aws/install`;
+        await this.$`curl ${link} -o ${tempFile} --silent`;
 
-    await this.fs.rm(tempFile);
-    await this.fs.rmdir(tempDir, { recursive: true });
+        const tempDir = await this.fs.tempDir();
+
+        await this.$`unzip ${tempFile} -d ${tempDir}`;
+        await this.$`${tempDir}/aws/install`;
+
+        await this.fs.rm(tempFile);
+        await this.fs.rmdir(tempDir, { recursive: true });
+        break;
+    }
   }
 
   async uninstallPackage() {
@@ -51,18 +91,18 @@ export default class AWS extends Package {
 
   async set(key: string, value: string, profile?: string) {
     if (!profile) {
-      return this.$`aws configure set ${key} ${value}`;
+      return this.$aws`configure set ${key} ${value}`.text();
     }
 
-    return this.$`aws configure set ${key} ${value} --profile ${profile}`;
+    return this.$aws`configure set ${key} ${value} --profile ${profile}`.text();
   }
 
   async get(key: string, profile?: string) {
     if (!profile) {
-      return this.$`aws configure get ${key}`;
+      return this.$aws`configure get ${key}`.text();
     }
 
-    return this.$`aws configure get ${key} --profile ${profile}`;
+    return this.$aws`configure get ${key} --profile ${profile}`.text();
   }
 
   async setDefaultRegion(region: string) {
