@@ -16,11 +16,6 @@ export default class DockerSwarm extends Service {
     return this.docker.isInstalled();
   }
 
-  async update() {
-    await this.docker.update();
-    return this;
-  }
-
   async installPackage() {
     return this.docker.installPackage();
   }
@@ -45,7 +40,7 @@ export default class DockerSwarm extends Service {
     }
 
     if (await this.isRunning()) {
-      return this;
+      return;
     }
 
     await this.$`docker swarm init`;
@@ -53,13 +48,11 @@ export default class DockerSwarm extends Service {
     if (!(await this.isRunning())) {
       throw new Error('Failed to start docker swarm');
     }
-
-    return this;
   }
 
   async stop() {
     if (!(await this.isRunning())) {
-      return this;
+      return;
     }
 
     await this.$`docker swarm leave --force`;
@@ -67,7 +60,9 @@ export default class DockerSwarm extends Service {
     if (await this.isRunning()) {
       throw new Error('Failed to stop docker swarm');
     }
+  }
 
-    return this;
+  async deploy(stack: string, composeFile: string) {
+    return this.$`docker stack deploy -c ${composeFile} ${stack}`;
   }
 }

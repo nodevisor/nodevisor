@@ -57,25 +57,33 @@ export default class AuthorizedKeys extends Module<{
     await this.fs.writeFile(authorizedKeysPath, trimmedKey);
   }
 
-  async appendFromFile(publicKeyPath: string, localPath = true) {
+  async readPublicKey(publicKeyPath: string, remotePath = false) {
+    try {
+      return remotePath ? await this.fs.readFile(publicKeyPath) : await fs.readFile(publicKeyPath);
+    } catch (error) {
+      throw new Error(
+        `Failed to read public key file at ${publicKeyPath}: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async appendFromFile(publicKeyPath: string, remotePath = false) {
     if (!publicKeyPath) {
       throw new Error('Public key file path is required');
     }
 
-    const publicKey = localPath
-      ? await fs.readFile(publicKeyPath)
-      : await this.fs.readFile(publicKeyPath);
+    const publicKey = await this.readPublicKey(publicKeyPath, remotePath);
+
     await this.append(publicKey.toString());
   }
 
-  async writeFromFile(publicKeyPath: string, localPath = true) {
+  async writeFromFile(publicKeyPath: string, remotePath = false) {
     if (!publicKeyPath) {
       throw new Error('Public key file path is required');
     }
 
-    const publicKey = localPath
-      ? await fs.readFile(publicKeyPath)
-      : await this.fs.readFile(publicKeyPath);
+    const publicKey = await this.readPublicKey(publicKeyPath, remotePath);
+
     await this.write(publicKey.toString());
   }
 }

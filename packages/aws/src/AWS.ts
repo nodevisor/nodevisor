@@ -45,16 +45,6 @@ export default class AWS extends Package<{
     }
   }
 
-  async update() {
-    if (!(await this.isInstalled())) {
-      return this;
-    }
-
-    await this.$aws`--update`;
-
-    return this;
-  }
-
   async installPackage() {
     switch (await this.packages.packageManager()) {
       case PackageManager.BREW:

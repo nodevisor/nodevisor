@@ -34,8 +34,6 @@ export default abstract class Package<TConfig extends PackageConfig = PackageCon
     await this.installPackage();
 
     this.log('Installed');
-
-    return this;
   }
 
   // New abstract method for subclasses to implement
@@ -48,12 +46,9 @@ export default abstract class Package<TConfig extends PackageConfig = PackageCon
     }
 
     await this.uninstallPackage();
-    return this;
   }
 
   protected abstract uninstallPackage(): Promise<void>;
-
-  abstract update(): Promise<this>;
 
   abstract isInstalled(): Promise<boolean>;
   abstract getVersion(): Promise<string>;

@@ -1,7 +1,7 @@
 import Protocol from '../constants/Protocol';
 
 type Endpoint = {
-  name: string;
+  name?: string;
   port: number;
   protocol: Protocol;
 };

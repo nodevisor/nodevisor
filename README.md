@@ -276,16 +276,6 @@ You can use Nodevisor for free if:
 
 For more details, read our [LICENSE page](https://github.com/nodevisor/nodevisor/blob/main/LICENSE.md).
 
-## Pricing
-
-We offer simple pricing:
-
-- **$9 per server, per month:**
-
-You get all features and unlimited users.
-
-For more details, check our [pricing page](https://www.nodevisor.com/pricing).
-
 ## Need help?
 
 If you have questions or need help, please open an issue on our [GitHub issues page](https://github.com/nodevisor/nodevisor/issues/new?title=Help%20needed%3A%20Question%20about%20Nodevisor&labels=question).

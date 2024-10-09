@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@nodevisor/core": "^0.0.14",
+    "@nodevisor/endpoint": "^0.0.14",
     "@nodevisor/packages": "^0.0.14"
   },
   "devDependencies": {

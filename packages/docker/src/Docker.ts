@@ -31,11 +31,6 @@ export default class Docker extends Service {
     }
   }
 
-  async update() {
-    throw new Error('Not implemented');
-    return this;
-  }
-
   async installPackage() {
     switch (await this.packages.packageManager()) {
       case PackageManager.BREW:
@@ -86,12 +81,10 @@ export default class Docker extends Service {
 
   async start() {
     await this.services.start('docker');
-    return this;
   }
 
   async stop() {
     await this.services.stop('docker');
-    return this;
   }
 
   // user methods
@@ -104,5 +97,9 @@ export default class Docker extends Service {
     }
 
     await this.groups.addUser(username, 'docker');
+  }
+
+  async pull(image: string) {
+    await this.$`docker pull ${image}`;
   }
 }
