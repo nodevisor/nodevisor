@@ -20,7 +20,7 @@
     "build": "npm run clean && npm run build:esm && npm run build:cjs",
     "build:esm": "tsc -p tsconfig.json",
     "build:cjs": "tsc -p tsconfig-cjs.json",
-    "test": "jest --passWithNoTests",
+    "test": "jest --runInBand",
     "valid": "tsc --noEmit"
   },
   "dependencies": {

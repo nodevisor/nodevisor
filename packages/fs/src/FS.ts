@@ -52,6 +52,10 @@ export default class FS extends Module {
   async mkdir(path: string, options: { recursive?: boolean } = {}): Promise<void> {
     const { recursive = false } = options;
 
+    if (await this.exists(path)) {
+      return;
+    }
+
     await this.$`mkdir ${recursive ? raw('-p') : ''} ${path}`;
   }
 

@@ -38,6 +38,9 @@ export default class Docker extends Service {
 
   async installPackage() {
     switch (await this.packages.packageManager()) {
+      case PackageManager.BREW:
+        await this.packages.install('docker');
+        break;
       case PackageManager.APT:
         await this.packages.install([
           'apt-transport-https',
@@ -66,7 +69,7 @@ export default class Docker extends Service {
         await this.start();
         break;
       default:
-        throw new Error(`Unsupported package manager: ${await this.packages.packageManager()}`);
+        throw new Error('Unsupported package manager');
     }
   }
 
