@@ -143,15 +143,8 @@ export default class Packages extends Module {
         return !!aptLinesFiltered.length;
         */
         const aptLines = await this.$`apt-cache policy ${name} | grep Installed`.lines();
-        console.log('aptLines***', aptLines, JSON.stringify(aptLines));
         // filter out lines that contain "Installed: (none)"
         const aptLinesFiltered = aptLines.filter((line) => !line.includes('Installed: (none)'));
-        console.log(
-          'aptLinesFiltered***',
-          aptLinesFiltered,
-          JSON.stringify(aptLinesFiltered),
-          !!aptLinesFiltered.length,
-        );
         return !!aptLinesFiltered.length;
     }
   }
