@@ -12,7 +12,5 @@ export default abstract class Service<
   async restart() {
     await this.stop();
     await this.start();
-
-    return this;
   }
 }

@@ -87,9 +87,13 @@ export default class Docker extends Service {
     await this.services.stop('docker');
   }
 
+  async restart() {
+    await this.services.restart('docker');
+  }
+
   // user methods
   // allow username to run docker commands without sudo
-  async allowUser(username: string) {
+  async allowUser(username: string, skipRestart = false) {
     const isUserInGroup = await this.groups.hasUser(username, 'docker');
     if (isUserInGroup) {
       this.log(`User ${username} is already in docker group`);
@@ -97,6 +101,11 @@ export default class Docker extends Service {
     }
 
     await this.groups.addUser(username, 'docker');
+
+    // restart docker service to apply changes, otherwise user will not be able to run docker commands without sudo
+    if (!skipRestart) {
+      await this.restart();
+    }
   }
 
   async pull(image: string) {

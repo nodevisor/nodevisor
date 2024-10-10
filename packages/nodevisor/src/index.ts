@@ -43,5 +43,8 @@ export * from '@nodevisor/aws';
 export { default as Docker } from '@nodevisor/docker';
 export * from '@nodevisor/docker';
 
+export { default as SSH } from '@nodevisor/ssh';
+export * from '@nodevisor/ssh';
+
 export { default as UFW } from '@nodevisor/ufw';
 export * from '@nodevisor/ufw';
