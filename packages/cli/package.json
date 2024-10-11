@@ -1,0 +1,44 @@
+{
+  "name": "@nodevisor/cli",
+  "description": "Module provides CLI for Nodevisor",
+  "version": "0.0.14",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "bin": {
+    "nodevisor": "./dist/cjs/cli.js"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "prettier": "prettier --write src/**/*.ts test/**/*.ts",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc -p tsconfig.json",
+    "build:cjs": "tsc -p tsconfig-cjs.json",
+    "test": "jest --passWithNoTests",
+    "valid": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nodevisor/core": "^0.0.14",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^22.5.4",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "5.5.4"
+  },
+  "gitHead": "9d54b26867ef1fa66a832f040bf12101e0c9d62a"
+}
