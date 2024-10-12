@@ -8,7 +8,7 @@ import * as dotenv from 'dotenv';
 const program = new Command();
 
 tsNode.register({
-  transpileOnly: true, // Optional: Disable type checking for faster execution
+  transpileOnly: true,
   compilerOptions: {
     module: 'NodeNext', // Set the module system to NodeNext
     moduleResolution: 'NodeNext', // Set the module resolution to NodeNext
@@ -47,14 +47,15 @@ program
         console.error('Error loading .env file:', result.error);
         process.exit(1);
       }
-      Object.assign(envVars, result.parsed); // Only pass variables from .env file
+      Object.assign(envVars, result.parsed);
     }
 
     try {
       const module = require(filePath);
-      await module.default({
-        env: envVars,
-      });
+      const { default: fn, schema } = module;
+
+      const parsed = schema ? schema.parse(envVars) : envVars;
+      await fn(parsed);
     } catch (error) {
       console.error(`Error while executing ${file}:`, (error as Error).message);
     }
