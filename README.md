@@ -99,17 +99,141 @@ _Explanation:_ In this example, the ${name} variable is safely included in the s
 
 More information about escaping variables can be found [here](https://nodevisor.com/docs/quotes).
 
-### Command Line - Comming Soon
+### Command Line
 
 To install Nodevisor, run this command:
 
-```bash
-npm install -g nodevisor
-
-nodevisor --host your-server-address --username runner --command "echo 'Hello, World!'"
+```sh
+npm install --save-dev @nodevisor/cli nodevisor
 ```
 
-_Explanation:_ This snippet shows how to install Nodevisor globally and run commands directly from the command line. This feature is still under development.
+#### Setting up package.json
+
+Here’s how your package.json should look:
+
+```json
+{
+  "name": "my-super-project",
+  "scripts": {
+    "deploy": "nodevisor ./.nodevisor/deploy.ts"
+  },
+  "devDependencies": {
+    "@nodevisor/cli": "0.1.0",
+    "nodevisor": "0.1.0",
+    "zod": "3.23.8"
+  }
+}
+```
+
+#### Running the Command
+
+You can now run your Nodevisor setup by executing:
+
+```sh
+npm run deploy
+```
+
+#### Project structure
+
+```ts
+my-super-project/
+│
+├── .nodevisor/
+│   └── deploy.ts
+├── package.json
+└── node_modules/
+```
+
+In your project root directory create deploy.ts inside _.nodevisor_ directory
+
+#### deploy.ts Example
+
+Here’s an example of what your deploy.ts file should look like. This script uses Nodevisor to perform server setup tasks like configuring users, installing Docker, setting up a firewall and run your nextjs application.
+
+_.nodevisor/deploy.ts_
+
+```ts
+import $, {
+  AuthorizedKeys,
+  Packages,
+  UFW,
+  Auth,
+  endpoints,
+  Docker,
+  DockerSwarm,
+  Users,
+  SSH,
+} from 'nodevisor';
+import { z } from 'zod';
+
+export const schema = z.object({
+  host: z
+    .string()
+    .min(1, 'Host is required')
+    .default(process.env.HOST ?? ''),
+  root: z
+    .object({
+      username: z.string().min(1, 'Root username is required'),
+      password: z.string().min(1, 'Root password is required'),
+      publicKey: z.string().min(1, 'Root public key is required'),
+    })
+    .default({
+      username: process.env.ROOT_USERNAME ?? 'root',
+      password: process.env.ROOT_PASSWORD ?? '',
+      publicKey: process.env.ROOT_PUBLIC_KEY ?? '',
+    }),
+  app: z
+    .object({
+      username: z.string().min(1, 'App username is required'),
+      password: z.string().min(1, 'App password is required'),
+    })
+    .default({
+      username: process.env.APP_USERNAME ?? 'runner',
+      password: process.env.APP_PASSWORD ?? '',
+    }),
+});
+
+export default async (config: z.infer<typeof schema>) => {
+  const { host, root, app } = config;
+
+  const $con = $.connect({
+    host,
+    username: root.username,
+    password: root.password,
+  });
+
+  // get list of new packages
+  await $con(Packages).update();
+
+  // assign public key to the root user
+  await $con(AuthorizedKeys).write(root.publicKey);
+
+  // disable password authentication
+  await $con(SSH).disablePasswordAuthentication();
+
+  // install firewall and allow only ssh, http and https
+  await $con(UFW).install();
+  await $con(UFW).allow([endpoints.ssh, endpoints.web, endpoints.webSecure]);
+  await $con(UFW).start();
+
+  // create user for the app
+  await $con(Users).add(app.username);
+  await $con(Auth).setPassword(app.username, app.username);
+
+  // assign public key to the app user
+  const $user = $con.as(app.username);
+  await $user(AuthorizedKeys).write(root.publicKey);
+
+  // install docker
+  await $con(DockerSwarm).install();
+
+  // allow app user to run docker commands without sudo
+  await $con(Docker).allowUser(app.username);
+
+  // start swarm
+  await $con(DockerSwarm).start();
+};
+```
 
 ### YAML Configuration - Comming Soon
 
