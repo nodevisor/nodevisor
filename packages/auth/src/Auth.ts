@@ -32,7 +32,7 @@ export default class Auth extends Module {
     try {
       await this.fs.writeFile(remotePath, `${username}:${password}`);
 
-      await this.$`chpasswd < "${remotePath}"`;
+      await this.$`chpasswd < ${remotePath}`;
     } finally {
       await this.fs.rm(remotePath);
     }

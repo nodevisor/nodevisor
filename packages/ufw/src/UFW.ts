@@ -66,12 +66,11 @@ export default class UFW extends Service {
   async allow(endpoint: Endpoint | Endpoint[]) {
     const endpoints = Array.isArray(endpoint) ? endpoint : [endpoint];
 
-    await Promise.all(
-      endpoints.map(async (endpoint) => {
-        const { port, protocol = Protocol.TCP } = endpoint;
-        await this.$`ufw allow ${port}/${protocol}`.text();
-      }),
-    );
+    // run in serial, parallel will break config file and override rules
+    for (const endpoint of endpoints) {
+      const { port, protocol = Protocol.TCP } = endpoint;
+      await this.$`ufw allow ${port}/${protocol}`.text();
+    }
   }
 
   async deleteAllow(endpoint: Endpoint) {

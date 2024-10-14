@@ -30,6 +30,9 @@ export default class AuthorizedKeys extends Module<{
     const homeDir = await this.env.home();
     const sshPath = path.join(homeDir, this.sshDir);
     await this.fs.mkdir(sshPath, { recursive: true });
+
+    // set permission 0x700
+    await this.fs.chmod(sshPath, '700');
   }
 
   async append(publicKey: string) {
@@ -43,6 +46,8 @@ export default class AuthorizedKeys extends Module<{
     const contentToAppend = currentContent ? `\n${trimmedKey}` : trimmedKey;
 
     await this.fs.appendFile(authorizedKeysPath, contentToAppend);
+
+    await this.fs.chmod(authorizedKeysPath, '600');
   }
 
   async write(publicKey: string) {
@@ -55,6 +60,8 @@ export default class AuthorizedKeys extends Module<{
 
     const authorizedKeysPath = await this.getAuthorizedKeysPath();
     await this.fs.writeFile(authorizedKeysPath, trimmedKey);
+
+    await this.fs.chmod(authorizedKeysPath, '600');
   }
 
   async readPublicKey(publicKeyPath: string, remotePath = false) {

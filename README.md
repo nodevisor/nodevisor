@@ -194,7 +194,7 @@ export const schema = z.object({
 });
 
 export default async (config: z.infer<typeof schema>) => {
-  const { host, root, app } = config;
+  const { host, root, app } = schema.parse(config);
 
   const $con = $.connect({
     host,
@@ -218,7 +218,7 @@ export default async (config: z.infer<typeof schema>) => {
 
   // create user for the app
   await $con(Users).add(app.username);
-  await $con(Auth).setPassword(app.username, app.username);
+  await $con(Auth).setPassword(app.username, app.password);
 
   // assign public key to the app user
   const $user = $con.as(app.username);

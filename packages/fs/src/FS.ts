@@ -1,5 +1,6 @@
 import { Module, Platform, raw } from '@nodevisor/core';
 import PWSH from '@nodevisor/pwsh';
+import Users from '@nodevisor/users';
 
 export type FSOptions<Flag = 'r'> = {
   encoding?: BufferEncoding | null;
@@ -9,7 +10,9 @@ export type FSOptions<Flag = 'r'> = {
 
 export default class FS extends Module {
   readonly name = 'fs';
+
   readonly pwsh = new PWSH(this.nodevisor);
+  readonly users = new Users(this.nodevisor);
 
   async readFile(path: string, options: FSOptions<'r'> = {}): Promise<string | Buffer> {
     const { encoding = 'utf8', flag = 'r' } = options;
@@ -27,6 +30,19 @@ export default class FS extends Module {
     const content = Buffer.isBuffer(data) ? data : Buffer.from(data, encoding || 'utf8');
 
     await this.connection.putContent(content, path, { encoding, mode, flags: flag });
+
+    // use correct file owner and group if "as" is defined
+    if (this.nodevisor.hasAs) {
+      const user = await this.users.whoami();
+      if (user) {
+        const withoutAs = this.nodevisor.clone({
+          as: undefined,
+        });
+
+        const fs = new FS(withoutAs);
+        await fs.chown(path, `${user}:${user}`);
+      }
+    }
   }
 
   async appendFile(

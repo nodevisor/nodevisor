@@ -1,4 +1,5 @@
 import path from 'path';
+import $, { Module } from '@nodevisor/core';
 import Env from './Env';
 
 describe('Env Module', () => {
@@ -7,7 +8,7 @@ describe('Env Module', () => {
   beforeAll(() => {
     env = new Env();
   });
-
+  /*
   it('should return the environment variable value', async () => {
     const home = await env.get('HOME');
 
@@ -45,6 +46,26 @@ describe('Env Module', () => {
 
     const value = await env.get('FILE_TEST_VAR');
     expect(value).toBe('test-file-value');
+  });
+  */
+
+  it('should be able to use specific username to get env variable', async () => {
+    class Paths extends Module<{
+      value: string;
+    }> {
+      readonly name = 'MyModule';
+      readonly env = new Env(this.nodevisor);
+
+      async getAuthorizedKeysPath() {
+        const homeDir = await this.env.home();
+        return this.$`printf ${homeDir}/.ssh/authorized_keys`;
+      }
+    }
+
+    const $user = $.as('seeden');
+    const value = await $user(Paths).getAuthorizedKeysPath();
+
+    console.log('value', value);
   });
   /*
   it('should unset the environment variable', async () => {

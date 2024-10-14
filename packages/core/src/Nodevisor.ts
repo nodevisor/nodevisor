@@ -50,6 +50,10 @@ export default class Nodevisor {
     return this.clone({ as: user });
   }
 
+  get hasAs() {
+    return !!this.commandOptions.as;
+  }
+
   async platform() {
     return this.cmd().platform();
   }

@@ -8,7 +8,7 @@ export default class Users extends Module {
   }
 
   async exists(username: string) {
-    return this.$`id -u ${username}`.boolean();
+    return this.$`id -u ${username}`.boolean(true);
   }
 
   async add(username: string) {
@@ -18,7 +18,7 @@ export default class Users extends Module {
     }
 
     await this.$`adduser ${username}`;
-    if (await this.exists(username)) {
+    if (!(await this.exists(username))) {
       throw new Error(`Failed to add user ${username}`);
     }
   }

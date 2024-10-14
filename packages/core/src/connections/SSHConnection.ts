@@ -14,6 +14,7 @@ import Connection, {
 import InMemoryWriteStream from '../utils/InMemoryWriteStream';
 import CommandOutputError from '../errors/CommandOutputError';
 import CommandOutput from '../commands/CommandOutput';
+import expandHomeDir from '../utils/expandHomeDir';
 
 const log = baseLog.extend('ssh-connection');
 const logExec = log.extend('exec');
@@ -72,7 +73,8 @@ export default class SSHConnection extends Connection {
 
     if ('privateKeyPath' in config && config.privateKeyPath) {
       const { privateKeyPath, ...rest } = config;
-      const privateKey = await fs.readFile(privateKeyPath as string, 'utf8');
+
+      const privateKey = await fs.readFile(expandHomeDir(privateKeyPath), 'utf8');
 
       return {
         privateKey,

@@ -265,7 +265,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     return this.connection.cached(key, fn);
   }
 
-  clone(clear: boolean = false, override: { env?: Env } = {}) {
+  clone(clear: boolean = false, override: { env?: Env; as?: As } = {}) {
     const Constructor = this.constructor as new (
       connection: Connection,
       options: CommandBuilderOptions,
@@ -341,6 +341,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     return this.cached('kernelName', async () => {
       try {
         try {
+          // without "as" because we should have access to uname without it as well
           return await this.clone(true).append`uname -s`.setShellQuote().toLowerCase().text();
         } catch (error) {
           return await this.clone(true)
@@ -388,6 +389,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
         return (
           (await this.clone(true, {
             env,
+            as: this.as,
           }).append`pwsh -command "echo $env:${key}"`
             .setPowerShellQuote()
             .text()) || undefined
@@ -396,6 +398,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
         return (
           (await this.clone(true, {
             env,
+            as: this.as,
           }).append`echo $${raw(key)}`
             .setShellQuote()
             .text()) || undefined
