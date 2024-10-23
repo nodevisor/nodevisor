@@ -3,6 +3,7 @@ import fs from 'fs/promises';
 import { nanoid } from 'nanoid';
 import { ShellConnection } from '../connections';
 import log from './log';
+import { Readable } from 'stream';
 
 enum STATUS_CODE {
   OK = 0,
@@ -129,19 +130,31 @@ MQd/p9Q2fR/Rt2afAAAAInNlZWRlbkBabGF0a29zLU1hY0Jvb2stUHJvLTIubG9jYWw=
         session.on('exec', async (accept, reject, info) => {
           const stream = accept();
 
-          try {
-            logExec(info.command);
-            const response = await shell.exec(info.command);
+          let stdin = '';
+          let hasStdin = false;
+          stream.stdin.on('data', (data: Buffer) => {
+            stdin += data.toString();
+            hasStdin = true;
+          });
 
-            stream.stderr.write(response.stderr);
-            stream.stdout.write(response.stdout);
-            stream.exit(response.code || 0);
-          } catch (error) {
-            stream.stderr.write(`Error executing command: ${(error as Error).message}\n`);
-            stream.exit(1); // Indicate failure in execution
-          } finally {
-            stream.end();
-          }
+          stream.stdin.on('end', async () => {
+            try {
+              logExec(info.command);
+              logExec(`stdin: ${stdin}`);
+              const response = await shell.exec(info.command, {
+                stdin: hasStdin ? stdin : undefined,
+              });
+
+              stream.stderr.write(response.stderr);
+              stream.stdout.write(response.stdout);
+              stream.exit(response.code || 0);
+            } catch (error) {
+              stream.stderr.write(`Error executing command: ${(error as Error).message}\n`);
+              stream.exit(1); // Indicate failure in execution
+            } finally {
+              stream.end();
+            }
+          });
         });
 
         session.on('sftp', (accept, reject) => {

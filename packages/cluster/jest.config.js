@@ -9,7 +9,4 @@ module.exports = {
   },
   coverageDirectory: 'coverage', // Directory where coverage reports are generated
   collectCoverageFrom: ['src/**/*.{ts,js}', '!src/**/*.spec.ts'], // Collect coverage, excluding .spec.ts files
-  transformIgnorePatterns: [
-    'node_modules/(?!(execa)/)', // Add execa to be transformed
-  ],
 };

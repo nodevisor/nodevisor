@@ -108,6 +108,22 @@ export default class Docker extends Service {
     }
   }
 
+  async login(options: { username: string; password: string; server: string }): Promise<void> {
+    const { username, password, server } = options;
+
+    const response = await this.$`docker login --username ${username} --password-stdin ${server}`
+      .stdin(password)
+      .text();
+
+    if (!response.includes('Login Succeeded')) {
+      throw new Error('Failed to log in to Docker registry');
+    }
+  }
+
+  async logout(server: string) {
+    await this.$`docker logout ${server}`;
+  }
+
   async pull(image: string) {
     await this.$`docker pull ${image}`;
   }

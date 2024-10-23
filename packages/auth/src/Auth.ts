@@ -27,14 +27,8 @@ export default class Auth extends Module {
   }
 
   async setPassword(username: string, password: string) {
-    const remotePath = await this.fs.temp();
+    const content = `${username}:${password}`;
 
-    try {
-      await this.fs.writeFile(remotePath, `${username}:${password}`);
-
-      await this.$`chpasswd < ${remotePath}`;
-    } finally {
-      await this.fs.rm(remotePath);
-    }
+    await this.$`chpasswd`.stdin(content);
   }
 }

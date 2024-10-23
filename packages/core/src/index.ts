@@ -1,4 +1,5 @@
 export * from './constants';
+export * from './commands';
 export * from './connections';
 export * from './errors';
 export * from './utils';

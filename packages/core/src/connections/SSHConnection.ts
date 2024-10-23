@@ -23,7 +23,7 @@ const logError = log.extend('error');
 
 export type SSHConnectionConfig = ConnectionConfig & {
   host?: string;
-  username: string;
+  username?: string;
 
   port?: number;
 
@@ -71,6 +71,10 @@ export default class SSHConnection extends Connection {
       });
     }
 
+    if (!username) {
+      throw new Error('Username is required for SSH connection');
+    }
+
     if ('privateKeyPath' in config && config.privateKeyPath) {
       const { privateKeyPath, ...rest } = config;
 
@@ -107,14 +111,25 @@ export default class SSHConnection extends Connection {
     }
   }
 
-  async exec(cmd: string) {
+  async exec(cmd: string, options: { stdin?: string } = {}) {
+    const { stdin } = options;
+
     try {
       await this.waitForConnection();
 
       const start = Date.now();
 
-      logExec(cmd);
-      const { stdout, stderr, code } = await this.ssh.execCommand(cmd);
+      if (stdin) {
+        logExec(`${cmd} | ${stdin}`);
+      } else {
+        logExec(cmd);
+      }
+
+      const { stdout, stderr, code } = await this.ssh.execCommand(cmd, {
+        stdin: stdin ? `${stdin}` : undefined,
+        noTrim: true,
+      });
+      logResponse(`stdout: ${JSON.stringify(stdout)}`);
       logResponse(`stdout: ${stdout}, stderr: ${stderr}, code: ${code}`);
 
       const outputConfig = {

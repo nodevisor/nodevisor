@@ -65,7 +65,7 @@ export default abstract class Connection extends EventEmitter {
     this.cache.clear();
   }
 
-  abstract exec(cmd: string): Promise<CommandOutput>;
+  abstract exec(cmd: string, options?: { stdin?: string }): Promise<CommandOutput>;
 
   async waitForConnection() {
     if (!this.isConnected()) {

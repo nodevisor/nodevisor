@@ -6,3 +6,4 @@ dist/
 lerna-debug.log
 .env
 my/
+docker-compose.yml

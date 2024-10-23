@@ -99,26 +99,37 @@ export default class AWS extends Package<{
     return this.set('default.region', region);
   }
 
+  async getDefaultRegion() {
+    return this.get('default.region');
+  }
+
   async setCredentials(accessKeyId: string, secretAccessKey: string) {
     await this.set('aws_access_key_id', accessKeyId);
     await this.set('aws_secret_access_key', secretAccessKey);
   }
+
+  async getAccessKeyId() {
+    return this.get('aws_access_key_id');
+  }
+
+  async getECRLoginPassword(options: { region?: string } = {}) {
+    const { region = await this.getDefaultRegion() } = options;
+
+    if (!region) {
+      throw new Error('AWS region is not specified');
+    }
+
+    return await this.$`aws ecr get-login-password --region ${region}`.text();
+  }
+
+  async getECRDockerRegistryEndpoint(registryId: string, options: { region?: string } = {}) {
+    const { region = await this.getDefaultRegion() } = options;
+
+    if (!region) {
+      throw new Error('AWS region is not specified');
+    }
+
+    const domain = region.startsWith('cn-') ? 'amazonaws.com.cn' : 'amazonaws.com';
+    return `${registryId}.dkr.ecr.${region}.${domain}`;
+  }
 }
-/*
-export async function setCredentials(
-  connection: Connection,
-  accessKeyId: string,
-  secretAccessKey: string,
-) {
-  const home = await env.home(connection);
-
-  await fs.mkdir(connection, `${home}/.aws`);
-
-  const content = `[default]
-aws_access_key_id = ${accessKeyId}
-aws_secret_access_key = ${secretAccessKey}
-`;
-
-  await sftp.putContent(connection, content, `${home}/.aws/credentials`);
-}
-*/

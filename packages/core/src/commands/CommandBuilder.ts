@@ -17,12 +17,15 @@ import { doubleQuote } from '../quotes';
 
 const platforms = Object.values(Platform) as string[];
 
+type ArgumentValue = string | number | boolean | undefined;
+
 export type CommandBuilderOptions = {
   env?: EnvOptions;
   command?: Command;
   quote?: Quote;
   noThrow?: boolean;
   as?: As | string;
+  stdin?: string;
 };
 
 export default class CommandBuilder implements PromiseLike<CommandOutput> {
@@ -36,10 +39,11 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
 
   private as?: As;
 
+  #stdin?: string;
   #noThrow: boolean;
 
   constructor(connection: Connection, options: CommandBuilderOptions = {}) {
-    const { command = [], quote, noThrow = false, as, env } = options;
+    const { command = [], quote, noThrow = false, as, env, stdin } = options;
 
     this.connection = connection;
     // command has own env, we need to clone it
@@ -49,8 +53,29 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     this.quote = quote;
 
     this.#noThrow = noThrow;
+    this.#stdin = stdin;
 
     this.as = typeof as === 'string' ? { user: as } : as;
+  }
+
+  argument(key: string | Record<string, ArgumentValue>, value?: ArgumentValue) {
+    if (isObject(key)) {
+      Object.entries(key).forEach(([key, value]) => {
+        this.argument(key, value);
+      });
+    } else {
+      if (value === undefined) {
+        this.append` ${raw(key)}`;
+      } else if (typeof value === 'boolean') {
+        this.append` ${raw(key)}=${raw(value ? 'true' : 'false')}`;
+      } else if (typeof value === 'number') {
+        this.append` ${raw(key)}=${raw(value.toString())}`;
+      } else {
+        this.append` ${raw(key)}=${value.toString()}`;
+      }
+    }
+
+    return this;
   }
 
   // quote methods
@@ -187,10 +212,12 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
 
   // execution methods
   async exec(): Promise<CommandOutput> {
+    const stdin = this.#stdin;
+
     if (this.quote) {
       const command = this.toString();
       try {
-        return await this.connection.exec(command);
+        return await this.connection.exec(command, { stdin });
       } catch (error) {
         if (this.#noThrow) {
           if (error instanceof CommandOutputError) {
@@ -261,6 +288,11 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     return this;
   }
 
+  stdin(stdin: string | undefined) {
+    this.#stdin = stdin;
+    return this;
+  }
+
   cached<T extends string>(key: string, fn: () => Promise<T>) {
     return this.connection.cached(key, fn);
   }
@@ -282,6 +314,7 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
           noThrow: this.#noThrow,
           as: this.as,
           env: this.env,
+          stdin: this.#stdin,
         };
 
     return new Constructor(this.connection, options);

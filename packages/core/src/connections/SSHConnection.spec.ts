@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
+import path from 'node:path';
 import Server from '../utils/Server';
 
 import SSHConnection from './SSHConnection';
@@ -136,5 +137,56 @@ describe('SSHConnection', () => {
 
     await fs.unlink(tempFilePath);
     await fs.unlink(localFile);
+  });
+
+  it('should be able to use stdin', async () => {
+    const { stdout, stderr, code } = await connection.exec('cat < /dev/stdin', {
+      stdin: 'hello',
+    });
+
+    expect(stdout).toBe('hello');
+    expect(stderr).toBe('');
+    expect(code).toBe(0);
+  });
+
+  it('should be able to use stdin', async () => {
+    const { stdout, stderr, code } = await connection.exec(
+      `node ${path.resolve(__dirname, '../utils/readInput.mjs')}`,
+      {
+        stdin: ' hello  1  ',
+      },
+    );
+
+    expect(stdout).toBe(' hello  1  ');
+    expect(stderr).toBe('');
+    expect(code).toBe(0);
+  });
+
+  it('should be able to use stdin without trimming', async () => {
+    const script = path.resolve(__dirname, '../utils/readInput.mjs');
+
+    const { stdout } = await connection.exec(`node ${script}`, {
+      stdin: ' hello  1  ',
+    });
+
+    expect(stdout).toBe(' hello  1  ');
+
+    const { stdout: stdout2 } = await connection.exec(`node ${script}`, {
+      stdin: '\n hello  1  ',
+    });
+
+    expect(stdout2).toBe('\n hello  1  ');
+
+    const { stdout: stdout3 } = await connection.exec(`node ${script}`, {
+      stdin: ' hello  1  \n ',
+    });
+
+    expect(stdout3).toBe(' hello  1  \n ');
+
+    const { stdout: stdout4 } = await connection.exec(`node ${script}`, {
+      stdin: '\n hello  1  \n \n\n',
+    });
+
+    expect(stdout4).toBe('\n hello  1  \n \n\n');
   });
 });

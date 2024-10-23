@@ -1,6 +1,5 @@
 import fs from 'node:fs/promises';
 import { platform } from 'node:os';
-import shell from 'shelljs';
 import baseLog from '../utils/log';
 import Connection, {
   type ConnectionConfig,
@@ -11,6 +10,7 @@ import Connection, {
 } from './Connection';
 import CommandOutput from '../commands/CommandOutput';
 import CommandOutputError from '../errors/CommandOutputError';
+import execCmd from '../utils/exec';
 
 const log = baseLog.extend('shell-connection');
 const logExec = log.extend('exec');
@@ -19,32 +19,30 @@ const logError = log.extend('error');
 
 const isWindows = platform() === 'win32';
 
-async function exec(cmd: string) {
-  return new Promise<CommandOutput>((resolve, reject) => {
-    const start = Date.now();
+async function exec(cmd: string, options: { stdin?: string } = {}) {
+  const start = Date.now();
+  const { stdin } = options;
 
-    logExec(cmd);
-    shell.exec(
-      cmd,
-      { silent: true, shell: isWindows ? undefined : '/bin/bash' },
-      (code: number, stdout: string, stderr: string) => {
-        logResponse(`stdout: ${stdout}, stderr: ${stderr}, code: ${code}`);
+  const { exitCode, stdout, stderr } = await execCmd(cmd, stdin);
 
-        const outputConfig = {
-          stdout: stdout,
-          stderr: stderr,
-          code: code,
-          duration: Date.now() - start,
-        };
+  logResponse(`stdout: ${stdout}, stderr: ${stderr}, code: ${exitCode}`);
 
-        if (code !== 0) {
-          reject(new CommandOutputError(outputConfig));
-          return;
-        }
+  if (exitCode !== 0) {
+    throw new CommandOutputError({
+      stdout,
+      stderr,
+      code: exitCode,
+      duration: Date.now() - start,
+    });
+  }
 
-        resolve(new CommandOutput(outputConfig));
-      },
-    );
+  logResponse(`stdout: ${JSON.stringify(stdout)}`);
+
+  return new CommandOutput({
+    stdout,
+    stderr,
+    code: exitCode,
+    duration: Date.now() - start,
   });
 }
 
@@ -67,11 +65,13 @@ export default class ShellConnection extends Connection {
     return this;
   }
 
-  async exec(cmd: string) {
+  async exec(cmd: string, options: { stdin?: string } = {}) {
+    const { stdin } = options;
+
     try {
       await this.waitForConnection();
 
-      return exec(cmd);
+      return exec(cmd, { stdin });
     } catch (error) {
       if (error instanceof CommandOutputError) {
         throw error;
