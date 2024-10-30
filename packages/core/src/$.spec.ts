@@ -1,5 +1,6 @@
 import $ from './$';
 import Module from './Module';
+import User from './User';
 
 class MyModule extends Module<{
   value: string;
@@ -47,5 +48,14 @@ describe('Shell execution', () => {
     // myModuleRunner.test2();
 
     $runner(myModuleRunner).test();
+  });
+
+  it('should clone user', () => {
+    const user = new User({
+      host: '127.0.0.1',
+      username: 'runner',
+    });
+
+    const test = $(user);
   });
 });

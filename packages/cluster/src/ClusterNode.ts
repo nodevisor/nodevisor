@@ -5,31 +5,27 @@ import SSH from '@nodevisor/ssh';
 import UFW from '@nodevisor/ufw';
 import Users from '@nodevisor/users';
 import Auth from '@nodevisor/auth';
-import Docker, { DockerSwarm } from '@nodevisor/docker';
-import ClusterUser from './ClusterUser';
+import $, { User } from '@nodevisor/core';
 
 export type ClusterNodeConfig = {
-  host: string; // ip or hostname
-  tags?: string[];
+  host: string;
 };
 
 export default class ClusterNode {
-  private config: ClusterNodeConfig;
+  readonly host: string; // ip or hostname
 
   constructor(config: ClusterNodeConfig) {
-    this.config = config;
+    const { host } = config;
+
+    this.host = host;
   }
 
-  get host() {
-    return this.config.host;
-  }
-
-  async setup(setupUser: ClusterUser, runnerUser: ClusterUser, isPrimary = false) {
+  async setup(setupUser: User, runnerUser: User, isPrimary = false) {
     if (!setupUser) {
       throw new Error('Setup user is required for cluster node setup');
     }
 
-    const $con = await setupUser.connect(this.host);
+    const $con = await $(setupUser.clone({ host: this.host }));
 
     // get list of new packages
     await $con(Packages).update();
@@ -49,7 +45,7 @@ export default class ClusterNode {
     await $con(UFW).allow([endpoints.ssh]);
     await $con(UFW).start();
 
-    if (!runnerUser) {
+    if (!runnerUser || !runnerUser.username) {
       throw new Error('Runner user is required for cluster node setup');
     }
 
@@ -68,24 +64,6 @@ export default class ClusterNode {
       await $runner(AuthorizedKeys).write(runnerPublicKey);
     }
 
-    // connect to the runner user
-    const $runner = await runnerUser.connect(this.host);
-
-    /*
-
-    // install docker
-    await $con(DockerSwarm).install();
-
-    // allow app user to run docker commands without sudo
-    await $con(Docker).allowUser(app.username);
-
-    // start swarm
-    await $con(DockerSwarm).start();
-
-    // install AWS Cli
-    await $con(AWS).install();
-    await $con(AWS).setCredentials(aws.accessKeyId, aws.secretAccessKey);
-    await $con(AWS).setDefaultRegion(aws.defaultRegion);
-    */
+    return $con;
   }
 }

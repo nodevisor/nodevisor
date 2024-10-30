@@ -1,40 +1,61 @@
-import YAML from 'yaml';
+import { User } from '@nodevisor/core';
 import ClusterService from './ClusterService';
 import ClusterNode from './ClusterNode';
-import ClusterUser from './ClusterUser';
-import type Volume from './@types/Volume';
-import type Registry from './@types/Registry';
+import Registry from './Registry';
 
-export type ClusterConfig = {
+type ClusterNodeOrString = ClusterNode | string;
+
+export type ClusterConfig<TClusterService extends ClusterService> = {
   name: string;
-  users: ClusterUser[]; // first user is setup user, second is runner/deploy user
-  nodes: ClusterNode[]; // first node is primary node, others are secondary nodes
-  services?: ClusterService[];
-  registry?: Registry; // default registry
+  users?: User[];
+  nodes?: ClusterNodeOrString[];
+  services?: TClusterService[];
+  registry?: Registry;
 };
 
-export default class Cluster {
-  private config: ClusterConfig;
+export default class Cluster<TClusterService extends ClusterService> {
+  readonly name: string;
+  protected users: User[];
+  protected nodes: ClusterNode[];
+  protected services: TClusterService[] = [];
+  protected registry?: Registry;
 
-  constructor(config: ClusterConfig) {
-    const { users } = config;
+  constructor(config: ClusterConfig<TClusterService>) {
+    const { name, users = [], nodes = [], services = [], registry } = config;
 
-    if (!users.length) {
-      throw new Error('Users are required for cluster setup');
-    }
+    this.name = name;
+    this.users = users;
+    this.registry = registry;
 
-    this.config = config;
+    this.nodes = nodes.map((node) =>
+      node instanceof ClusterNode ? node : new ClusterNode({ host: node }),
+    );
+
+    services.forEach((service) => this.addService(service));
+  }
+
+  addService(service: TClusterService) {
+    service.setClusterName(this.name);
+
+    this.services = [...this.services, service];
+    return this;
   }
 
   async setup() {
-    const { nodes, users } = this.config;
+    const { nodes, users } = this;
 
     const [setupUser, nonRootUser] = users;
     if (!setupUser) {
       throw new Error('Setup user is required for cluster setup');
     }
 
-    const runnerUser = nonRootUser ?? setupUser.clone('runner');
+    const runnerUser =
+      nonRootUser ??
+      setupUser.clone({
+        username: 'runner',
+        // remove root password from runner user because it's not needed
+        password: undefined,
+      });
 
     await Promise.all(
       nodes.map(async (node, index) => {
@@ -44,75 +65,12 @@ export default class Cluster {
     );
   }
 
-  getBackendNetworkName() {
-    const { name } = this.config;
-    return `${name}-backend`;
-  }
-
-  async getDockerServicesConfig() {
-    const { name, services = [] } = this.config;
-
-    const backendNetworkName = this.getBackendNetworkName();
-    const servicesConfig: Record<string, any> = {};
-
-    await Promise.all(
-      services.map(async (service) => {
-        const serviceName = service.name;
-        const network = `${name}-${serviceName}`;
-
-        const { networks = [], ...config } = await service.getDockerConfig();
-
-        servicesConfig[serviceName] = {
-          ...config,
-          networks: [backendNetworkName, network, ...networks],
-        };
-      }),
-    );
-
-    return servicesConfig;
-  }
-
-  async getDockerVolumesConfig() {
-    const { services = [] } = this.config;
-
-    let volumesConfig: Record<string, Volume> = {};
-
-    await Promise.all(
-      services.map(async (service) => {
-        const volumes = await service.getDockerVolumes();
-
-        volumesConfig = { ...volumesConfig, ...volumes };
-      }),
-    );
-
-    return volumesConfig;
-  }
-
-  async getDockerComposeConfig() {
-    const services = await this.getDockerServicesConfig();
-    const volumes = await this.getDockerVolumesConfig();
-
-    const backendNetworkName = this.getBackendNetworkName();
+  toObject() {
+    const { name, services = [] } = this;
 
     return {
-      version: '3.8',
-      services,
-      volumes,
-
-      networks: {
-        [backendNetworkName]: {
-          driver: 'overlay',
-          // allow other services to join the network
-          // The --attachable option enables both standalone containers and Swarm services to connect to the overlay network.
-          // Without --attachable, only Swarm services can connect to the network.
-          attachable: true,
-        },
-      },
+      name,
+      services: services.map((service) => service.toObject()),
     };
-  }
-
-  async getDockerComposeYAML() {
-    const config = await this.getDockerComposeConfig();
-    return YAML.stringify(config);
   }
 }

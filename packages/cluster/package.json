@@ -31,8 +31,7 @@
     "@nodevisor/ssh": "^0.0.14",
     "@nodevisor/ufw": "^0.0.14",
     "@nodevisor/users": "^0.0.14",
-    "@nodevisor/packages": "^0.0.14",
-    "yaml": "^2.6.0"
+    "@nodevisor/packages": "^0.0.14"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

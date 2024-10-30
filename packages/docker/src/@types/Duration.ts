@@ -6,13 +6,11 @@
 1h5m30s20ms
 */
 
-type Unit = 'ms' | 's' | 'm' | 'h';
-
 type Milliseconds = `${number}ms`;
 type Seconds = `${number}s`;
 type Minutes = `${number}m`;
 type Hours = `${number}h`;
 
-type DockerDuration = `${Hours | ''}${Minutes | ''}${Seconds | ''}${Milliseconds | ''}`;
+type Duration = `${Hours | ''}${Minutes | ''}${Seconds | ''}${Milliseconds | ''}`;
 
-export default DockerDuration;
+export default Duration;

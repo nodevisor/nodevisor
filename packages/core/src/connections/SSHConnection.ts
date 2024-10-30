@@ -1,7 +1,4 @@
-import fs from 'node:fs/promises';
-import os from 'node:os';
-
-import { NodeSSH, type Config as NodeSSHConfig } from 'node-ssh';
+import { NodeSSH } from 'node-ssh';
 import SFTPClient from 'ssh2-sftp-client';
 import baseLog from '../utils/log';
 import Connection, {
@@ -14,79 +11,24 @@ import Connection, {
 import InMemoryWriteStream from '../utils/InMemoryWriteStream';
 import CommandOutputError from '../errors/CommandOutputError';
 import CommandOutput from '../commands/CommandOutput';
-import expandHomeDir from '../utils/expandHomeDir';
+import User, { type UserConfig } from '../User';
 
 const log = baseLog.extend('ssh-connection');
 const logExec = log.extend('exec');
 const logResponse = log.extend('response');
 const logError = log.extend('error');
 
-export type SSHConnectionConfig = ConnectionConfig & {
-  host?: string;
-  username?: string;
-
-  port?: number;
-
-  forceIPv4?: boolean;
-  forceIPv6?: boolean;
-  agent?: string;
-  readyTimeout?: number;
-} & (
-    | {
-        password?: string;
-      }
-    | {
-        privateKey: string;
-        passphrase?: string;
-      }
-    | {
-        privateKeyPath: string;
-        passphrase?: string;
-      }
-  );
+export type SSHConnectionConfig = ConnectionConfig & UserConfig;
 
 export default class SSHConnection extends Connection {
   private ssh: NodeSSH;
+  private user: User;
 
   constructor(config: SSHConnectionConfig) {
     super(config);
 
+    this.user = new User(config);
     this.ssh = new NodeSSH();
-  }
-
-  private async prepareSSH2Config(config: SSHConnectionConfig): Promise<NodeSSHConfig> {
-    const { host, username } = config;
-
-    if (!host) {
-      return this.prepareSSH2Config({
-        ...config,
-        host: 'localhost',
-      });
-    }
-
-    if (host === 'localhost' && !username) {
-      return this.prepareSSH2Config({
-        ...config,
-        username: os.userInfo().username,
-      });
-    }
-
-    if (!username) {
-      throw new Error('Username is required for SSH connection');
-    }
-
-    if ('privateKeyPath' in config && config.privateKeyPath) {
-      const { privateKeyPath, ...rest } = config;
-
-      const privateKey = await fs.readFile(expandHomeDir(privateKeyPath), 'utf8');
-
-      return {
-        privateKey,
-        ...rest,
-      };
-    }
-
-    return config;
   }
 
   isConnected() {
@@ -99,8 +41,9 @@ export default class SSHConnection extends Connection {
         return this;
       }
 
-      const ssh2Config = await this.prepareSSH2Config(this.config as SSHConnectionConfig);
-      await this.ssh.connect(ssh2Config);
+      const config = await this.user.getNodeSSHConfig();
+
+      await this.ssh.connect(config);
 
       await this.onConnected();
 
@@ -161,7 +104,7 @@ export default class SSHConnection extends Connection {
 
   // file transfer
   private async getSFTP() {
-    const sftpConfig = await this.prepareSSH2Config(this.config as SSHConnectionConfig);
+    const sftpConfig = await this.user.getNodeSSHConfig();
 
     const sftp = new SFTPClient();
     await sftp.connect(sftpConfig);

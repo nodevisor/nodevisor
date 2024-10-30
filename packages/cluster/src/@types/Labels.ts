@@ -1,3 +1,3 @@
-type Labels = Record<string, string | boolean | number | undefined>;
+type Labels = Record<string, string | number | boolean>;
 
 export default Labels;

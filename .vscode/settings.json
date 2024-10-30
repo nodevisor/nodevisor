@@ -18,5 +18,7 @@
     ".eslintrc.json": "jsonc",
     "tsconfig.json": "jsonc"
   },
-  "cSpell.words": []
+  "cSpell.words": [],
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true
 }

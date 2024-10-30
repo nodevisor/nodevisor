@@ -10,6 +10,7 @@ describe('Nodevisor', () => {
 
   it('should create an SSHConnection if username is provided', () => {
     const nodevisor = new Nodevisor({
+      host: '127.0.0.1',
       username: 'runner',
     });
 

@@ -1,13 +1,12 @@
-import type Port from '../@types/Port';
-import type PortObject from '../@types/PortObject';
+import { type Port, type PortObject } from '@nodevisor/cluster';
 import parsePort from './parsePort';
-
+import omitUndefined from './omitUndefined';
 const defaultIp = '127.0.0.1';
 const defaultProtocol = 'tcp';
 
 export default function toDockerPorts(ports: Port[] = []): PortObject[] {
   return ports.map((port) => {
-    const portConfig: Port = typeof port === 'string' ? parsePort(port) : port;
+    const portConfig: PortObject = typeof port === 'string' ? parsePort(port) : port;
 
     const {
       target,
@@ -23,12 +22,12 @@ export default function toDockerPorts(ports: Port[] = []): PortObject[] {
       );
     }
 
-    return {
+    return omitUndefined({
       target,
       published,
       ip,
       protocol,
       mode,
-    };
+    });
   });
 }

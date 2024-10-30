@@ -1,5 +1,4 @@
-import type PortObject from '../@types/PortObject';
-import type Port from '../@types/Port';
+import { type Port, type PortObject } from '@nodevisor/cluster';
 
 export default function parsePort(port: string): PortObject {
   // extract optional protocol

@@ -64,14 +64,18 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
         this.argument(key, value);
       });
     } else {
+      if (!this.isEmpty()) {
+        this.append` `;
+      }
+
       if (value === undefined) {
-        this.append` ${raw(key)}`;
+        this.append`${raw(key)}`;
       } else if (typeof value === 'boolean') {
-        this.append` ${raw(key)}=${raw(value ? 'true' : 'false')}`;
+        this.append`${raw(key)}=${raw(value ? 'true' : 'false')}`;
       } else if (typeof value === 'number') {
-        this.append` ${raw(key)}=${raw(value.toString())}`;
+        this.append`${raw(key)}=${raw(value.toString())}`;
       } else {
-        this.append` ${raw(key)}=${value.toString()}`;
+        this.append`${raw(key)}=${value.toString()}`;
       }
     }
 
@@ -113,6 +117,10 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
   setSuffix(suffix: string) {
     this.suffix = suffix;
     return this;
+  }
+
+  isEmpty() {
+    return !this.command.length;
   }
 
   getSuffix() {

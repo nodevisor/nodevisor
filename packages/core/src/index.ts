@@ -20,4 +20,7 @@ export * from './Package';
 export { default as Service } from './Service';
 export * from './Service';
 
+export { default as User } from './User';
+export * from './User';
+
 export { default } from './$';
