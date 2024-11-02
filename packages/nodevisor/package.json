@@ -1,7 +1,7 @@
 {
   "name": "nodevisor",
   "description": "Server Management and Scalable Application Deployment",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -24,22 +24,22 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/auth": "^0.0.14",
-    "@nodevisor/authorized-keys": "^0.0.14",
-    "@nodevisor/aws": "^0.0.14",
-    "@nodevisor/core": "^0.0.14",
-    "@nodevisor/docker": "^0.0.14",
-    "@nodevisor/endpoint": "^0.0.14",
-    "@nodevisor/env": "^0.0.14",
-    "@nodevisor/fs": "^0.0.14",
-    "@nodevisor/groups": "^0.0.14",
-    "@nodevisor/os": "^0.0.14",
-    "@nodevisor/packages": "^0.0.14",
-    "@nodevisor/pwsh": "^0.0.14",
-    "@nodevisor/services": "^0.0.14",
-    "@nodevisor/ssh": "^0.0.14",
-    "@nodevisor/users": "^0.0.14",
-    "@nodevisor/ufw": "^0.0.14"
+    "@nodevisor/auth": "^0.0.15",
+    "@nodevisor/authorized-keys": "^0.0.15",
+    "@nodevisor/aws": "^0.0.15",
+    "@nodevisor/core": "^0.0.15",
+    "@nodevisor/docker": "^0.0.15",
+    "@nodevisor/endpoint": "^0.0.15",
+    "@nodevisor/env": "^0.0.15",
+    "@nodevisor/fs": "^0.0.15",
+    "@nodevisor/groups": "^0.0.15",
+    "@nodevisor/os": "^0.0.15",
+    "@nodevisor/packages": "^0.0.15",
+    "@nodevisor/pwsh": "^0.0.15",
+    "@nodevisor/services": "^0.0.15",
+    "@nodevisor/ssh": "^0.0.15",
+    "@nodevisor/ufw": "^0.0.15",
+    "@nodevisor/users": "^0.0.15"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
