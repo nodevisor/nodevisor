@@ -8,6 +8,7 @@ import { User } from '@nodevisor/core';
 import Traefik from './services/Traefik';
 import Whoami from './services/Whoami';
 import Redis from './services/Redis';
+import DockerBuilder from './DockerBuilder';
 
 describe('Cluster', () => {
   it('should create a empty cluster', async () => {
@@ -331,6 +332,7 @@ describe('Cluster', () => {
       proxy,
       domains: ['whoami.127.0.0.1.nip.io'],
       depends: [redis],
+      builder: new DockerBuilder(),
     });
 
     const cluster = new Cluster({

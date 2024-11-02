@@ -14,10 +14,9 @@ import type CommandOutput from './CommandOutput';
 import CommandOutputBuilder from './CommandOutputBuilder';
 import CommandOutputError from '../errors/CommandOutputError';
 import { doubleQuote } from '../quotes';
+import type ArgumentValue from '../@types/ArgumentValue';
 
 const platforms = Object.values(Platform) as string[];
-
-type ArgumentValue = string | number | boolean | undefined;
 
 export type CommandBuilderOptions = {
   env?: EnvOptions;
@@ -68,7 +67,15 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
         this.append` `;
       }
 
-      if (value === undefined) {
+      if (Array.isArray(value)) {
+        value.forEach((v) => {
+          this.argument(key, v);
+        });
+      } else if (isObject(value)) {
+        Object.entries(value).forEach(([subKey, subValue]) => {
+          this.append`${raw(key)}`.argument(subKey, subValue);
+        });
+      } else if (value === undefined || value === null) {
         this.append`${raw(key)}`;
       } else if (typeof value === 'boolean') {
         this.append`${raw(key)}=${raw(value ? 'true' : 'false')}`;

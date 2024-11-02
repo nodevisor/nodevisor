@@ -1,9 +1,12 @@
 {
-  "name": "@nodevisor/aws",
-  "description": "Module provides ability to manage AWS resources",
+  "name": "@nodevisor/builder",
+  "description": "Module provides abstract builder of images",
   "version": "0.0.14",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
+  "bin": {
+    "nodevisor": "./dist/cjs/cli.js"
+  },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -20,14 +23,11 @@
     "build": "npm run clean && npm run build:esm && npm run build:cjs",
     "build:esm": "tsc -p tsconfig.json",
     "build:cjs": "tsc -p tsconfig-cjs.json",
-    "test": "jest --runInBand",
+    "test": "jest --passWithNoTests",
     "valid": "tsc --noEmit"
   },
   "dependencies": {
     "@nodevisor/core": "^0.0.14",
-    "@nodevisor/fs": "^0.0.14",
-    "@nodevisor/os": "^0.0.14",
-    "@nodevisor/packages": "^0.0.14",
     "@nodevisor/registry": "^0.0.14"
   },
   "devDependencies": {

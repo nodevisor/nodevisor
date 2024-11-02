@@ -24,6 +24,7 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
+    "@nodevisor/builder": "^0.0.14",
     "@nodevisor/core": "^0.0.14",
     "@nodevisor/authorized-keys": "^0.0.14",
     "@nodevisor/endpoint": "^0.0.14",
@@ -31,7 +32,8 @@
     "@nodevisor/ssh": "^0.0.14",
     "@nodevisor/ufw": "^0.0.14",
     "@nodevisor/users": "^0.0.14",
-    "@nodevisor/packages": "^0.0.14"
+    "@nodevisor/packages": "^0.0.14",
+    "@nodevisor/registry": "^0.0.14"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

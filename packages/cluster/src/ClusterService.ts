@@ -1,5 +1,7 @@
 import { unset } from 'lodash';
 import { CommandBuilder, ShellConnection, raw } from '@nodevisor/core';
+import Builder from '@nodevisor/builder';
+import Registry from '@nodevisor/registry';
 import type Labels from './@types/Labels';
 import type Environment from './@types/Environment';
 import type PortObject from './@types/PortObject';
@@ -9,6 +11,8 @@ import portToPortObject from './utils/portToPortObject';
 export type ClusterServiceConfig = {
   name: string;
   image?: string;
+  registry?: Registry;
+  builder?: Builder;
   labels?: Labels;
   environment?: Environment;
   cpus?: {
@@ -32,6 +36,9 @@ export type ClusterServiceConfig = {
 export default class ClusterService {
   readonly name: string;
   readonly image?: string;
+  readonly registry?: Registry;
+  readonly builder?: Builder;
+
   protected clusterName?: string;
 
   private labels: Labels;
@@ -57,6 +64,8 @@ export default class ClusterService {
     const {
       name,
       image,
+      registry,
+      builder,
       labels = {},
       environment = {},
       cpus = {},
@@ -68,6 +77,8 @@ export default class ClusterService {
 
     this.name = name;
     this.image = image;
+    this.registry = registry;
+    this.builder = builder;
     this.labels = labels;
     this.environment = environment;
     this.cpus = cpus;

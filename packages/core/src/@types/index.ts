@@ -1,3 +1,5 @@
+export { type default as ArgumentValue } from './ArgumentValue';
+
 export { type default as Command } from './Command';
 export { type default as CommandPart } from './CommandPart';
 

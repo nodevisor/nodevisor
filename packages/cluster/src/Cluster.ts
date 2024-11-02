@@ -1,7 +1,6 @@
 import { User } from '@nodevisor/core';
 import ClusterService from './ClusterService';
 import ClusterNode from './ClusterNode';
-import Registry from './Registry';
 
 type ClusterNodeOrString = ClusterNode | string;
 
@@ -10,22 +9,19 @@ export type ClusterConfig<TClusterService extends ClusterService> = {
   users?: User[];
   nodes?: ClusterNodeOrString[];
   services?: TClusterService[];
-  registry?: Registry;
 };
 
-export default class Cluster<TClusterService extends ClusterService> {
+export default abstract class Cluster<TClusterService extends ClusterService> {
   readonly name: string;
   protected users: User[];
   protected nodes: ClusterNode[];
   protected services: TClusterService[] = [];
-  protected registry?: Registry;
 
   constructor(config: ClusterConfig<TClusterService>) {
-    const { name, users = [], nodes = [], services = [], registry } = config;
+    const { name, users = [], nodes = [], services = [] } = config;
 
     this.name = name;
     this.users = users;
-    this.registry = registry;
 
     this.nodes = nodes.map((node) =>
       node instanceof ClusterNode ? node : new ClusterNode({ host: node }),

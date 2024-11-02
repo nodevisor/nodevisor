@@ -1,8 +1,9 @@
-import { Service } from '@nodevisor/core';
+import { Service, type ArgumentValue } from '@nodevisor/core';
 import Groups from '@nodevisor/groups';
 import Packages, { PackageManager } from '@nodevisor/packages';
 import Services from '@nodevisor/services';
 import FS from '@nodevisor/fs';
+import type TargetPlatform from './@types/TargetPlatform';
 
 export default class Docker extends Service {
   readonly name = 'docker';
@@ -125,6 +126,51 @@ export default class Docker extends Service {
   }
 
   async pull(image: string) {
-    await this.$`docker pull ${image}`;
+    return await this.$`docker pull ${image}`.text();
+  }
+
+  async tag(image: string, tag: string) {
+    return await this.$`docker image tag ${image} ${tag}`.text();
+  }
+
+  async push(tag: string) {
+    return await this.$`docker image push ${tag}`.text();
+  }
+
+  async ls() {
+    return await this.$`docker image ls`.text();
+  }
+
+  async buildx(
+    dockerfilePath: string,
+    options: {
+      platform?: TargetPlatform | TargetPlatform[]; // platform to build for
+      args?: Record<string, string | number | boolean | undefined | null>; // additional build arguments
+      tags?: string[]; // image tags
+      context?: string; // build context, which is the directory Docker will use for the build
+      push?: boolean; // push the built image to the registry
+    } = {},
+  ) {
+    const { platform, args = {}, tags = [], context = '.', push = false } = options;
+
+    const cb = this.$`docker buildx build -f ${dockerfilePath}`
+      .argument('--build-arg', args)
+      .argument('-t', tags);
+
+    if (platform) {
+      const platformArg = Array.isArray(platform) ? platform.join(',') : platform;
+      cb.argument('--platform', platformArg);
+    }
+
+    if (push) {
+      cb.argument('--push');
+    }
+
+    // context is the last argument
+    if (context) {
+      cb.argument(context);
+    }
+
+    return cb;
   }
 }

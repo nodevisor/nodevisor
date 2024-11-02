@@ -4,6 +4,7 @@ type VolumeTopLevel = {
   driver: 'local';
   name?: string;
   labels?: Record<string, string>;
+  external?: boolean;
 };
 
 export default VolumeTopLevel;
