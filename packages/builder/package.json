@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/builder",
   "description": "Module provides abstract builder of images",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "bin": {
@@ -27,8 +27,8 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/core": "^0.0.16",
-    "@nodevisor/registry": "^0.0.16"
+    "@nodevisor/core": "^0.0.17",
+    "@nodevisor/registry": "^0.0.17"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
