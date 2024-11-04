@@ -1,3 +1,6 @@
+export { default as Express } from './Express';
+export * from './Express';
+
 export { default as Postgres } from './Postgres';
 export * from './Postgres';
 

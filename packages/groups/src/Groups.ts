@@ -32,6 +32,11 @@ export default class Groups extends Module {
   }
 
   async addUser(username: string, group: string) {
+    // check if user is already in group
+    if (await this.hasUser(username, group)) {
+      return;
+    }
+
     await this.$`usermod -aG ${group} ${username}`;
 
     if (!(await this.hasUser(username, group))) {
@@ -40,6 +45,11 @@ export default class Groups extends Module {
   }
 
   async removeUser(username: string, group: string) {
+    // check if user is in group
+    if (!(await this.hasUser(username, group))) {
+      return;
+    }
+
     await this.$`gpasswd -d ${username} ${group}`;
 
     if (await this.hasUser(username, group)) {
@@ -47,6 +57,7 @@ export default class Groups extends Module {
     }
   }
 
+  // alternative groups [username]
   async userGroups(username: string) {
     const items = await this.$`id -Gn ${username}`.text();
 

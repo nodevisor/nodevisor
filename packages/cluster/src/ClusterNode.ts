@@ -11,7 +11,7 @@ export type ClusterNodeConfig = {
   host: string;
 };
 
-export default class ClusterNode {
+export default abstract class ClusterNode {
   readonly host: string; // ip or hostname
 
   constructor(config: ClusterNodeConfig) {
@@ -20,18 +20,29 @@ export default class ClusterNode {
     this.host = host;
   }
 
-  async setup(setupUser: User, runnerUser: User, isPrimary = false) {
-    if (!setupUser) {
-      throw new Error('Setup user is required for cluster node setup');
+  $(user: User) {
+    return $(user.clone({ host: this.host }));
+  }
+
+  abstract deploy(runner: User, manager: ClusterNode, options?: {}): Promise<void>;
+
+  // prepare node for deployment and secure it
+  async setup(admin: User, runner: User, _manager: ClusterNode, _options?: {}) {
+    if (!admin) {
+      throw new Error('Admin user is required for cluster node setup');
     }
 
-    const $con = await $(setupUser.clone({ host: this.host }));
+    if (!runner || !runner.username) {
+      throw new Error('Runner user is required for cluster node setup');
+    }
+
+    const $con = this.$(admin);
 
     // get list of new packages
     await $con(Packages).update();
 
     // allow setup user to use key for authentication instead of password
-    const publicKey = await setupUser.getPublicKey();
+    const publicKey = await admin.getPublicKey();
     if (publicKey) {
       // assign public key to the root user
       await $con(AuthorizedKeys).write(publicKey);
@@ -45,25 +56,19 @@ export default class ClusterNode {
     await $con(UFW).allow([endpoints.ssh]);
     await $con(UFW).start();
 
-    if (!runnerUser || !runnerUser.username) {
-      throw new Error('Runner user is required for cluster node setup');
-    }
-
     // create runner user
-    await $con(Users).add(runnerUser.username);
+    await $con(Users).add(runner.username);
 
-    if (runnerUser.password && !publicKey) {
+    if (runner.password && !publicKey) {
       // set password for the runner user if it is provided
-      await $con(Auth).setPassword(runnerUser.username, runnerUser.password as string);
+      await $con(Auth).setPassword(runner.username, runner.password as string);
     }
 
     // assign public key to the runner user
-    const runnerPublicKey = await runnerUser.getPublicKey();
+    const runnerPublicKey = await runner.getPublicKey();
     if (runnerPublicKey) {
-      const $runner = $con.as(runnerUser.username);
+      const $runner = $con.as(runner.username);
       await $runner(AuthorizedKeys).write(runnerPublicKey);
     }
-
-    return $con;
   }
 }

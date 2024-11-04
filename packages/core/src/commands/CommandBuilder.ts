@@ -75,7 +75,10 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
         Object.entries(value).forEach(([subKey, subValue]) => {
           this.append`${raw(key)}`.argument(subKey, subValue);
         });
-      } else if (value === undefined || value === null) {
+      } else if (value === undefined) {
+        // do nothing
+      } else if (value === null) {
+        // include key as a flag without a value
         this.append`${raw(key)}`;
       } else if (typeof value === 'boolean') {
         this.append`${raw(key)}=${raw(value ? 'true' : 'false')}`;

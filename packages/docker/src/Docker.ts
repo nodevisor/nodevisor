@@ -1,4 +1,4 @@
-import { Service, type ArgumentValue } from '@nodevisor/core';
+import { Service } from '@nodevisor/core';
 import Groups from '@nodevisor/groups';
 import Packages, { PackageManager } from '@nodevisor/packages';
 import Services from '@nodevisor/services';
@@ -94,19 +94,14 @@ export default class Docker extends Service {
 
   // user methods
   // allow username to run docker commands without sudo
+  // user need to relogin to apply changes
   async allowUser(username: string, skipRestart = false) {
-    const isUserInGroup = await this.groups.hasUser(username, 'docker');
-    if (isUserInGroup) {
-      this.log(`User ${username} is already in docker group`);
-      return;
-    }
+    // https://docs.docker.com/engine/install/linux-postinstall/
+    // add group docker if it does not exist
+    await this.groups.add('docker');
 
+    // add user to docker group
     await this.groups.addUser(username, 'docker');
-
-    // restart docker service to apply changes, otherwise user will not be able to run docker commands without sudo
-    if (!skipRestart) {
-      await this.restart();
-    }
   }
 
   async login(options: { username: string; password: string; server: string }): Promise<void> {
@@ -123,6 +118,11 @@ export default class Docker extends Service {
 
   async logout(server: string) {
     await this.$`docker logout ${server}`;
+  }
+
+  // list all images in the local (system) registry
+  async images() {
+    return await this.$`docker images`.text();
   }
 
   async pull(image: string) {
@@ -149,28 +149,24 @@ export default class Docker extends Service {
       tags?: string[]; // image tags
       context?: string; // build context, which is the directory Docker will use for the build
       push?: boolean; // push the built image to the registry
+      target?: string;
     } = {},
   ) {
-    const { platform, args = {}, tags = [], context = '.', push = false } = options;
+    const { platform, args = {}, tags = [], context = '.', push = false, target } = options;
 
-    const cb = this.$`docker buildx build -f ${dockerfilePath}`
-      .argument('--build-arg', args)
-      .argument('-t', tags);
-
-    if (platform) {
-      const platformArg = Array.isArray(platform) ? platform.join(',') : platform;
-      cb.argument('--platform', platformArg);
-    }
-
-    if (push) {
-      cb.argument('--push');
-    }
+    const cb = this.$`docker buildx build`.argument({
+      '-f': dockerfilePath,
+      '-t': tags,
+      '--build-arg': args,
+      '--push': push ? null : undefined,
+      '--platform': Array.isArray(platform) ? platform.join(',') : platform,
+    });
 
     // context is the last argument
     if (context) {
       cb.argument(context);
     }
 
-    return cb;
+    return cb.text();
   }
 }

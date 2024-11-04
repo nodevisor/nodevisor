@@ -8,7 +8,7 @@ export type WebConfig = DockerServiceConfig & {
   port?: number;
 };
 
-export default abstract class Web extends DockerService {
+export default class Web extends DockerService {
   readonly domains: string[];
   readonly proxy: WebProxy;
   readonly port: number;

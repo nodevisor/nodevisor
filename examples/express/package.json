@@ -1,0 +1,23 @@
+{
+  "name": "express-example",
+  "version": "1.0.0",
+  "description": "Example Express application with Nodevisor",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "setup": "nodevisor cluster.ts --setup",
+    "deploy": "nodevisor cluster.ts --deploy"
+  },
+  "dependencies": {
+    "express": "^4.21.1",
+    "nodevisor": "^0.0.16",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  }
+}

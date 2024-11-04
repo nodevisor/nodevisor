@@ -40,7 +40,7 @@ export type UserConfig = {
 export default class User {
   private config: UserConfig;
 
-  static getLocalhostUser() {
+  static get local() {
     return new User({
       host: '127.0.0.1',
       username: os.userInfo().username,

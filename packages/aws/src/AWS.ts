@@ -19,6 +19,7 @@ export default class AWS extends Package<{
   readonly packages = new Packages(this.nodevisor);
   readonly fs = new FS(this.nodevisor);
   readonly os = new OS(this.nodevisor);
+
   get command() {
     return this.config.command || 'aws';
   }

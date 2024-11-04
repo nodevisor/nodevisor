@@ -11,6 +11,15 @@ export * from '@nodevisor/auth';
 export { default as AuthorizedKeys } from '@nodevisor/authorized-keys';
 export * from '@nodevisor/authorized-keys';
 
+export { default as Builder } from '@nodevisor/builder';
+export * from '@nodevisor/builder';
+
+export { default as CLI } from '@nodevisor/cli';
+export * from '@nodevisor/cli';
+
+export { default as Cluster } from '@nodevisor/cluster';
+export * from '@nodevisor/cluster';
+
 export { default as Env } from '@nodevisor/env';
 export * from '@nodevisor/env';
 
@@ -28,6 +37,11 @@ export * from '@nodevisor/packages';
 
 export { default as PWSH } from '@nodevisor/pwsh';
 export * from '@nodevisor/pwsh';
+
+export { default as Registry } from '@nodevisor/registry';
+export * from '@nodevisor/registry';
+
+export * from '@nodevisor/schema';
 
 export { default as Services } from '@nodevisor/services';
 export * from '@nodevisor/services';

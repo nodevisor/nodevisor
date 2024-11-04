@@ -32,7 +32,7 @@
   "dependencies": {},
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "lerna": "^8.1.8",
+    "lerna": "^8.1.9",
     "prettier": "^3.3.3"
   }
 }

@@ -1,31 +1,11 @@
-import { Service } from '@nodevisor/core';
+import { Module } from '@nodevisor/core';
 import Docker from './Docker';
 
-export default class DockerSwarm extends Service {
+export default class DockerSwarm extends Module {
   readonly name = 'docker-swarm';
   readonly docker = new Docker(this.nodevisor);
 
-  // package
-
-  // package version methods
-  async getVersion() {
-    return this.docker.getVersion();
-  }
-
-  async isInstalled() {
-    return this.docker.isInstalled();
-  }
-
-  async installPackage() {
-    return this.docker.installPackage();
-  }
-
-  async uninstallPackage() {
-    return this.docker.uninstallPackage();
-  }
-
-  // service
-  async isRunning() {
+  async isActive() {
     if (!(await this.docker.isRunning())) {
       return false;
     }
@@ -34,35 +14,51 @@ export default class DockerSwarm extends Service {
     return response?.includes('Swarm: active');
   }
 
-  async start() {
-    if (!(await this.isInstalled())) {
-      throw new Error('Docker is not installed');
-    }
-
-    if (await this.isRunning()) {
+  async init(address?: string) {
+    if (await this.isActive()) {
       return;
     }
 
-    await this.$`docker swarm init`;
+    await this.$`docker swarm init`.argument('--advertise-addr', address);
 
-    if (!(await this.isRunning())) {
+    if (!(await this.isActive())) {
       throw new Error('Failed to start docker swarm');
     }
   }
 
-  async stop() {
-    if (!(await this.isRunning())) {
+  async leave() {
+    if (!(await this.isActive())) {
       return;
     }
 
     await this.$`docker swarm leave --force`;
 
-    if (await this.isRunning()) {
+    if (await this.isActive()) {
       throw new Error('Failed to stop docker swarm');
     }
   }
 
   async deploy(stack: string, composeFile: string) {
     return this.$`docker stack deploy -c ${composeFile} ${stack}`;
+  }
+
+  async getManagerToken() {
+    return this.$`docker swarm join-token -q manager}`.text();
+  }
+
+  async getWorkerToken() {
+    return this.$`docker swarm join-token -q worker}`.text();
+  }
+
+  async join(token: string, address: string, port = 2377) {
+    return this.$`docker swarm join`.argument('--token', token).append` ${address}:${port}`;
+  }
+
+  async promote(node: string) {
+    return this.$`docker node promote ${node}`;
+  }
+
+  async demote(node: string) {
+    return this.$`docker node demote ${node}`;
   }
 }

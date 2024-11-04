@@ -1,34 +1,40 @@
 import { User } from '@nodevisor/core';
 import ClusterService from './ClusterService';
-import ClusterNode from './ClusterNode';
+import ClusterNode, { type ClusterNodeConfig } from './ClusterNode';
 
-type ClusterNodeOrString = ClusterNode | string;
-
-export type ClusterConfig<TClusterService extends ClusterService> = {
+export type ClusterConfig<
+  TClusterService extends ClusterService,
+  TClusterNode extends ClusterNode,
+> = {
   name: string;
   users?: User[];
-  nodes?: ClusterNodeOrString[];
+  nodes?: Array<TClusterNode | string>;
   services?: TClusterService[];
 };
 
-export default abstract class Cluster<TClusterService extends ClusterService> {
+export default abstract class Cluster<
+  TClusterService extends ClusterService,
+  TClusterNode extends ClusterNode,
+> {
   readonly name: string;
   protected users: User[];
-  protected nodes: ClusterNode[];
+  protected nodes: TClusterNode[];
   protected services: TClusterService[] = [];
 
-  constructor(config: ClusterConfig<TClusterService>) {
+  constructor(config: ClusterConfig<TClusterService, TClusterNode>) {
     const { name, users = [], nodes = [], services = [] } = config;
 
     this.name = name;
     this.users = users;
 
     this.nodes = nodes.map((node) =>
-      node instanceof ClusterNode ? node : new ClusterNode({ host: node }),
+      node instanceof ClusterNode ? node : this.createClusterNode({ host: node }),
     );
 
     services.forEach((service) => this.addService(service));
   }
+
+  protected abstract createClusterNode(config: ClusterNodeConfig): TClusterNode;
 
   addService(service: TClusterService) {
     service.setClusterName(this.name);
@@ -37,28 +43,58 @@ export default abstract class Cluster<TClusterService extends ClusterService> {
     return this;
   }
 
+  toRunner(user: User) {
+    return user.clone({ username: 'runner', password: undefined });
+  }
+
+  async deployNode(node: TClusterNode, runner: User, manager: TClusterNode) {
+    await node.deploy(runner, manager);
+  }
+
+  async deploy() {
+    const { nodes, users } = this;
+
+    const [admin, runner] = users;
+    if (!admin) {
+      throw new Error('Admin user is required for cluster setup');
+    }
+
+    const runnerUser = runner ?? this.toRunner(admin);
+
+    const [manager, ...workers] = nodes;
+    if (!manager) {
+      throw new Error('Manager node is required for cluster setup');
+    }
+
+    // primary node must be setup first, because other nodes will use it as a source of truth
+    await this.deployNode(manager, runnerUser, manager);
+
+    await Promise.all(workers.map((worker) => this.deployNode(worker, runnerUser, manager)));
+  }
+
+  async setupNode(node: TClusterNode, admin: User, runner: User, manager: TClusterNode) {
+    await node.setup(admin, runner, manager);
+  }
+
   async setup() {
     const { nodes, users } = this;
 
-    const [setupUser, nonRootUser] = users;
-    if (!setupUser) {
-      throw new Error('Setup user is required for cluster setup');
+    const [admin, runner] = users;
+    if (!admin) {
+      throw new Error('Admin user is required for cluster setup');
     }
 
-    const runnerUser =
-      nonRootUser ??
-      setupUser.clone({
-        username: 'runner',
-        // remove root password from runner user because it's not needed
-        password: undefined,
-      });
+    const runnerUser = runner ?? this.toRunner(admin);
 
-    await Promise.all(
-      nodes.map(async (node, index) => {
-        const isPrimary = index === 0;
-        await node.setup(setupUser, runnerUser, isPrimary);
-      }),
-    );
+    const [manager, ...workers] = nodes;
+    if (!manager) {
+      throw new Error('Manager node is required for cluster setup');
+    }
+
+    // primary node must be setup first, because other nodes will use it as a source of truth
+    await this.setupNode(manager, admin, runnerUser, manager);
+
+    await Promise.all(workers.map((worker) => this.setupNode(worker, admin, runnerUser, manager)));
   }
 
   toObject() {

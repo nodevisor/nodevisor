@@ -1,31 +1,38 @@
 import YAML from 'yaml';
-import Cluster, { type ClusterConfig, ClusterService } from '@nodevisor/cluster';
+import Cluster, { type ClusterConfig } from '@nodevisor/cluster';
+import DockerNode, { type DockerNodeConfig } from './DockerNode';
 import type DockerService from './DockerService';
 import type DockerComposeConfig from './@types/DockerComposeConfig';
 import type DockerComposeServiceConfig from './@types/DockerComposeServiceConfig';
 import type NetworksTopLevel from './@types/NetworksTopLevel';
 import type VolumesTopLevel from './@types/VolumesTopLevel';
+import { User } from '@nodevisor/core';
+// import DockerCompose from './DockerCompose';
 
-export type DockerClusterConfig = ClusterConfig<DockerService> & {
-  version?: number;
+export type DockerClusterConfig = ClusterConfig<DockerService, DockerNode> & {
+  // version?: number;
   networks?: NetworksTopLevel;
   volumes?: VolumesTopLevel;
 };
 
-export default class DockerCluster extends Cluster<DockerService> {
-  private version: number;
+export default class DockerCluster extends Cluster<DockerService, DockerNode> {
+  // private version: number;
   private networks: NetworksTopLevel = {};
   private volumes: VolumesTopLevel = {};
 
   constructor(config: DockerClusterConfig) {
-    const { version = 3.8, networks = {}, volumes = {}, ...rest } = config;
+    const { /* version = 3.8, */ networks = {}, volumes = {}, ...rest } = config;
 
     super(rest);
 
     // version is obsolete
-    this.version = version;
+    // this.version = version;
     this.networks = networks;
     this.volumes = volumes;
+  }
+
+  protected createClusterNode(config: DockerNodeConfig) {
+    return new DockerNode(config);
   }
 
   getNetworks() {
@@ -138,6 +145,18 @@ export default class DockerCluster extends Cluster<DockerService> {
     });
 
     return services;
+  }
+
+  async deployNode(node: DockerNode, runner: User, manager: DockerNode) {
+    const yaml = this.yaml();
+
+    node.deploy(runner, manager, { yaml });
+  }
+
+  async setupNode(node: DockerNode, admin: User, runner: User, manager: DockerNode) {
+    const token = await manager.getWorkerToken(runner);
+
+    node.setup(admin, runner, manager, { token });
   }
 
   toCompose(): DockerComposeConfig {

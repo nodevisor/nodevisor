@@ -33,7 +33,7 @@ export default class Traefik extends WebProxy {
   private dashboard?: DashboardConfig;
   private dockerUnixSocket: string;
 
-  constructor(config: TraefikConfig) {
+  constructor(config: TraefikConfig = {}) {
     const {
       ssl,
       name = 'traefik',

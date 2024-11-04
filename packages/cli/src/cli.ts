@@ -36,6 +36,8 @@ program
   .description('Nodevisor CLI to automate server setup')
   .argument('<file>', 'TypeScript file to execute')
   .option('-e, --env <path>', 'Path to .env file')
+  .option('-d, --deploy', 'Deploy cluster')
+  .option('-s, --setup', 'Setup cluster')
   .action(async (file, options) => {
     try {
       let filePath = path.resolve(file);
@@ -72,7 +74,16 @@ program
       const { default: fn, schema } = module;
 
       const parsed = schema ? schema.parse(envVars) : envVars;
-      await fn(parsed);
+      const result = await fn(parsed);
+
+      if (options.deploy) {
+        await result.deploy();
+      }
+
+      if (options.setup) {
+        await result.setup();
+      }
+
       process.exit(0);
     } catch (error) {
       console.error(`Error while executing ${file}:`, (error as Error).message);

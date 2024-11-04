@@ -1,5 +1,11 @@
-import $, { type User } from '@nodevisor/core';
+import FS from '@nodevisor/fs';
+import UFW from '@nodevisor/ufw';
+import { User } from '@nodevisor/core';
+import { Protocol } from '@nodevisor/endpoint';
 import { ClusterNode, type ClusterNodeConfig } from '@nodevisor/cluster';
+import DockerCompose from './DockerCompose';
+import Docker from './Docker';
+import DockerSwarm from './DockerSwarm';
 
 export type DockerNodeConfig = ClusterNodeConfig & {};
 
@@ -10,30 +16,94 @@ export default class DockerNode extends ClusterNode {
     super(rest);
   }
 
-  async setup(setupUser: User, runnerUser: User, isPrimary = false) {
-    const $con = await super.setup(setupUser, runnerUser, isPrimary);
+  isEqual(node: DockerNode) {
+    return this.host === node.host;
+  }
 
-    const $runner = await $(runnerUser.clone({ host: this.host }));
+  async deploy(runner: User, manager: DockerNode, options: { yaml: string }) {
+    const isManager = this.isEqual(manager);
+    if (!isManager) {
+      console.log('skip deploy for worker node');
+      return;
+    }
+
+    const { yaml } = options;
+
+    const $con = await this.$(runner);
+
+    // save docker compose file to temp file
+    const tempFile = await $con(FS).temp();
+    await $con(FS).writeFile(tempFile, yaml);
+
+    const dockerCompose = await $con(DockerCompose);
+    const result = await dockerCompose.up({
+      file: tempFile,
+    });
+
+    console.log('deploy result', result);
+
+    // remove temp file
+    await $con(FS).rm(tempFile);
+  }
+
+  async setup(admin: User, runner: User, manager: DockerNode, options: { token: string }) {
+    if (!runner.username) {
+      throw new Error('Runner user is required for docker node setup');
+    }
+
+    const isManager = this.isEqual(manager);
+
+    const { token } = options;
+
+    // base setup for all nodes
+    await super.setup(admin, runner, manager);
+
+    const $con = this.$(admin);
 
     // install docker
+    await $con(Docker).install();
+
+    // https://docs.docker.com/engine/install/linux-postinstall/
+    // enable runner user to run docker commands without sudo
+    await $con(Docker).allowUser(runner.username);
+
+    // start docker service
+    await $con(Docker).start();
+
+    // need to relogin to apply changes
+    const $runner = this.$(runner);
+
+    // https://docs.docker.com/engine/swarm/swarm-tutorial/#open-protocols-and-ports-between-the-hosts
+    /* allow docker swarm management port
+    •	TCP port 2377: Cluster management communications
+    •	TCP and UDP port 7946: Communication among nodes
+    •	UDP port 4789: Overlay network traffic
+    */
+    await $runner(UFW).allow({ port: 2377, protocol: Protocol.TCP });
+    await $runner(UFW).allow({ port: 7946, protocol: Protocol.TCP });
+    await $runner(UFW).allow({ port: 7946, protocol: Protocol.UDP });
+    await $runner(UFW).allow({ port: 4789, protocol: Protocol.UDP });
+
+    if (isManager) {
+      // join swarm as manager
+      const { host } = this;
+      await $con(DockerSwarm).init(host);
+    } else {
+      // join as worker
+      await $runner(DockerSwarm).join(token, manager.host);
+    }
 
     /*
-
-    // install docker
-    await $con(DockerSwarm).install();
-
-    // allow app user to run docker commands without sudo
-    await $con(Docker).allowUser(app.username);
-
-    // start swarm
-    await $con(DockerSwarm).start();
-
     // install AWS Cli
     await $con(AWS).install();
     await $con(AWS).setCredentials(aws.accessKeyId, aws.secretAccessKey);
     await $con(AWS).setDefaultRegion(aws.defaultRegion);
     */
+  }
 
-    return $con;
+  async getWorkerToken(runner: User) {
+    const $con = this.$(runner);
+
+    return $con(DockerSwarm).getWorkerToken();
   }
 }
