@@ -5,8 +5,7 @@ import expandHomeDir from './utils/expandHomeDir';
 import { cloneDeep } from 'lodash';
 
 export type UserConfig = {
-  host: string;
-
+  host?: string;
   username?: string;
 
   port?: number;

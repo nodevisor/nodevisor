@@ -1,4 +1,4 @@
-import { User } from '@nodevisor/core';
+import { User, UserConfig } from '@nodevisor/core';
 import ClusterService from './ClusterService';
 import ClusterNode, { type ClusterNodeConfig } from './ClusterNode';
 
@@ -7,7 +7,7 @@ export type ClusterConfig<
   TClusterNode extends ClusterNode,
 > = {
   name: string;
-  users?: User[];
+  users?: Array<User | UserConfig>;
   nodes?: Array<TClusterNode | string>;
   services?: TClusterService[];
 };
@@ -25,7 +25,8 @@ export default abstract class Cluster<
     const { name, users = [], nodes = [], services = [] } = config;
 
     this.name = name;
-    this.users = users;
+
+    this.users = users.map((user) => (user instanceof User ? user : new User(user)));
 
     this.nodes = nodes.map((node) =>
       node instanceof ClusterNode ? node : this.createClusterNode({ host: node }),
