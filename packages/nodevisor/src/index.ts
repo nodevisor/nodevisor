@@ -14,9 +14,6 @@ export * from '@nodevisor/authorized-keys';
 export { default as Builder } from '@nodevisor/builder';
 export * from '@nodevisor/builder';
 
-export { default as CLI } from '@nodevisor/cli';
-export * from '@nodevisor/cli';
-
 export { default as Cluster } from '@nodevisor/cluster';
 export * from '@nodevisor/cluster';
 

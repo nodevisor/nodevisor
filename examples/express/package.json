@@ -12,12 +12,13 @@
   },
   "dependencies": {
     "express": "^4.21.1",
-    "nodevisor": "^0.0.16",
+    "nodevisor": "^0.0.17",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@nodevisor/cli": "^0.0.17",
     "@types/express": "^5.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.7.2"
   }
 }

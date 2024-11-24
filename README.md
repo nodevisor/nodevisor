@@ -33,7 +33,6 @@ Nodevisor is still in the early stages, and we’re working on exciting new feat
 - **Server/client mode:** Securely connect clients to a Nodevisor server to manage changes and instructions.
 - **Web interface:** An easy-to-use website to manage servers. You can host it yourself or use our cloud version for quick access.
 - **GitHub Actions integration:** Easily integrate with CI/CD pipelines for smoother deployment.
-- **YAML configuration:** Set up servers simply using YAML files.
 
 ## Writing shell scripts with Nodevisor
 
@@ -235,29 +234,6 @@ export default async (config: z.infer<typeof schema>) => {
 };
 ```
 
-### YAML Configuration - Comming Soon
-
-You can also use YAML to configure your Nodevisor instance.
-
-```yaml
-
-- name: Prepare web servers
-  remote_user: root
-  hosts:
-    - '192.168.1.1'
-    - '192.168.1.2'
-    - '192.168.1.3'
-
-  tasks:
-  - name: Install packages
-    nodevisor.packages
-      install:
-        - curl
-        - git
-```
-
-_Explanation:_ This YAML configuration defines a list of tasks to be executed on a set of servers. It's a simple and structured way to manage server setups, but this feature is still in development.
-
 ## Packages
 
 Nodevisor is trying to simplify non-unified commands across different operating systems. Therefore, we created unified packages for common tasks.
@@ -394,7 +370,6 @@ Nodevisor has a special license. In some cases, you may need to get a company li
 You can use Nodevisor for free if:
 
 - You are using it for personal use.
-- You are an organization managing up to 2 servers.
 - You are a non-profit organization.
 - You are trying out Nodevisor to see if it works for you, without commercial use.
 
