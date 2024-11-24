@@ -20,11 +20,12 @@
   "scripts": {
     "clean": "rm -rf dist",
     "prettier": "prettier --write src/**/*.ts test/**/*.ts",
-    "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs && npm run chmod:cli",
     "build:esm": "tsc -p tsconfig.json",
     "build:cjs": "tsc -p tsconfig-cjs.json",
     "test": "jest --passWithNoTests",
-    "valid": "tsc --noEmit"
+    "valid": "tsc --noEmit",
+    "chmod:cli": "chmod +x dist/cjs/cli.js"
   },
   "dependencies": {
     "commander": "^12.1.0",
