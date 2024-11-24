@@ -21,7 +21,8 @@ export default abstract class ClusterNode {
   }
 
   $(user: User) {
-    return $(user.clone({ host: this.host }));
+    const userWithHost = user.clone({ host: this.host });
+    return $(userWithHost);
   }
 
   abstract deploy(runner: User, manager: ClusterNode, options?: {}): Promise<void>;

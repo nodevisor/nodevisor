@@ -1,6 +1,6 @@
 import { exec as childProcessExec } from 'node:child_process';
 
-export default function execCmd(cmd: string, stdin?: string) {
+export default function exec(cmd: string, stdin?: string) {
   return new Promise<{
     exitCode: number | null;
     stdout: string;

@@ -3,6 +3,7 @@ import os from 'node:os';
 import { type Config as NodeSSHConfig } from 'node-ssh';
 import expandHomeDir from './utils/expandHomeDir';
 import { cloneDeep } from 'lodash';
+import canReadFile from './utils/canReadFile';
 
 export type UserConfig = {
   host?: string;
@@ -58,6 +59,10 @@ export default class User {
     return 'password' in this.config ? this.config.password : undefined;
   }
 
+  get passphrase() {
+    return 'passphrase' in this.config ? this.config.passphrase : undefined;
+  }
+
   async getPrivateKey() {
     const { config } = this;
 
@@ -68,7 +73,12 @@ export default class User {
     if ('privateKeyPath' in config && config.privateKeyPath) {
       const { privateKeyPath } = config;
 
-      return await fs.readFile(expandHomeDir(privateKeyPath), 'utf8');
+      const privateKeyPathExpanded = expandHomeDir(privateKeyPath);
+      if (!(await canReadFile(privateKeyPathExpanded))) {
+        throw new Error(`Cannot read private key file: ${privateKeyPath}`);
+      }
+
+      return await fs.readFile(privateKeyPathExpanded, 'utf8');
     }
 
     return undefined;
@@ -116,6 +126,7 @@ export default class User {
 
       password: this.password,
       privateKey: await this.getPrivateKey(),
+      passphrase: this.passphrase,
 
       port,
       forceIPv4,

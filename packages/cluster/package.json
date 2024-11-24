@@ -18,8 +18,11 @@
     "clean": "rm -rf dist",
     "prettier": "prettier --write src/**/*.ts test/**/*.ts",
     "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "build:watch": "npm run build:esm:watch & npm run build:cjs:watch",
     "build:esm": "tsc -p tsconfig.json",
     "build:cjs": "tsc -p tsconfig-cjs.json",
+    "build:esm:watch": "tsc -p tsconfig.json --watch",
+    "build:cjs:watch": "tsc -p tsconfig-cjs.json --watch",
     "test": "jest --passWithNoTests",
     "valid": "tsc --noEmit"
   },

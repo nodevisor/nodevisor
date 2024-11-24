@@ -11,6 +11,7 @@ import portToPortObject from './utils/portToPortObject';
 export type ClusterServiceConfig = {
   name: string;
   image?: string;
+  context?: string;
   registry?: Registry;
   builder?: Builder;
   labels?: Labels;
@@ -36,6 +37,7 @@ export type ClusterServiceConfig = {
 export default class ClusterService {
   readonly name: string;
   readonly image?: string;
+  readonly context?: string;
   readonly registry?: Registry;
   readonly builder?: Builder;
 
@@ -64,6 +66,7 @@ export default class ClusterService {
     const {
       name,
       image,
+      context,
       registry,
       builder,
       labels = {},
@@ -77,6 +80,7 @@ export default class ClusterService {
 
     this.name = name;
     this.image = image;
+    this.context = context;
     this.registry = registry;
     this.builder = builder;
     this.labels = labels;
@@ -301,5 +305,30 @@ export default class ClusterService {
     }
 
     return `${clusterName}_${this.name}_network`;
+  }
+
+  async build(options: { registry?: Registry; context?: string; push?: boolean } = {}) {
+    const { builder } = this;
+    if (!builder) {
+      return;
+    }
+
+    // service registry has higher priority over options.registry
+    const registry = this.registry ?? options.registry;
+    if (!registry) {
+      throw new Error(`Registry is required to build service ${this.name}`);
+    }
+
+    // service context has higher priority over options.context
+    const context = this.context ?? options.context;
+    if (!context) {
+      throw new Error(`Context is required to build service ${this.name}`);
+    }
+
+    await builder.build({
+      ...options,
+      context,
+      registry,
+    });
   }
 }

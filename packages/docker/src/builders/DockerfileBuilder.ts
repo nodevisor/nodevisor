@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import Registry from '@nodevisor/registry';
 import DockerBuilder, { type DockerBuilderConfig } from './DockerBuilder';
-import { Dockerfile, DockerfileStage } from '../dockerfiles';
+import { Dockerfile } from '../dockerfiles';
 
 export type DockerfileBuilderConfig = DockerBuilderConfig & {
   dockerfile?: Dockerfile;
@@ -18,15 +18,20 @@ export default class DockerfileBuilder extends DockerBuilder {
     this.dockerfile = dockerfile;
   }
 
-  async build(registry: Registry, push = false) {
+  async build(options: { registry: Registry; push?: boolean; context?: string }) {
     const { dockerfilePath } = this;
 
     const dockerfileContent = await this.getDockerfileContent();
 
-    // save to file
+    // save Dockerfile to file
     await fs.writeFile(dockerfilePath, dockerfileContent);
 
-    return super.build(registry, push);
+    try {
+      return await super.build(options);
+    } finally {
+      // remove the Dockerfile
+      await fs.unlink(dockerfilePath);
+    }
   }
 
   async getDockerfileContent() {

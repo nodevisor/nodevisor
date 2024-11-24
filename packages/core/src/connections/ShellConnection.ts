@@ -23,6 +23,12 @@ async function exec(cmd: string, options: { stdin?: string } = {}) {
   const start = Date.now();
   const { stdin } = options;
 
+  if (stdin) {
+    logExec(`${cmd} | ${stdin}`);
+  } else {
+    logExec(cmd);
+  }
+
   const { exitCode, stdout, stderr } = await execCmd(cmd, stdin);
 
   logResponse(`stdout: ${stdout}, stderr: ${stderr}, code: ${exitCode}`);

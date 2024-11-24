@@ -61,4 +61,12 @@ export default class DockerSwarm extends Module {
   async demote(node: string) {
     return this.$`docker node demote ${node}`;
   }
+
+  async ls() {
+    return this.$`docker stack ls`;
+  }
+
+  async services(stack: string) {
+    return this.$`docker stack services ${stack}`;
+  }
 }

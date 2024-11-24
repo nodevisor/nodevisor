@@ -18,6 +18,9 @@
     "build": "npm run clean && npm run build:esm && npm run build:cjs",
     "build:esm": "tsc -p tsconfig.json",
     "build:cjs": "tsc -p tsconfig-cjs.json",
+    "build:watch": "npm run build:esm:watch & npm run build:cjs:watch",
+    "build:esm:watch": "tsc -p tsconfig.json --watch",
+    "build:cjs:watch": "tsc -p tsconfig-cjs.json --watch",
     "test": "jest --passWithNoTests",
     "test:file": "jest ./src/index.spec.ts --passWithNoTests --verbose",
     "valid": "tsc --noEmit"

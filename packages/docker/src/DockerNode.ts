@@ -1,11 +1,14 @@
 import FS from '@nodevisor/fs';
 import UFW from '@nodevisor/ufw';
-import { User } from '@nodevisor/core';
+import { User, log as baseLog } from '@nodevisor/core';
 import { Protocol } from '@nodevisor/endpoint';
 import { ClusterNode, type ClusterNodeConfig } from '@nodevisor/cluster';
 import DockerCompose from './DockerCompose';
 import Docker from './Docker';
 import DockerSwarm from './DockerSwarm';
+
+const log = baseLog.extend('DockerNode');
+const logDeploy = log.extend('deploy');
 
 export type DockerNodeConfig = ClusterNodeConfig & {};
 
@@ -23,27 +26,31 @@ export default class DockerNode extends ClusterNode {
   async deploy(runner: User, manager: DockerNode, options: { yaml: string }) {
     const isManager = this.isEqual(manager);
     if (!isManager) {
-      console.log('skip deploy for worker node');
       return;
     }
 
     const { yaml } = options;
 
-    const $con = await this.$(runner);
+    const $con = this.$(runner);
 
     // save docker compose file to temp file
     const tempFile = await $con(FS).temp();
-    await $con(FS).writeFile(tempFile, yaml);
+    logDeploy('temp file', tempFile);
 
-    const dockerCompose = await $con(DockerCompose);
-    const result = await dockerCompose.up({
-      file: tempFile,
-    });
+    try {
+      await $con(FS).writeFile(tempFile, yaml);
+      logDeploy('docker compose file saved', tempFile);
 
-    console.log('deploy result', result);
+      const dockerCompose = await $con(DockerCompose);
+      const result = await dockerCompose.up({
+        file: tempFile,
+      });
 
-    // remove temp file
-    await $con(FS).rm(tempFile);
+      logDeploy('deploy result', result);
+    } finally {
+      // remove temp file
+      await $con(FS).rm(tempFile);
+    }
   }
 
   async setup(admin: User, runner: User, manager: DockerNode, options: { token: string }) {

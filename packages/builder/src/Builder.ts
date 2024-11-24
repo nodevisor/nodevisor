@@ -14,7 +14,7 @@ export default abstract class Builder {
   protected tags: string[]; // Image tags
 
   constructor(config: BuilderConfig) {
-    const { arch = 'amd64', context = '.', args = {}, tags = [] } = config;
+    const { arch = 'amd64', context = '.', args = {}, tags = ['latest'] } = config;
 
     this.arch = arch;
     this.context = context;
@@ -22,5 +22,9 @@ export default abstract class Builder {
     this.tags = tags;
   }
 
-  abstract build(registry: Registry): Promise<void>;
+  abstract build(config: {
+    registry: Registry;
+    push?: boolean;
+    context?: string;
+  }): Promise<string[]>;
 }

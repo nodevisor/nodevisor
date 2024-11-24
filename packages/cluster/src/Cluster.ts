@@ -1,4 +1,5 @@
 import { User, UserConfig } from '@nodevisor/core';
+import Registry from '@nodevisor/registry';
 import ClusterService from './ClusterService';
 import ClusterNode, { type ClusterNodeConfig } from './ClusterNode';
 
@@ -10,6 +11,8 @@ export type ClusterConfig<
   users?: Array<User | UserConfig>;
   nodes?: Array<TClusterNode | string>;
   services?: TClusterService[];
+  context?: string;
+  registry?: Registry;
 };
 
 export default abstract class Cluster<
@@ -20,9 +23,11 @@ export default abstract class Cluster<
   protected users: User[];
   protected nodes: TClusterNode[];
   protected services: TClusterService[] = [];
+  protected context?: string;
+  protected registry?: Registry;
 
   constructor(config: ClusterConfig<TClusterService, TClusterNode>) {
-    const { name, users = [], nodes = [], services = [] } = config;
+    const { name, users = [], nodes = [], services = [], registry } = config;
 
     this.name = name;
 
@@ -33,6 +38,8 @@ export default abstract class Cluster<
     );
 
     services.forEach((service) => this.addService(service));
+
+    this.registry = registry;
   }
 
   protected abstract createClusterNode(config: ClusterNodeConfig): TClusterNode;
@@ -52,7 +59,28 @@ export default abstract class Cluster<
     await node.deploy(runner, manager);
   }
 
-  async deploy() {
+  async build(options: { registry?: Registry; context?: string; push?: boolean } = {}) {
+    const { registry = this.registry, context = this.context, ...restOptions } = options;
+    const { services } = this;
+
+    await Promise.all(
+      services.map((service) =>
+        service.build({
+          registry,
+          context,
+          ...restOptions,
+        }),
+      ),
+    );
+  }
+
+  async deploy(options: { skipBuild?: boolean; registry?: Registry } = {}) {
+    const { skipBuild = false, registry } = options;
+
+    if (!skipBuild) {
+      await this.build({ registry });
+    }
+
     const { nodes, users } = this;
 
     const [admin, runner] = users;

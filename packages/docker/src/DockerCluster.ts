@@ -150,13 +150,13 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
   async deployNode(node: DockerNode, runner: User, manager: DockerNode) {
     const yaml = this.yaml();
 
-    node.deploy(runner, manager, { yaml });
+    await node.deploy(runner, manager, { yaml });
   }
 
   async setupNode(node: DockerNode, admin: User, runner: User, manager: DockerNode) {
     const token = await manager.getWorkerToken(runner);
 
-    node.setup(admin, runner, manager, { token });
+    await node.setup(admin, runner, manager, { token });
   }
 
   toCompose(): DockerComposeConfig {

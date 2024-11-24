@@ -33,6 +33,7 @@ export default class DockerService extends ClusterService {
     const {
       name,
       image,
+      builder,
       labels,
       ports,
       environment,
@@ -42,18 +43,23 @@ export default class DockerService extends ClusterService {
       volumes = [],
       networks = {},
       depends = [],
+      context,
+      registry,
       ...rest
     } = config;
 
     super({
       name,
       image,
+      builder,
       labels,
       environment,
       cpus,
       memory,
       replicas,
       ports,
+      registry,
+      context,
     });
 
     this.config = rest;

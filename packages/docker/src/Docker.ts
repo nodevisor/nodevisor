@@ -107,12 +107,21 @@ export default class Docker extends Service {
   async login(options: { username: string; password: string; server: string }): Promise<void> {
     const { username, password, server } = options;
 
-    const response = await this.$`docker login --username ${username} --password-stdin ${server}`
-      .stdin(password)
-      .text();
+    try {
+      const response = await this.$`docker login --username ${username} --password-stdin ${server}`
+        .stdin(password)
+        .text();
 
-    if (!response.includes('Login Succeeded')) {
-      throw new Error('Failed to log in to Docker registry');
+      if (!response.includes('Login Succeeded')) {
+        throw new Error('Failed to log in to Docker registry');
+      }
+    } catch (error) {
+      // on mac you need to use "credsStore": "osxkeychain"
+      if (error instanceof Error && error.message.includes('not implemented')) {
+        throw new Error(`Login failed. Check your docker config.json. ${error.message}`);
+      }
+
+      throw error;
     }
   }
 
@@ -141,6 +150,7 @@ export default class Docker extends Service {
     return await this.$`docker image ls`.text();
   }
 
+  // https://docs.docker.com/reference/cli/docker/buildx/build/
   async buildx(
     dockerfilePath: string,
     options: {
@@ -164,7 +174,7 @@ export default class Docker extends Service {
 
     // context is the last argument
     if (context) {
-      cb.argument(context);
+      cb.argument(context, null);
     }
 
     return cb.text();

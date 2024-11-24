@@ -2,10 +2,10 @@ import Registry, { type RegistryConfig } from '@nodevisor/registry';
 import Docker from './Docker';
 
 export type DockerRegistryConfig = RegistryConfig & {
-  url: string; // Docker registry URL, e.g., 'registry.example.com'
   repository: string; // Repository name, e.g., 'project-web'
   username?: string; // Optional username for login
   password?: string; // Optional password for login
+  url?: string; // Docker registry URL, e.g., 'registry.example.com'
 };
 
 export default class DockerRegistry extends Registry {
@@ -16,7 +16,7 @@ export default class DockerRegistry extends Registry {
   private docker = new Docker();
 
   constructor(config: DockerRegistryConfig) {
-    const { url, repository, username, password } = config;
+    const { url = 'docker.io', repository, username, password } = config;
 
     super(config);
 

@@ -63,21 +63,25 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
         this.argument(key, value);
       });
     } else {
-      if (!this.isEmpty()) {
-        this.append` `;
-      }
-
       if (Array.isArray(value)) {
         value.forEach((v) => {
           this.argument(key, v);
         });
+        return this;
       } else if (isObject(value)) {
         Object.entries(value).forEach(([subKey, subValue]) => {
           this.append`${raw(key)}`.argument(subKey, subValue);
         });
+        return this;
       } else if (value === undefined) {
-        // do nothing
-      } else if (value === null) {
+        return this;
+      }
+
+      if (!this.isEmpty()) {
+        this.append` `;
+      }
+
+      if (value === null) {
         // include key as a flag without a value
         this.append`${raw(key)}`;
       } else if (typeof value === 'boolean') {

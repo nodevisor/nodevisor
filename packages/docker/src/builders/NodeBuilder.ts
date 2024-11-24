@@ -1,16 +1,18 @@
 import Registry from '@nodevisor/registry';
-import { Dockerfile, DockerfileStage } from '../dockerfiles';
+import { DockerfileStage } from '../dockerfiles';
 import DockerfileBuilder, { type DockerfileBuilderConfig } from './DockerfileBuilder';
 
 type NodeBuilderConfig = DockerfileBuilderConfig & {
   node?: string;
   nodeVersion?: string;
   nodeImage?: string;
+  distDir?: string;
   dotEnv?: string | Record<string, string>;
 };
 
 export default class NodeBuilder extends DockerfileBuilder {
-  private nodeImage: string;
+  readonly nodeImage: string;
+  readonly distDir: string;
   private dotEnv?: string | Record<string, string>;
 
   constructor(config: NodeBuilderConfig = {}) {
@@ -18,6 +20,7 @@ export default class NodeBuilder extends DockerfileBuilder {
       node = 'node',
       nodeVersion = '20-alpine',
       nodeImage = `${node}:${nodeVersion}`,
+      distDir = 'dist',
       dotEnv,
       ...rest
     } = config;
@@ -25,11 +28,12 @@ export default class NodeBuilder extends DockerfileBuilder {
     super(rest);
 
     this.nodeImage = nodeImage;
+    this.distDir = distDir;
     this.dotEnv = dotEnv;
   }
 
-  async build(registry: Registry, push = false) {
-    const { nodeImage, dotEnv } = this;
+  async build(options: { registry: Registry; push?: boolean; context?: string }) {
+    const { nodeImage, dotEnv, distDir } = this;
 
     const builder = new DockerfileStage(nodeImage, 'builder')
       .workdir('/app')
@@ -43,7 +47,7 @@ export default class NodeBuilder extends DockerfileBuilder {
       .workdir('/app')
       .env('NODE_ENV', 'production')
       .copy('/app/package*.json', '.', { from: builder })
-      .copy('/app/dist', './dist', { from: builder })
+      .copy(`/app/${distDir}`, `./${distDir}`, { from: builder })
       .if(!!dotEnv, (stage) =>
         stage
           .copy('/app/.env', './.env', { from: builder })
@@ -54,6 +58,6 @@ export default class NodeBuilder extends DockerfileBuilder {
 
     this.dockerfile.clear().add(builder).add(exec);
 
-    return super.build(registry, push);
+    return super.build(options);
   }
 }

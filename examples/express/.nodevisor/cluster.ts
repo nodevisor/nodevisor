@@ -1,4 +1,5 @@
 import { DockerCluster, Traefik, Express, adminSchema, runnerSchema, Redis } from 'nodevisor';
+import { DockerRegistry } from '@nodevisor/docker';
 import { z } from 'zod';
 
 export const schema = z.object({
@@ -25,6 +26,17 @@ export const schema = z.object({
       port: Number(process.env.EXPRESS_PORT ?? 3000),
       domains: process.env.EXPRESS_DOMAINS ? process.env.EXPRESS_DOMAINS.split(',') : [],
     }),
+  registry: z
+    .object({
+      repository: z.string().min(1),
+      username: z.string().min(1),
+      password: z.string().min(1),
+    })
+    .default({
+      repository: process.env.REGISTRY_REPOSITORY ?? '',
+      username: process.env.REGISTRY_USERNAME ?? '',
+      password: process.env.REGISTRY_PASSWORD ?? '',
+    }),
   admin: adminSchema.default({
     username: process.env.ADMIN_USERNAME ?? 'root',
     password: process.env.ADMIN_PASSWORD ?? '',
@@ -42,7 +54,9 @@ export const schema = z.object({
 });
 
 export default async (config: z.infer<typeof schema>) => {
-  const { express, traefik, admin, runner, nodes } = schema.parse(config);
+  const { express, traefik, admin, runner, nodes, registry } = schema.parse(config);
+
+  const dockerRegistry = new DockerRegistry(registry);
 
   const proxy = new Traefik(traefik);
 
@@ -53,6 +67,8 @@ export default async (config: z.infer<typeof schema>) => {
     name: 'express',
     proxy,
     depends: [redis],
+    context: './../../',
+    registry: dockerRegistry,
     cpus: {
       min: 0.5,
     },
