@@ -67,7 +67,7 @@ export default async (config: z.infer<typeof schema>) => {
     name: 'express',
     proxy,
     depends: [redis],
-    context: './../../',
+    context: '.',
     registry: dockerRegistry,
     cpus: {
       min: 0.5,
