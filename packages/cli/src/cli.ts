@@ -85,8 +85,9 @@ program
       }
 
       process.exit(0);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Error while executing ${file}:`, (error as Error).message);
+      console.error((error as Error).stack);
       process.exit(1);
     }
   });
