@@ -11,6 +11,7 @@
     "url": "https://github.com/nodevisor/nodevisor"
   },
   "scripts": {
+    "postinstall": "npm run build -w packages/cli && npm rebuild --ignore-scripts @nodevisor/cli",
     "prettier": "prettier --write src/**/*.ts test/**/*.ts",
     "build": "lerna run build",
     "build:nodevisor": "lerna run build --scope=nodevisor --include-dependencies",
