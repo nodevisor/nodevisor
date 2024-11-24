@@ -1,6 +1,6 @@
 {
   "name": "@nodevisor/endpoint",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {

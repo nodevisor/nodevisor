@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/packages",
   "description": "Module provides ability to manage packages",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -24,8 +24,8 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/core": "^0.0.17",
-    "@nodevisor/os": "^0.0.17"
+    "@nodevisor/core": "^0.0.18",
+    "@nodevisor/os": "^0.0.18"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
