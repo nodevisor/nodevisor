@@ -1,12 +1,11 @@
 export * from './@types';
+
+export * from './constants';
 export * from './services';
 export * from './builders';
 
 export { default } from './Docker';
 export * from './Docker';
-
-export { default as DockerSwarm } from './DockerSwarm';
-export * from './DockerSwarm';
 
 export { default as DockerCluster } from './DockerCluster';
 export * from './DockerCluster';
@@ -22,3 +21,9 @@ export * from './DockerRegistry';
 
 export { default as DockerService } from './DockerService';
 export * from './DockerService';
+
+export { default as DockerStack } from './DockerStack';
+export * from './DockerStack';
+
+export { default as DockerSwarm } from './DockerSwarm';
+export * from './DockerSwarm';

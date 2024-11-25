@@ -17,7 +17,7 @@ type DockerComposeServiceConfig = {
   networks?: Networks;
   ports?: Port[];
   restart?: 'no' | 'always' | 'unless-stopped' | 'on-failure' | `on-failure:${number}`;
-  depends_on?: Record<string, Omit<Depends, 'service'>>;
+  depends_on?: Record<string, Omit<Depends, 'service'>> | string[]; // swarm has list only
   deploy?: {
     mode?: 'global' | 'replicated';
     replicas?: number;

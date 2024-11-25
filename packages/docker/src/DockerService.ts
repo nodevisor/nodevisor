@@ -8,6 +8,7 @@ import type Volume from './@types/Volume';
 import type Network from './@types/Network';
 import type Networks from './@types/Networks';
 import type Depends from './@types/Depends';
+import DockerClusterType from './constants/DockerClusterType';
 
 type DependsOrService = Depends | DockerService;
 
@@ -175,7 +176,7 @@ export default class DockerService extends ClusterService {
     return deploy;
   }
 
-  toCompose(): DockerComposeServiceConfig {
+  toCompose(type: DockerClusterType = DockerClusterType.SWARM): DockerComposeServiceConfig {
     const { image } = this;
 
     const data: DockerComposeServiceConfig = {
@@ -209,7 +210,7 @@ export default class DockerService extends ClusterService {
     }
 
     if (this.hasDepends()) {
-      data.depends_on = toDockerDepends(this.getDepends());
+      data.depends_on = toDockerDepends(this.getDepends(), type);
     }
 
     return data;
