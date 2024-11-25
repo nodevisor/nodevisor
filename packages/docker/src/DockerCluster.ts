@@ -178,7 +178,7 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
       networks: this.getComposeNetworks(),
     };
 
-    if (type !== DockerClusterType.COMPOSE) {
+    if (type === DockerClusterType.COMPOSE) {
       // name is required for compose
       compose.name = name;
     }
