@@ -70,6 +70,10 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
         return this;
       } else if (isObject(value)) {
         Object.entries(value).forEach(([subKey, subValue]) => {
+          if (!this.isEmpty()) {
+            this.append` `;
+          }
+
           this.append`${raw(key)}`.argument(subKey, subValue);
         });
         return this;
