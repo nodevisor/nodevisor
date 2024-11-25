@@ -1,3 +1,4 @@
+import { type NodevisorProxy } from '@nodevisor/core';
 import Registry, { type RegistryConfig } from '@nodevisor/registry';
 import AWS from './AWS';
 
@@ -48,7 +49,7 @@ export default class ECR extends Registry {
     };
   }
 
-  async login() {
+  async login($con: NodevisorProxy) {
     throw new Error('Not implemented');
   }
 

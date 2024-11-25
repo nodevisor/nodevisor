@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import $, { NodevisorProxy } from '@nodevisor/core';
 import Docker from '../Docker';
 import type TargetPlatform from '../@types/TargetPlatform';
 import Builder, { type BuilderConfig } from '@nodevisor/builder';
@@ -32,7 +33,6 @@ export type DockerBuilderConfig = BuilderConfig & {
 
 export default class DockerBuilder extends Builder {
   protected dockerfilePath: string;
-  protected docker = new Docker();
 
   constructor(config: DockerBuilderConfig = {}) {
     const { dockerfilePath = 'Dockerfile', ...rest } = config;
@@ -51,6 +51,7 @@ export default class DockerBuilder extends Builder {
       context?: string;
       labels?: Record<string, string>;
     },
+    $con = $,
   ) {
     const { push = true, context = this.context, labels } = options;
 
@@ -64,14 +65,13 @@ export default class DockerBuilder extends Builder {
     log('context', contextResolved);
 
     // login to the registry
-    const credentials = await registry.getLoginCredentials();
-    await this.docker.login(credentials);
+    await registry.login($con);
 
     const imageTags = tags.map((tag) => registry.getURI(image, { tag }));
 
     log('imageTags', imageTags);
 
-    const result = await this.docker.buildx(dockerfilePath, {
+    await $con(Docker).buildx(dockerfilePath, {
       context: contextResolved,
       tags: imageTags,
       args,
@@ -79,8 +79,6 @@ export default class DockerBuilder extends Builder {
       push,
       labels,
     });
-
-    log('docker build result', result);
 
     return imageTags;
   }

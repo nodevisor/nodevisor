@@ -1,5 +1,6 @@
 import AuthorizedKeys from '@nodevisor/authorized-keys';
 import { endpoints } from '@nodevisor/endpoint';
+import type Registry from '@nodevisor/registry';
 import Packages from '@nodevisor/packages';
 import SSH from '@nodevisor/ssh';
 import UFW from '@nodevisor/ufw';
@@ -71,5 +72,11 @@ export default abstract class ClusterNode {
       const $runner = $con.as(runner.username);
       await $runner(AuthorizedKeys).write(runnerPublicKey);
     }
+  }
+
+  async authenticateRegistries(user: User, registries: Registry[], _manager: ClusterNode) {
+    const $con = this.$(user);
+
+    await Promise.all(registries.map((registry) => registry.login($con)));
   }
 }

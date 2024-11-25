@@ -1,3 +1,4 @@
+import $, { NodevisorProxy } from '@nodevisor/core';
 import Registry, { type RegistryConfig } from '@nodevisor/registry';
 import Docker from './Docker';
 
@@ -11,7 +12,6 @@ export default class DockerRegistry extends Registry {
   private url: string;
   private username?: string;
   private password?: string;
-  private docker = new Docker();
 
   constructor(config: DockerRegistryConfig) {
     const { url = 'docker.io', username, password } = config;
@@ -45,23 +45,20 @@ export default class DockerRegistry extends Registry {
     };
   }
 
-  async login() {
-    const { url, username, password } = this;
+  async login($con: NodevisorProxy) {
+    const docker = $con(Docker);
 
-    if (username && password) {
-      await this.docker.login({
-        server: url,
-        username,
-        password,
-      });
-    }
+    const credentials = await this.getLoginCredentials();
+    await docker.login(credentials);
   }
 
-  async push(image: string, tag: string = 'latest') {
-    await this.login();
+  async push(image: string, tag: string = 'latest', $con = $) {
+    await this.login($);
 
     const imageTag = this.getURI(image, { tag });
-    await this.docker.tag(image, imageTag);
-    await this.docker.push(imageTag);
+
+    const docker = $con(Docker);
+    await docker.tag(image, imageTag);
+    await docker.push(imageTag);
   }
 }

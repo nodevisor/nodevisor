@@ -6,6 +6,7 @@ import { ClusterNode, type ClusterNodeConfig } from '@nodevisor/cluster';
 import DockerCompose from './DockerCompose';
 import Docker from './Docker';
 import DockerSwarm from './DockerSwarm';
+import type Registry from '@nodevisor/registry';
 
 const log = baseLog.extend('DockerNode');
 const logDeploy = log.extend('deploy');
@@ -112,5 +113,16 @@ export default class DockerNode extends ClusterNode {
     const $con = this.$(runner);
 
     return $con(DockerSwarm).getWorkerToken();
+  }
+
+  async authenticateRegistries(user: User, registries: Registry[], manager: ClusterNode) {
+    // only manager is doing authentication
+    if (this !== manager) {
+      return;
+    }
+
+    const $con = this.$(user);
+
+    await Promise.all(registries.map((registry) => registry.login($con)));
   }
 }

@@ -1,4 +1,5 @@
 import { User, UserConfig } from '@nodevisor/core';
+import { uniq } from 'lodash';
 import Registry from '@nodevisor/registry';
 import ClusterService from './ClusterService';
 import ClusterNode, { type ClusterNodeConfig } from './ClusterNode';
@@ -55,13 +56,52 @@ export default abstract class Cluster<
     return user.clone({ username: 'runner', password: undefined });
   }
 
-  async deployNode(node: TClusterNode, runner: User, manager: TClusterNode) {
-    await node.deploy(runner, manager);
+  getRegistries(currentRegistry?: Registry) {
+    const registries: Registry[] = [];
+
+    if (this.registry) {
+      registries.push(this.registry);
+    }
+
+    if (currentRegistry) {
+      registries.push(currentRegistry);
+    }
+
+    this.services.forEach((service) => {
+      if (service.registry) {
+        registries.push(service.registry);
+      }
+    });
+
+    return uniq(registries);
   }
 
   async build(options: { registry?: Registry; context?: string; push?: boolean } = {}) {
     const { registry = this.registry, context = this.context, ...restOptions } = options;
     const { services } = this;
+
+    /*
+    ~/.docker/config.json
+    {
+      "auths": {
+        "registry1.example.com": {
+          "auth": "base64-encoded-credentials"
+        },
+        "registry2.example.com": {
+          "auth": "base64-encoded-credentials"
+        }
+        // More registries...
+      }
+    }
+    // run in serial to avoid race conditions, for parallel I need to use specific DOCKER_CONFIG for each build with different credentials
+    for (const service of services) {
+      await service.build({
+        registry,
+        context,
+        ...restOptions,
+      });
+    }
+    */
 
     await Promise.all(
       services.map((service) =>
@@ -74,8 +114,12 @@ export default abstract class Cluster<
     );
   }
 
+  async deployNode(node: TClusterNode, runner: User, manager: TClusterNode) {
+    await node.deploy(runner, manager);
+  }
+
   async deploy(options: { skipBuild?: boolean; registry?: Registry } = {}) {
-    const { skipBuild = false, registry } = options;
+    const { skipBuild = false, registry = this.registry } = options;
 
     if (!skipBuild) {
       await this.build({ registry });
@@ -94,6 +138,12 @@ export default abstract class Cluster<
     if (!manager) {
       throw new Error('Manager node is required for cluster setup');
     }
+
+    // authentificate registries
+    const registries = this.getRegistries(registry);
+    await Promise.all(
+      nodes.map((node) => node.authenticateRegistries(runnerUser, registries, manager)),
+    );
 
     // primary node must be setup first, because other nodes will use it as a source of truth
     await this.deployNode(manager, runnerUser, manager);

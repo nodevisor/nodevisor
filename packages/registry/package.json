@@ -23,6 +23,9 @@
     "test": "jest --passWithNoTests",
     "valid": "tsc --noEmit"
   },
+  "dependencies": {
+    "@nodevisor/core": "^0.0.24"
+  },
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "^22.9.3",

@@ -1,3 +1,5 @@
+import { type NodevisorProxy } from '@nodevisor/core';
+
 export type RegistryConfig = {};
 
 export default abstract class Registry {
@@ -7,7 +9,7 @@ export default abstract class Registry {
 
   abstract getURI(image: string, options: { tag?: string }): string;
 
-  abstract login(): Promise<void>;
+  abstract login($con: NodevisorProxy): Promise<void>;
 
   abstract getLoginCredentials(): Promise<{
     username: string;

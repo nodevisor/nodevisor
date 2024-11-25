@@ -36,7 +36,8 @@
     "@nodevisor/services": "^0.0.24",
     "@nodevisor/ssh": "^0.0.24",
     "@nodevisor/ufw": "^0.0.24",
-    "@nodevisor/users": "^0.0.24"
+    "@nodevisor/users": "^0.0.24",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
