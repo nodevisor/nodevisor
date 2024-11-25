@@ -7,6 +7,7 @@ import DockerCompose from './DockerCompose';
 import Docker from './Docker';
 import DockerSwarm from './DockerSwarm';
 import type Registry from '@nodevisor/registry';
+import DockerStack from './DockerStack';
 
 const log = baseLog.extend('DockerNode');
 const logDeploy = log.extend('deploy');
@@ -24,7 +25,13 @@ export default class DockerNode extends ClusterNode {
     return this.host === node.host;
   }
 
-  async deploy(runner: User, manager: DockerNode, options: { yaml: string }) {
+  async deploy(
+    name: string,
+    runner: User,
+    manager: DockerNode,
+    options: { yaml: string; type?: 'swarm' | 'stack' },
+  ) {
+    const { type = 'swarm' } = options;
     const isManager = this.isEqual(manager);
     if (!isManager) {
       return;
@@ -42,12 +49,24 @@ export default class DockerNode extends ClusterNode {
       await $con(FS).writeFile(tempFile, yaml);
       logDeploy('docker compose file saved', tempFile);
 
-      const dockerCompose = await $con(DockerCompose);
-      const result = await dockerCompose.up({
-        file: tempFile,
-      });
+      if (type === 'stack') {
+        const dockerCompose = await $con(DockerCompose);
+        const result = await dockerCompose.up({
+          file: tempFile,
+        });
 
-      logDeploy('deploy result', result);
+        logDeploy('deploy result', result);
+      } else if (type === 'swarm') {
+        const dockerStack = await $con(DockerStack);
+        const result = await dockerStack.deploy(name, {
+          composeFile: tempFile,
+          prune: true,
+        });
+
+        logDeploy('deploy result', result);
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
     } finally {
       // remove temp file
       await $con(FS).rm(tempFile);

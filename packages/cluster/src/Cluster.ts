@@ -115,7 +115,7 @@ export default abstract class Cluster<
   }
 
   async deployNode(node: TClusterNode, runner: User, manager: TClusterNode) {
-    await node.deploy(runner, manager);
+    await node.deploy(this.name, runner, manager);
   }
 
   async deploy(options: { skipBuild?: boolean; registry?: Registry } = {}) {

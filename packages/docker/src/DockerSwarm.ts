@@ -38,10 +38,6 @@ export default class DockerSwarm extends Module {
     }
   }
 
-  async deploy(stack: string, composeFile: string) {
-    return this.$`docker stack deploy -c ${composeFile} ${stack}`;
-  }
-
   async getManagerToken() {
     return this.$`docker swarm join-token -q manager}`.text();
   }
@@ -60,13 +56,5 @@ export default class DockerSwarm extends Module {
 
   async demote(node: string) {
     return this.$`docker node demote ${node}`;
-  }
-
-  async ls() {
-    return this.$`docker stack ls`;
-  }
-
-  async services(stack: string) {
-    return this.$`docker stack services ${stack}`;
   }
 }

@@ -26,7 +26,7 @@ export default abstract class ClusterNode {
     return $(userWithHost);
   }
 
-  abstract deploy(runner: User, manager: ClusterNode, options?: {}): Promise<void>;
+  abstract deploy(name: string, runner: User, manager: ClusterNode, options?: {}): Promise<void>;
 
   // prepare node for deployment and secure it
   async setup(admin: User, runner: User, _manager: ClusterNode, _options?: {}) {
