@@ -61,6 +61,8 @@ export default class DockerNode extends ClusterNode {
         const result = await dockerStack.deploy(name, {
           composeFile: tempFile,
           prune: true,
+          // without it w are not able to get image from private repo
+          withRegistryAuth: true,
         });
 
         logDeploy('deploy result', result);
