@@ -171,13 +171,19 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
   toCompose(): DockerComposeConfig {
     const { name, type /* version */ } = this;
 
-    return {
-      name,
+    const compose: DockerComposeConfig = {
       // version: version.toString(),
       services: this.getComposeServices(type),
       volumes: this.getComposeVolumes(),
       networks: this.getComposeNetworks(),
     };
+
+    if (type !== DockerClusterType.COMPOSE) {
+      // name is required for compose
+      compose.name = name;
+    }
+
+    return compose;
   }
 
   yaml() {
