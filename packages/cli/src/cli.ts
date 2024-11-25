@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 import { Command } from 'commander';
 import * as tsNode from 'ts-node';
 import * as fs from 'node:fs';
