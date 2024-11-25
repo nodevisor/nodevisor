@@ -32,7 +32,7 @@ export default class NodeBuilder extends DockerfileBuilder {
     this.dotEnv = dotEnv;
   }
 
-  async build(options: { registry: Registry; push?: boolean; context?: string }) {
+  async build(image: string, registry: Registry, options: { push?: boolean; context?: string }) {
     const { nodeImage, dotEnv, distDir } = this;
 
     const builder = new DockerfileStage(nodeImage, 'builder')
@@ -58,6 +58,6 @@ export default class NodeBuilder extends DockerfileBuilder {
 
     this.dockerfile.clear().add(builder).add(exec);
 
-    return super.build(options);
+    return super.build(image, registry, options);
   }
 }

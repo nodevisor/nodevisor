@@ -18,7 +18,7 @@ export default class DockerfileBuilder extends DockerBuilder {
     this.dockerfile = dockerfile;
   }
 
-  async build(options: { registry: Registry; push?: boolean; context?: string }) {
+  async build(image: string, registry: Registry, options: { push?: boolean; context?: string }) {
     const { dockerfilePath } = this;
 
     const dockerfileContent = await this.getDockerfileContent();
@@ -27,7 +27,7 @@ export default class DockerfileBuilder extends DockerBuilder {
     await fs.writeFile(dockerfilePath, dockerfileContent);
 
     try {
-      return await super.build(options);
+      return await super.build(image, registry, options);
     } finally {
       // remove the Dockerfile
       await fs.unlink(dockerfilePath);

@@ -43,8 +43,16 @@ export default class DockerBuilder extends Builder {
   }
 
   // todo add target
-  async build(options: { registry: Registry; push?: boolean; context?: string }) {
-    const { registry, push = true, context = this.context } = options;
+  async build(
+    image: string,
+    registry: Registry,
+    options: {
+      push?: boolean;
+      context?: string;
+      labels?: Record<string, string>;
+    },
+  ) {
+    const { push = true, context = this.context, labels } = options;
 
     const { arch, args, tags, dockerfilePath } = this;
 
@@ -59,7 +67,7 @@ export default class DockerBuilder extends Builder {
     const credentials = await registry.getLoginCredentials();
     await this.docker.login(credentials);
 
-    const imageTags = tags.map((tag) => registry.getURI({ tag }));
+    const imageTags = tags.map((tag) => registry.getURI(image, { tag }));
 
     log('imageTags', imageTags);
 
@@ -69,6 +77,7 @@ export default class DockerBuilder extends Builder {
       args,
       platform: getPlatform(arch),
       push,
+      labels,
     });
 
     log('docker build result', result);

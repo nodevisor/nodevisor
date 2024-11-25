@@ -160,9 +160,10 @@ export default class Docker extends Service {
       context?: string; // build context, which is the directory Docker will use for the build
       push?: boolean; // push the built image to the registry
       target?: string;
+      labels?: Record<string, string>;
     } = {},
   ) {
-    const { platform, args = {}, tags = [], context = '.', push = false, target } = options;
+    const { platform, args = {}, tags = [], context = '.', push = false, labels = {} } = options;
 
     const cb = this.$`docker buildx build`.argument({
       '-f': dockerfilePath,
@@ -170,6 +171,7 @@ export default class Docker extends Service {
       '--build-arg': args,
       '--push': push ? null : undefined,
       '--platform': Array.isArray(platform) ? platform.join(',') : platform,
+      '--label': labels,
     });
 
     // context is the last argument

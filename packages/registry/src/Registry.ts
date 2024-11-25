@@ -5,7 +5,7 @@ export default abstract class Registry {
 
   abstract push(serviceName: string, image: string): Promise<void>;
 
-  abstract getURI(options?: { tag?: string }): string;
+  abstract getURI(image: string, options: { tag?: string }): string;
 
   abstract login(): Promise<void>;
 

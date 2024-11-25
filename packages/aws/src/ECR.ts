@@ -3,32 +3,33 @@ import AWS from './AWS';
 
 export type ECRConfig = RegistryConfig & {
   registryId: string;
-  repository: string;
   region?: string;
 };
 
 export default class ECR extends Registry {
   private registryId: string; // ${registryId}.dkr.ecr.${region}.${domain}
-  private repository: string; // repository name like project-web
   private region?: string;
   private aws = new AWS();
 
   constructor(config: ECRConfig) {
-    const { registryId, repository, region } = config;
+    const { registryId, region } = config;
 
     super(config);
 
     this.registryId = registryId;
-    this.repository = repository;
     this.region = region;
   }
 
   // 123456789.dkr.ecr.eu-central-1.amazonaws.com/project-web
-  getURI(options: { region?: string; tag?: string } = {}) {
+  getURI(image: string, options: { region?: string; tag?: string } = {}) {
     const { region = this.region, tag } = options;
 
+    if (!image) {
+      throw new Error('Repository is required');
+    }
+
     const endpoint = this.aws.getECRDockerRegistryEndpoint(this.registryId, { region });
-    const uri = `${endpoint}/${this.repository}`;
+    const uri = `${endpoint}/${image}`;
 
     if (tag) {
       return `${uri}:${tag}`;

@@ -325,10 +325,14 @@ export default class ClusterService {
       throw new Error(`Context is required to build service ${this.name}`);
     }
 
-    await builder.build({
+    const image = this.image ?? this.name;
+
+    await builder.build(image, registry, {
       ...options,
       context,
-      registry,
+      labels: {
+        service: this.name,
+      },
     });
   }
 }

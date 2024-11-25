@@ -2,7 +2,6 @@ import Registry, { type RegistryConfig } from '@nodevisor/registry';
 import Docker from './Docker';
 
 export type DockerRegistryConfig = RegistryConfig & {
-  repository: string; // Repository name, e.g., 'project-web'
   username?: string; // Optional username for login
   password?: string; // Optional password for login
   url?: string; // Docker registry URL, e.g., 'registry.example.com'
@@ -10,26 +9,24 @@ export type DockerRegistryConfig = RegistryConfig & {
 
 export default class DockerRegistry extends Registry {
   private url: string;
-  private repository: string;
   private username?: string;
   private password?: string;
   private docker = new Docker();
 
   constructor(config: DockerRegistryConfig) {
-    const { url = 'docker.io', repository, username, password } = config;
+    const { url = 'docker.io', username, password } = config;
 
     super(config);
 
     this.url = url;
-    this.repository = repository;
     this.username = username;
     this.password = password;
   }
 
   // 123456789.dkr.ecr.eu-central-1.amazonaws.com/project-web
-  getURI(options: { tag?: string } = {}) {
+  getURI(image: string, options: { tag?: string } = {}) {
     const { tag } = options;
-    const uri = `${this.url}/${this.repository}`;
+    const uri = `${this.url}/${image}`;
 
     return tag ? `${uri}:${tag}` : uri;
   }
@@ -63,7 +60,7 @@ export default class DockerRegistry extends Registry {
   async push(image: string, tag: string = 'latest') {
     await this.login();
 
-    const imageTag = this.getURI({ tag });
+    const imageTag = this.getURI(image, { tag });
     await this.docker.tag(image, imageTag);
     await this.docker.push(imageTag);
   }

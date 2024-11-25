@@ -22,9 +22,13 @@ export default abstract class Builder {
     this.tags = tags;
   }
 
-  abstract build(config: {
-    registry: Registry;
-    push?: boolean;
-    context?: string;
-  }): Promise<string[]>;
+  abstract build(
+    image: string,
+    registry: Registry,
+    config: {
+      push?: boolean;
+      context?: string;
+      labels?: Record<string, string>;
+    },
+  ): Promise<string[]>;
 }

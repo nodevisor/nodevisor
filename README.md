@@ -114,7 +114,7 @@ Here’s how your package.json should look:
 {
   "name": "my-super-project",
   "scripts": {
-    "deploy": "nodevisor cluster.ts --deploy"
+    "deploy": "nodevisor-cli cluster.ts --deploy"
   },
   "devDependencies": {
     "@nodevisor/cli": "0.1.0",
