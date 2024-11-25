@@ -14,7 +14,7 @@ export default class DockerStack extends Module {
     stackName: string,
     options: {
       composeFile?: string;
-      detach?: boolean; // default: true
+      detach?: boolean; // In a future release, --detach=false will become the default. - comment from docker cli
       prune?: boolean;
       quiet?: boolean;
       resolveImage?: 'always' | 'never' | 'changed'; // default: always
@@ -23,7 +23,7 @@ export default class DockerStack extends Module {
   ) {
     const {
       composeFile = 'docker-compose.yml',
-      detach,
+      detach = false,
       prune,
       quiet,
       resolveImage,
@@ -63,5 +63,26 @@ export default class DockerStack extends Module {
 
   async services(stack: string) {
     return this.$`docker stack services ${stack}`;
+  }
+
+  // https://docs.docker.com/reference/cli/docker/stack/rm/
+  async rm(
+    stackName: string,
+    options: {
+      detach?: boolean; // In a future release, --detach=false will become the default. - comment from docker cli
+    },
+  ) {
+    const { detach = false } = options;
+
+    if (!stackName) {
+      throw new Error('stackName is required');
+    }
+
+    return this.command('up')
+      .argument({
+        '--detach': detach,
+      })
+      .argument(stackName, null)
+      .text();
   }
 }
