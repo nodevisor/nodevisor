@@ -123,7 +123,7 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
 
       // add current service network to networks
       networks[service.getNetworkName()] = {
-        priority: 0,
+        // priority: 0,
       };
 
       // add networks for each depends service
@@ -133,7 +133,7 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
 
         if (!networks[networkName]) {
           networks[networkName] = {
-            priority: 0,
+            // priority: 0,
           };
         }
       });
