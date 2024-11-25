@@ -29,7 +29,7 @@ export default class DockerNode extends ClusterNode {
     name: string,
     runner: User,
     manager: DockerNode,
-    options: { yaml: string; type?: 'swarm' | 'stack' },
+    options: { yaml: string; type?: 'swarm' | 'compose' },
   ) {
     const { type = 'swarm' } = options;
     const isManager = this.isEqual(manager);
@@ -49,7 +49,7 @@ export default class DockerNode extends ClusterNode {
       await $con(FS).writeFile(tempFile, yaml);
       logDeploy('docker compose file saved', tempFile);
 
-      if (type === 'stack') {
+      if (type === 'compose') {
         const dockerCompose = await $con(DockerCompose);
         const result = await dockerCompose.up({
           file: tempFile,
