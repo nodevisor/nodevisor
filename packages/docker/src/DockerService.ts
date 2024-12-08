@@ -1,5 +1,10 @@
 import { set } from 'lodash';
-import { ClusterService, type ClusterServiceConfig } from '@nodevisor/cluster';
+import {
+  ClusterService,
+  type ClusterServiceConfig,
+  ClusterBase,
+  ServiceScope,
+} from '@nodevisor/cluster';
 import type DockerComposeServiceConfig from './@types/DockerComposeServiceConfig';
 import toDockerStringObject from './utils/toDockerStringObject';
 import toDockerPorts from './utils/toDockerPorts';
@@ -79,22 +84,7 @@ export default class DockerService extends ClusterService {
           }
         : depend;
 
-    const { service } = data;
-
-    service.setClusterName(this.clusterName);
-
     this.depends.push(data);
-    return this;
-  }
-
-  setClusterName(clusterName: string | undefined) {
-    super.setClusterName(clusterName);
-
-    this.getDepends().forEach((depend) => {
-      const { service } = depend;
-      service.setClusterName(clusterName);
-    });
-
     return this;
   }
 
@@ -147,6 +137,35 @@ export default class DockerService extends ClusterService {
     return !!Object.keys(networks).length;
   }
 
+  getDependServices(external?: boolean, includeDepends: boolean = false): DockerService[] {
+    const services = new Set<DockerService>();
+
+    this.getDepends().forEach((depend) => {
+      const { service } = depend;
+
+      if (external === false && service.external) {
+        return;
+      }
+
+      if (external === undefined || (external === true && service.external)) {
+        services.add(service);
+      }
+
+      if (includeDepends) {
+        const innerExternal =
+          external === undefined || (external === true && service.external) ? undefined : external;
+
+        const dependServices = service.getDependServices(innerExternal, includeDepends);
+
+        dependServices.forEach((dependService) => {
+          services.add(dependService);
+        });
+      }
+    });
+
+    return Array.from(services);
+  }
+
   getDepends(): Depends[] {
     return this.depends.map((depend) => ({ condition: 'service_started', ...depend }));
   }
@@ -176,7 +195,11 @@ export default class DockerService extends ClusterService {
     return deploy;
   }
 
-  toCompose(type: DockerClusterType = DockerClusterType.SWARM): DockerComposeServiceConfig {
+  toCompose(
+    cluster: ClusterBase,
+    scope: ServiceScope,
+    type: DockerClusterType,
+  ): DockerComposeServiceConfig {
     const { image } = this;
 
     const data: DockerComposeServiceConfig = {

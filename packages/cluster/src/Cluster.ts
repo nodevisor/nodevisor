@@ -3,12 +3,13 @@ import { uniq } from 'lodash';
 import Registry from '@nodevisor/registry';
 import ClusterService from './ClusterService';
 import ClusterNode, { type ClusterNodeConfig } from './ClusterNode';
+import ClusterBase, { type ClusterBaseConfig } from './ClusterBase';
+import ServiceScope from './constants/ServiceScope';
 
 export type ClusterConfig<
   TClusterService extends ClusterService,
   TClusterNode extends ClusterNode,
-> = {
-  name: string;
+> = ClusterBaseConfig & {
   users?: Array<User | UserConfig>;
   nodes?: Array<TClusterNode | string>;
   services?: TClusterService[];
@@ -19,8 +20,7 @@ export type ClusterConfig<
 export default abstract class Cluster<
   TClusterService extends ClusterService,
   TClusterNode extends ClusterNode,
-> {
-  readonly name: string;
+> extends ClusterBase {
   protected users: User[];
   protected nodes: TClusterNode[];
   protected services: TClusterService[] = [];
@@ -28,9 +28,9 @@ export default abstract class Cluster<
   protected registry?: Registry;
 
   constructor(config: ClusterConfig<TClusterService, TClusterNode>) {
-    const { name, users = [], nodes = [], services = [], registry } = config;
+    const { users = [], nodes = [], services = [], registry, ...restConfig } = config;
 
-    this.name = name;
+    super(restConfig);
 
     this.users = users.map((user) => (user instanceof User ? user : new User(user)));
 
@@ -46,10 +46,53 @@ export default abstract class Cluster<
   protected abstract createClusterNode(config: ClusterNodeConfig): TClusterNode;
 
   addService(service: TClusterService) {
-    service.setClusterName(this.name);
-
     this.services = [...this.services, service];
     return this;
+  }
+
+  protected abstract getDependentServices(
+    service: TClusterService,
+    scope: ServiceScope,
+    includeDepends: boolean,
+  ): TClusterService[];
+
+  getServices(
+    scope: ServiceScope = ServiceScope.ALL,
+    includeDepends: boolean = false,
+  ): TClusterService[] {
+    const services: Set<TClusterService> = new Set();
+
+    this.services.forEach((service) => {
+      if (scope === ServiceScope.INTERNAL && service.external) {
+        return;
+      }
+
+      const process =
+        scope === ServiceScope.ALL || (scope === ServiceScope.EXTERNAL && service.external);
+      if (process) {
+        services.add(service);
+      }
+
+      if (includeDepends) {
+        const dependScope = process ? ServiceScope.ALL : scope;
+        const dependServices = this.getDependentServices(service, dependScope, includeDepends);
+        dependServices.forEach((dependService) => {
+          services.add(dependService);
+        });
+      }
+    });
+
+    return Array.from(services);
+  }
+
+  getNetworkName(service: TClusterService, scope: ServiceScope = ServiceScope.ALL) {
+    const externalServices =
+      scope === ServiceScope.ALL ? [] : this.getServices(ServiceScope.EXTERNAL, true);
+
+    const isExternal = externalServices.includes(service);
+    const clusterName = isExternal ? this.externalName : this.name;
+
+    return `${clusterName}_${service.name}_network`;
   }
 
   toRunner(user: User) {
@@ -114,12 +157,19 @@ export default abstract class Cluster<
     );
   }
 
-  async deployNode(node: TClusterNode, runner: User, manager: TClusterNode) {
-    await node.deploy(this.name, runner, manager);
+  async deployNode<TOptions extends {}>(
+    node: TClusterNode,
+    runner: User,
+    manager: TClusterNode,
+    options: TOptions,
+  ) {
+    await node.deploy(this.name, runner, manager, options);
   }
 
-  async deploy(options: { skipBuild?: boolean; registry?: Registry } = {}) {
-    const { skipBuild = false, registry = this.registry } = options;
+  async deploy<TDeployOptions extends { skipBuild?: boolean; registry?: Registry }>(
+    options: TDeployOptions,
+  ) {
+    const { skipBuild = false, registry = this.registry, ...restOptions } = options;
 
     if (!skipBuild) {
       await this.build({ registry });
@@ -146,9 +196,11 @@ export default abstract class Cluster<
     );
 
     // primary node must be setup first, because other nodes will use it as a source of truth
-    await this.deployNode(manager, runnerUser, manager);
+    await this.deployNode(manager, runnerUser, manager, restOptions);
 
-    await Promise.all(workers.map((worker) => this.deployNode(worker, runnerUser, manager)));
+    await Promise.all(
+      workers.map((worker) => this.deployNode(worker, runnerUser, manager, restOptions)),
+    );
   }
 
   async setupNode(node: TClusterNode, admin: User, runner: User, manager: TClusterNode) {

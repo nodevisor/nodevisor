@@ -1,4 +1,4 @@
-import { type PartialFor } from '@nodevisor/cluster';
+import { ClusterBase, ServiceScope, type PartialFor } from '@nodevisor/cluster';
 import type Web from './Web';
 import WebProxy, { type WebProxyConfig } from './WebProxy';
 import { Protocol } from '@nodevisor/endpoint';
@@ -25,7 +25,7 @@ type TraefikConfig = PartialFor<WebProxyConfig, 'name'> & {
   ssl?: SSLConfig;
   dashboard?: DashboardConfig;
   dockerUnixSocket?: string;
-  version?: string;
+  version?: string | number;
 };
 
 export default class Traefik extends WebProxy {
@@ -81,7 +81,7 @@ export default class Traefik extends WebProxy {
     return volumes;
   }
 
-  getCommand() {
+  getCommand(cluster: ClusterBase, scope: ServiceScope) {
     const { ssl, dashboard } = this;
     const cb = super.getCommand();
 
@@ -94,7 +94,7 @@ export default class Traefik extends WebProxy {
       '--entrypoints.web.address': ':80',
       // https://doc.traefik.io/traefik/providers/docker/#network
       // use correct network for comunnication with web services
-      '--providers.docker.network': this.getNetworkName(),
+      '--providers.docker.network': this.getNetworkName(cluster, scope),
     });
 
     if (dashboard) {
@@ -215,7 +215,7 @@ export default class Traefik extends WebProxy {
     return ports;
   }
 
-  getWebLabels(web: Web) {
+  getWebLabels(cluster: ClusterBase, scope: ServiceScope, web: Web) {
     const { ssl } = this;
     const { port, domains, name } = web;
 
@@ -228,7 +228,7 @@ export default class Traefik extends WebProxy {
       'traefik.enable': true,
       // https://doc.traefik.io/traefik/routing/providers/docker/#traefikdockernetwork
       // without it it will use random network
-      [`traefik.docker.network`]: this.getNetworkName(),
+      [`traefik.docker.network`]: this.getNetworkName(cluster, scope),
       [`${servicesPrefix}.loadbalancer.server.port`]: port,
 
       // allow http traffic

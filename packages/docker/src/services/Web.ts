@@ -1,6 +1,7 @@
 import DockerService, { type DockerServiceConfig } from '../DockerService';
 import type WebProxy from './WebProxy';
 import type Depends from '../@types/Depends';
+import { ClusterBase } from '@nodevisor/cluster';
 
 export type WebConfig = DockerServiceConfig & {
   domains: string[];
@@ -34,7 +35,7 @@ export default class Web extends DockerService {
     ];
   }
 
-  getLabels() {
+  getLabels(cluster: ClusterBase, scope: ServiceScope) {
     return {
       ...super.getLabels(),
       ...this.proxy.getWebLabels(this),
