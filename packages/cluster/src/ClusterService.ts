@@ -7,9 +7,11 @@ import type Environment from './@types/Environment';
 import type PortObject from './@types/PortObject';
 import type Port from './@types/Port';
 import portToPortObject from './utils/portToPortObject';
+import ServiceScope from './constants/ServiceScope';
+import ClusterBase from './ClusterBase';
+import ClusterServiceBase, { type ClusterServiceBaseConfig } from './ClusterServiceBase';
 
-export type ClusterServiceConfig = {
-  name: string;
+export type ClusterServiceConfig = ClusterServiceBaseConfig & {
   image?: string;
   context?: string;
   registry?: Registry;
@@ -34,14 +36,11 @@ export type ClusterServiceConfig = {
   command?: string;
 };
 
-export default class ClusterService {
-  readonly name: string;
+export default class ClusterService extends ClusterServiceBase {
   readonly image?: string;
   readonly context?: string;
   readonly registry?: Registry;
   readonly builder?: Builder;
-
-  protected clusterName?: string;
 
   private labels: Labels;
   private environment: Environment;
@@ -64,7 +63,6 @@ export default class ClusterService {
 
   constructor(config: ClusterServiceConfig) {
     const {
-      name,
       image,
       context,
       registry,
@@ -76,9 +74,11 @@ export default class ClusterService {
       replicas = {},
       ports = [],
       command,
+      ...baseConfig
     } = config;
 
-    this.name = name;
+    super(baseConfig);
+
     this.image = image;
     this.context = context;
     this.registry = registry;
@@ -95,9 +95,16 @@ export default class ClusterService {
     }
   }
 
-  setClusterName(clusterName: string | undefined) {
-    this.clusterName = clusterName;
-    return this;
+  isInScope(scope: ServiceScope) {
+    switch (scope) {
+      case ServiceScope.EXTERNAL:
+        return this.external;
+      case ServiceScope.INTERNAL:
+        return !this.external;
+      case ServiceScope.ALL:
+      default:
+        return true;
+    }
   }
 
   getPorts() {
@@ -233,7 +240,7 @@ export default class ClusterService {
   }
 
   getLabel(key: string) {
-    const { labels } = this;
+    const labels = this.getLabels();
     return labels[key];
   }
 
@@ -248,8 +255,8 @@ export default class ClusterService {
   }
 
   getEnvironment(key: string) {
-    const { environment } = this;
-    return environment[key];
+    const environments = this.getEnvironments();
+    return environments[key];
   }
 
   addCommandArgument(key: string, value: string | number | boolean | undefined) {
@@ -292,19 +299,14 @@ export default class ClusterService {
     return data;
   }
 
+  /*
   clone() {
     return new ClusterService(this.toObject());
   }
+  */
 
-  getNetworkName() {
-    const { clusterName } = this;
-    if (!clusterName) {
-      throw new Error(
-        'You must set cluster name before getting network name. Did you forget to assign service to cluster?',
-      );
-    }
-
-    return `${clusterName}_${this.name}_network`;
+  getNetworkName(cluster: ClusterBase, scope?: ServiceScope) {
+    return cluster.getNetworkName(this, scope);
   }
 
   async build(options: { registry?: Registry; context?: string; push?: boolean } = {}) {
