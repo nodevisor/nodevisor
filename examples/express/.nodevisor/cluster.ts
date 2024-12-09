@@ -28,12 +28,12 @@ export const schema = z.object({
     }),
   registry: z
     .object({
-      repository: z.string().min(1),
+      url: z.string().min(1),
       username: z.string().min(1),
       password: z.string().min(1),
     })
     .default({
-      repository: process.env.REGISTRY_REPOSITORY ?? '',
+      url: process.env.REGISTRY_REPOSITORY ?? '',
       username: process.env.REGISTRY_USERNAME ?? '',
       password: process.env.REGISTRY_PASSWORD ?? '',
     }),
@@ -66,7 +66,7 @@ export default async (config: z.infer<typeof schema>) => {
     ...express,
     name: 'express',
     proxy,
-    depends: [redis],
+    dependencies: [redis],
     context: '.',
     registry: dockerRegistry,
     cpus: {
@@ -76,7 +76,7 @@ export default async (config: z.infer<typeof schema>) => {
 
   const cluster = new DockerCluster({
     name: 'express-example',
-    services: [web],
+    dependencies: [web],
     users: [admin, runner],
     nodes,
   });

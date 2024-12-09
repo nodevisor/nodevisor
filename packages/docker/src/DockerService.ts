@@ -1,5 +1,5 @@
 import { set } from 'lodash';
-import { ClusterService, type ClusterServiceConfig } from '@nodevisor/cluster';
+import { ClusterService, type ClusterServiceConfig, ClusterBase } from '@nodevisor/cluster';
 import type DockerComposeServiceConfig from './@types/DockerComposeServiceConfig';
 import toDockerStringObject from './utils/toDockerStringObject';
 import toDockerPorts from './utils/toDockerPorts';
@@ -9,6 +9,7 @@ import type Network from './@types/Network';
 import type Networks from './@types/Networks';
 import type Depends from './@types/Depends';
 import DockerClusterType from './constants/DockerClusterType';
+import type DockerDependency from './@types/DockerDependency';
 
 type DependsOrService = Depends | DockerService;
 
@@ -79,23 +80,12 @@ export default class DockerService extends ClusterService {
           }
         : depend;
 
-    const { service } = data;
-
-    service.setClusterName(this.clusterName);
-
     this.depends.push(data);
     return this;
   }
 
-  setClusterName(clusterName: string | undefined) {
-    super.setClusterName(clusterName);
-
-    this.getDepends().forEach((depend) => {
-      const { service } = depend;
-      service.setClusterName(clusterName);
-    });
-
-    return this;
+  getDependencies(cluster: ClusterBase, includeExternal?: boolean, includeInternal?: boolean) {
+    return super.getDependencies(cluster, includeExternal, includeInternal) as DockerDependency[];
   }
 
   addVolume(volume: Volume) {
@@ -147,6 +137,37 @@ export default class DockerService extends ClusterService {
     return !!Object.keys(networks).length;
   }
 
+  /*
+  getDependServices(external?: boolean, includeDepends: boolean = false): DockerService[] {
+    const services = new Set<DockerService>();
+
+    this.getDepends().forEach((depend) => {
+      const { service } = depend;
+
+      if (external === false && service.external) {
+        return;
+      }
+
+      if (external === undefined || (external === true && service.external)) {
+        services.add(service);
+      }
+
+      if (includeDepends) {
+        const innerExternal =
+          external === undefined || (external === true && service.external) ? undefined : external;
+
+        const dependServices = service.getDependServices(innerExternal, includeDepends);
+
+        dependServices.forEach((dependService) => {
+          services.add(dependService);
+        });
+      }
+    });
+
+    return Array.from(services);
+  }
+  */
+
   getDepends(): Depends[] {
     return this.depends.map((depend) => ({ condition: 'service_started', ...depend }));
   }
@@ -176,43 +197,45 @@ export default class DockerService extends ClusterService {
     return deploy;
   }
 
-  toCompose(type: DockerClusterType = DockerClusterType.SWARM): DockerComposeServiceConfig {
+  toCompose(cluster: ClusterBase, type: DockerClusterType): DockerComposeServiceConfig {
     const { image } = this;
 
-    const data: DockerComposeServiceConfig = {
-      ...this.config,
-      image,
-      deploy: this.getDeploy(),
-    };
+    return this.run(cluster, () => {
+      const data: DockerComposeServiceConfig = {
+        ...this.config,
+        image,
+        deploy: this.getDeploy(),
+      };
 
-    if (this.hasCommand()) {
-      data.command = this.getCommand().toString();
-    }
+      if (this.hasCommand()) {
+        data.command = this.getCommand().toString();
+      }
 
-    if (this.hasEnvironments()) {
-      data.environment = toDockerStringObject(this.getEnvironments());
-    }
+      if (this.hasEnvironments()) {
+        data.environment = toDockerStringObject(this.getEnvironments());
+      }
 
-    if (this.hasLabels()) {
-      data.labels = toDockerStringObject(this.getLabels());
-    }
+      if (this.hasLabels()) {
+        data.labels = toDockerStringObject(this.getLabels());
+      }
 
-    if (this.hasVolumes()) {
-      data.volumes = this.getVolumes();
-    }
+      if (this.hasVolumes()) {
+        data.volumes = this.getVolumes();
+      }
 
-    if (this.hasNetworks()) {
-      data.networks = this.getNetworks();
-    }
+      if (this.hasNetworks()) {
+        data.networks = this.getNetworks();
+      }
 
-    if (this.hasPorts()) {
-      data.ports = toDockerPorts(this.getPorts());
-    }
+      if (this.hasPorts()) {
+        data.ports = toDockerPorts(this.getPorts());
+      }
 
-    if (this.hasDepends()) {
-      data.depends_on = toDockerDepends(this.getDepends(), type);
-    }
+      if (this.hasDepends()) {
+        data.depends_on = toDockerDepends(this.getDepends(), type);
+      }
 
-    return data;
+      return data;
+    });
   }
 }
