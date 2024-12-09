@@ -4,7 +4,9 @@ import Registry from '@nodevisor/registry';
 import ClusterService from './ClusterService';
 import ClusterNode, { type ClusterNodeConfig } from './ClusterNode';
 import ClusterBase, { type ClusterBaseConfig } from './ClusterBase';
-import ServiceScope from './constants/ServiceScope';
+import Dependency from './@types/Dependency';
+import type PartialFor from './@types/PartialFor';
+import uniqDependencies from './utils/uniqDependencies';
 
 export type ClusterConfig<
   TClusterService extends ClusterService,
@@ -12,7 +14,7 @@ export type ClusterConfig<
 > = ClusterBaseConfig & {
   users?: Array<User | UserConfig>;
   nodes?: Array<TClusterNode | string>;
-  services?: TClusterService[];
+  dependencies?: Array<TClusterService | PartialFor<Dependency, 'cluster'>>;
   context?: string;
   registry?: Registry;
 };
@@ -23,12 +25,12 @@ export default abstract class Cluster<
 > extends ClusterBase {
   protected users: User[];
   protected nodes: TClusterNode[];
-  protected services: TClusterService[] = [];
+  protected dependencies: Dependency[] = [];
   protected context?: string;
   protected registry?: Registry;
 
   constructor(config: ClusterConfig<TClusterService, TClusterNode>) {
-    const { users = [], nodes = [], services = [], registry, ...restConfig } = config;
+    const { users = [], nodes = [], dependencies = [], registry, ...restConfig } = config;
 
     super(restConfig);
 
@@ -38,59 +40,71 @@ export default abstract class Cluster<
       node instanceof ClusterNode ? node : this.createClusterNode({ host: node }),
     );
 
-    services.forEach((service) => this.addService(service));
+    dependencies.forEach((dependency) => this.addDependency(dependency));
 
     this.registry = registry;
   }
 
   protected abstract createClusterNode(config: ClusterNodeConfig): TClusterNode;
 
-  addService(service: TClusterService) {
-    this.services = [...this.services, service];
+  addDependency(input: TClusterService | PartialFor<Dependency, 'cluster'>) {
+    const dependency: Dependency =
+      input instanceof ClusterService
+        ? {
+            service: input as TClusterService,
+            cluster: this,
+          }
+        : {
+            cluster: this,
+            ...(input as PartialFor<Dependency, 'cluster'>),
+          };
+
+    this.dependencies = uniqDependencies([...this.dependencies, dependency]);
     return this;
   }
 
-  protected abstract getDependentServices(
-    service: TClusterService,
-    scope: ServiceScope,
-    includeDepends: boolean,
-  ): TClusterService[];
+  isExternal(dependency: Dependency) {
+    return dependency.cluster && dependency.cluster.name !== this.name;
+  }
 
-  getServices(
-    scope: ServiceScope = ServiceScope.ALL,
-    includeDepends: boolean = false,
-  ): TClusterService[] {
-    const services: Set<TClusterService> = new Set();
+  getDependencies(includeExternal = false, includeDepends = false) {
+    const dependencies: Dependency[] = [];
 
-    this.services.forEach((service) => {
-      if (scope === ServiceScope.INTERNAL && service.external) {
+    this.dependencies.forEach((dependency) => {
+      const isDependencyExternal = this.isExternal(dependency);
+
+      const process = includeExternal ? true : !isDependencyExternal;
+      if (!process) {
         return;
       }
 
-      const process =
-        scope === ServiceScope.ALL || (scope === ServiceScope.EXTERNAL && service.external);
-      if (process) {
-        services.add(service);
-      }
+      dependencies.push(dependency);
 
-      if (includeDepends) {
-        const dependScope = process ? ServiceScope.ALL : scope;
-        const dependServices = this.getDependentServices(service, dependScope, includeDepends);
+      // only include depends if the dependency is not external, external dependencies have dependencies processed in different cluster
+      if (includeDepends && !isDependencyExternal) {
+        const dependServices = dependency.service.getDependencies(
+          dependency.cluster,
+          includeExternal,
+          includeDepends,
+        );
+
         dependServices.forEach((dependService) => {
-          services.add(dependService);
+          dependencies.push(dependService);
         });
       }
     });
 
-    return Array.from(services);
+    return uniqDependencies(dependencies);
   }
 
-  getNetworkName(service: TClusterService, scope: ServiceScope = ServiceScope.ALL) {
-    const externalServices =
-      scope === ServiceScope.ALL ? [] : this.getServices(ServiceScope.EXTERNAL, true);
+  getDependency(service: TClusterService) {
+    const dependencies = this.getDependencies(false, true);
 
-    const isExternal = externalServices.includes(service);
-    const clusterName = isExternal ? this.externalName : this.name;
+    return dependencies.find((dependency) => dependency.service === service);
+  }
+
+  getNetworkName(service: TClusterService) {
+    const clusterName = this.name;
 
     return `${clusterName}_${service.name}_network`;
   }
@@ -110,7 +124,7 @@ export default abstract class Cluster<
       registries.push(currentRegistry);
     }
 
-    this.services.forEach((service) => {
+    this.dependencies.forEach(({ service }) => {
       if (service.registry) {
         registries.push(service.registry);
       }
@@ -121,7 +135,7 @@ export default abstract class Cluster<
 
   async build(options: { registry?: Registry; context?: string; push?: boolean } = {}) {
     const { registry = this.registry, context = this.context, ...restOptions } = options;
-    const { services } = this;
+    const { dependencies } = this;
 
     /*
     ~/.docker/config.json
@@ -147,7 +161,7 @@ export default abstract class Cluster<
     */
 
     await Promise.all(
-      services.map((service) =>
+      dependencies.map(({ service }) =>
         service.build({
           registry,
           context,
@@ -229,11 +243,11 @@ export default abstract class Cluster<
   }
 
   toObject() {
-    const { name, services = [] } = this;
+    const { name, dependencies } = this;
 
     return {
       name,
-      services: services.map((service) => service.toObject()),
+      services: dependencies.map(({ cluster, service }) => service.toObject()),
     };
   }
 }

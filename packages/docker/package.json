@@ -37,7 +37,6 @@
     "@nodevisor/registry": "^0.0.32",
     "@nodevisor/services": "^0.0.32",
     "@nodevisor/ufw": "^0.0.32",
-    "contexta": "^1.0.0",
     "lodash": "^4.17.21",
     "yaml": "^2.6.1"
   },
