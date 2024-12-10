@@ -1,8 +1,5 @@
 import type Dependency from '../@types/Dependency';
-
-function getDependencyId(dependency: Dependency) {
-  return `${dependency.cluster.name}:${dependency.service.name}`;
-}
+import getDependencyId from './getDependencyId';
 
 export default function uniqDependencies(dependencies: Dependency[]) {
   const ids = new Set();

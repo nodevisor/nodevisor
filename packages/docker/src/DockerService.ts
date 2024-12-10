@@ -7,11 +7,9 @@ import toDockerDepends from './utils/toDockerDepends';
 import type Volume from './@types/Volume';
 import type Network from './@types/Network';
 import type Networks from './@types/Networks';
-import type Depends from './@types/Depends';
+import type DockerDependsOn from './@types/DockerDependsOn';
 import DockerClusterType from './constants/DockerClusterType';
 import type DockerDependency from './@types/DockerDependency';
-
-type DependsOrService = Depends | DockerService;
 
 type PartialDockerComposeServiceConfig = Omit<
   DockerComposeServiceConfig,
@@ -20,7 +18,6 @@ type PartialDockerComposeServiceConfig = Omit<
   deploy?: Omit<DockerComposeServiceConfig['deploy'], 'resources' | 'replicas'>;
   volumes?: Volume[];
   networks?: Networks;
-  depends?: DependsOrService[];
 };
 
 export type DockerServiceConfig = ClusterServiceConfig & PartialDockerComposeServiceConfig;
@@ -29,7 +26,6 @@ export default class DockerService extends ClusterService {
   private config: PartialDockerComposeServiceConfig;
   private volumes: Volume[];
   private networks: Networks;
-  private depends: Depends[] = [];
 
   constructor(config: DockerServiceConfig) {
     const {
@@ -44,9 +40,9 @@ export default class DockerService extends ClusterService {
       replicas,
       volumes = [],
       networks = {},
-      depends = [],
       context,
       registry,
+      dependencies = [],
       ...rest
     } = config;
 
@@ -62,30 +58,16 @@ export default class DockerService extends ClusterService {
       ports,
       registry,
       context,
+      dependencies,
     });
 
     this.config = rest;
     this.volumes = volumes;
     this.networks = networks;
-
-    depends.forEach((depend) => this.addDepends(depend));
   }
 
-  addDepends(depend: DependsOrService) {
-    const data: Depends =
-      depend instanceof DockerService
-        ? {
-            service: depend,
-            condition: 'service_started',
-          }
-        : depend;
-
-    this.depends.push(data);
-    return this;
-  }
-
-  getDependencies(cluster: ClusterBase, includeExternal?: boolean, includeInternal?: boolean) {
-    return super.getDependencies(cluster, includeExternal, includeInternal) as DockerDependency[];
+  getDependencies(cluster: ClusterBase, includeExternal?: boolean, includeDepends?: boolean) {
+    return super.getDependencies(cluster, includeExternal, includeDepends) as DockerDependency[];
   }
 
   addVolume(volume: Volume) {
@@ -135,46 +117,6 @@ export default class DockerService extends ClusterService {
   hasNetworks() {
     const networks = this.getNetworks();
     return !!Object.keys(networks).length;
-  }
-
-  /*
-  getDependServices(external?: boolean, includeDepends: boolean = false): DockerService[] {
-    const services = new Set<DockerService>();
-
-    this.getDepends().forEach((depend) => {
-      const { service } = depend;
-
-      if (external === false && service.external) {
-        return;
-      }
-
-      if (external === undefined || (external === true && service.external)) {
-        services.add(service);
-      }
-
-      if (includeDepends) {
-        const innerExternal =
-          external === undefined || (external === true && service.external) ? undefined : external;
-
-        const dependServices = service.getDependServices(innerExternal, includeDepends);
-
-        dependServices.forEach((dependService) => {
-          services.add(dependService);
-        });
-      }
-    });
-
-    return Array.from(services);
-  }
-  */
-
-  getDepends(): Depends[] {
-    return this.depends.map((depend) => ({ condition: 'service_started', ...depend }));
-  }
-
-  hasDepends() {
-    const depends = this.getDepends();
-    return !!depends.length;
   }
 
   getDeploy(): Exclude<DockerComposeServiceConfig['deploy'], undefined> {
@@ -231,8 +173,9 @@ export default class DockerService extends ClusterService {
         data.ports = toDockerPorts(this.getPorts());
       }
 
-      if (this.hasDepends()) {
-        data.depends_on = toDockerDepends(this.getDepends(), type);
+      const dependencies = this.getDependencies(cluster);
+      if (dependencies.length) {
+        data.depends_on = toDockerDepends(dependencies, type);
       }
 
       return data;

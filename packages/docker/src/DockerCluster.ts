@@ -11,6 +11,7 @@ import { User } from '@nodevisor/core';
 import DockerClusterType from './constants/DockerClusterType';
 import Registry from '@nodevisor/registry';
 import type DockerDependency from './@types/DockerDependency';
+import type Network from './@types/Network';
 
 export type DockerClusterConfig = ClusterConfig<DockerService, DockerNode> & {
   type?: DockerClusterType;
@@ -20,7 +21,6 @@ export type DockerClusterConfig = ClusterConfig<DockerService, DockerNode> & {
 };
 
 export default class DockerCluster extends Cluster<DockerService, DockerNode> {
-  protected dependencies: DockerDependency[] = [];
   readonly type: DockerClusterType;
   // private version: number;
   private networks: NetworksTopLevel = {};
@@ -59,10 +59,24 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     return networks;
   }
 
+  getServiceComposeNetwork(
+    _cluster: DockerCluster,
+    _service: DockerService,
+    type: DockerClusterType,
+  ): Network {
+    const network: Network = {};
+    if (type === DockerClusterType.COMPOSE) {
+      network.priority = 0; // swarm does not support priority
+    }
+
+    return network;
+  }
+
   getComposeNetworks() {
     const networks = this.getNetworks();
 
     const dependencies = this.getDependencies(true, true);
+    // console.log('dependencies***', dependencies);
     dependencies.forEach((dependency) => {
       const isExternal = this.isExternal(dependency);
       const networkName = dependency.service.getNetworkName(dependency.cluster);
@@ -95,8 +109,8 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     return volumes;
   }
 
-  getDependencies(includeExternal?: boolean, includeInternal?: boolean) {
-    return super.getDependencies(includeExternal, includeInternal) as DockerDependency[];
+  getDependencies(includeExternal?: boolean, includeDepends?: boolean) {
+    return super.getDependencies(includeExternal, includeDepends) as DockerDependency[];
   }
 
   getComposeVolumes() {
@@ -131,19 +145,29 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
 
       const { networks = {}, ...serviceCompose } = service.toCompose(cluster, type);
 
+      const network: Network = {};
+      if (type === DockerClusterType.COMPOSE) {
+        network.priority = 0; // swarm does not support priority
+      }
+
       // add current service network to networks
-      networks[service.getNetworkName(cluster)] = {
-        // priority: 0, // swarm does not support priority
-      };
+      networks[service.getNetworkName(cluster)] = this.getServiceComposeNetwork(
+        cluster,
+        service,
+        type,
+      );
 
       // add networks for each depends service
-      service.getDependencies(cluster, true).forEach((serviceDependency) => {
+      const deps = service.getDependencies(cluster, false, true);
+      service.getDependencies(cluster, false, true).forEach((serviceDependency) => {
         const networkName = serviceDependency.service.getNetworkName(serviceDependency.cluster);
 
         if (!networks[networkName]) {
-          networks[networkName] = {
-            // priority: 0,
-          };
+          networks[networkName] = this.getServiceComposeNetwork(
+            serviceDependency.cluster,
+            serviceDependency.service,
+            type,
+          );
         }
       });
 
@@ -177,7 +201,7 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     await node.setup(admin, runner, manager, { token });
   }
 
-  toCompose(options: { type?: DockerClusterType }): DockerComposeConfig {
+  toCompose(options: { type?: DockerClusterType } = {}): DockerComposeConfig {
     const { type = this.type } = options;
     const { name /* version */ } = this;
 
@@ -196,7 +220,7 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     return compose;
   }
 
-  yaml(options: { type?: DockerClusterType }) {
+  yaml(options: { type?: DockerClusterType } = {}) {
     const compose = this.toCompose(options);
 
     return YAML.stringify(compose);

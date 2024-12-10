@@ -1,5 +1,4 @@
 import DockerService, { type DockerServiceConfig } from '../DockerService';
-import type Depends from '../@types/Depends';
 import WebProxy from './WebProxy';
 import type WebProxyDependency from '../@types/WebProxyDependency';
 import { useCluster } from '@nodevisor/cluster';
@@ -20,20 +19,11 @@ export default class Web extends DockerService {
 
     super(rest);
 
-    this.proxy = proxy instanceof WebProxy ? { service: proxy } : proxy;
     this.domains = domains;
     this.port = port;
-  }
+    this.proxy = proxy instanceof WebProxy ? { service: proxy } : proxy;
 
-  getDepends(): Depends[] {
-    const depends = super.getDepends();
-    return [
-      ...depends,
-      {
-        service: this.proxy.service,
-        condition: 'service_started',
-      },
-    ];
+    this.addDependency(this.proxy);
   }
 
   getLabels() {

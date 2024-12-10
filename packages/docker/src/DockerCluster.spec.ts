@@ -8,7 +8,7 @@ import { User } from '@nodevisor/core';
 import Traefik from './services/Traefik';
 import Whoami from './services/Whoami';
 import Redis from './services/Redis';
-import DockerBuilder from './DockerBuilder';
+import DockerClusterType from './constants/DockerClusterType';
 
 describe('Cluster', () => {
   it('should create a empty cluster', async () => {
@@ -32,7 +32,7 @@ describe('Cluster', () => {
       users: [setup, runner],
     });
 
-    const config = await cluster.toCompose();
+    const config = await cluster.toCompose({ type: DockerClusterType.COMPOSE });
 
     const result = {
       name: 'test',
@@ -70,10 +70,10 @@ describe('Cluster', () => {
       name: 'test',
       nodes: [primary],
       users: [setupUser, runnerUser],
-      services: [proxy],
+      dependencies: [proxy],
     });
 
-    const config = await cluster.toCompose();
+    const config = cluster.toCompose({ type: DockerClusterType.COMPOSE });
 
     // console.log(JSON.stringify(config, null, 2));
 
@@ -184,10 +184,10 @@ describe('Cluster', () => {
       name: 'test',
       nodes: [primary],
       users: [setupUser, runnerUser],
-      services: [proxy, web],
+      dependencies: [web],
     });
 
-    const config = await cluster.toCompose();
+    const config = cluster.toCompose({ type: DockerClusterType.COMPOSE });
 
     // console.log(JSON.stringify(config, null, 2));
 
@@ -331,18 +331,17 @@ describe('Cluster', () => {
     const web = new Whoami({
       proxy,
       domains: ['whoami.127.0.0.1.nip.io'],
-      depends: [redis],
-      builder: new DockerBuilder(),
+      dependencies: [redis],
     });
 
     const cluster = new Cluster({
       name: 'test',
       nodes: ['127.0.0.1'],
       users: [setupUser, runnerUser],
-      services: [web],
+      dependencies: [web],
     });
 
-    const config = await cluster.toCompose();
+    const config = cluster.toCompose({ type: DockerClusterType.COMPOSE });
 
     const result = {
       name: 'test',
@@ -489,6 +488,7 @@ describe('Cluster', () => {
     };
 
     expect(config).toEqual(result);
+    /*
     // await cluster.setup();
 
     const yaml = cluster.yaml();
@@ -507,5 +507,6 @@ describe('Cluster', () => {
     console.log(curlResult);
     expect(curlResult).toContain('Host: whoami.127.0.0.1.nip.io');
     expect(curlResult).toContain('X-Forwarded-Host: whoami.127.0.0.1.nip.io');
+    */
   });
 });

@@ -100,6 +100,8 @@ export default abstract class ClusterService extends ClusterServiceBase {
     if (command) {
       this.command.append`${raw(command)}`;
     }
+
+    dependencies.forEach((dependency) => this.addDependency(dependency));
   }
 
   addDependency(input: ClusterService | PartialFor<Dependency, 'cluster'>) {
