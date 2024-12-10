@@ -100,7 +100,12 @@ export default abstract class Cluster<
   getDependency(service: TClusterService) {
     const dependencies = this.getDependencies(false, true);
 
-    return dependencies.find((dependency) => dependency.service === service);
+    const dependency = dependencies.find((dependency) => dependency.service === service);
+    if (!dependency) {
+      throw new Error(`Dependency ${service.name} not found in cluster ${this.name}`);
+    }
+
+    return dependency;
   }
 
   getNetworkName(service: TClusterService) {

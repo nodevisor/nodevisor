@@ -1,9 +1,8 @@
 import type WebProxy from '../services/WebProxy';
-import type DockerCluster from '../DockerCluster';
+import type DockerDependency from './DockerDependency';
 
-type WebProxyDependency = {
+type WebProxyDependency = Omit<DockerDependency, 'service'> & {
   service: WebProxy;
-  cluster?: DockerCluster;
 };
 
 export default WebProxyDependency;

@@ -7,11 +7,12 @@ import type DockerComposeServiceConfig from './@types/DockerComposeServiceConfig
 import type NetworksTopLevel from './@types/NetworksTopLevel';
 import type VolumesTopLevel from './@types/VolumesTopLevel';
 import { User } from '@nodevisor/core';
-// import DockerCompose from './DockerCompose';
 import DockerClusterType from './constants/DockerClusterType';
 import Registry from '@nodevisor/registry';
 import type DockerDependency from './@types/DockerDependency';
 import type Network from './@types/Network';
+import WebProxy from './services/WebProxy';
+import type WebProxyDependency from './@types/WebProxyDependency';
 
 export type DockerClusterConfig = ClusterConfig<DockerService, DockerNode> & {
   type?: DockerClusterType;
@@ -41,6 +42,16 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     this.type = type;
     this.networks = networks;
     this.volumes = volumes;
+  }
+
+  getDependencies(includeExternal?: boolean, includeDepends?: boolean) {
+    return super.getDependencies(includeExternal, includeDepends) as DockerDependency[];
+  }
+
+  getDependency(service: WebProxy): WebProxyDependency;
+  getDependency(service: DockerService): DockerDependency;
+  getDependency(service: DockerService | WebProxy) {
+    return super.getDependency(service);
   }
 
   protected createClusterNode(config: DockerNodeConfig) {
@@ -76,7 +87,6 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     const networks = this.getNetworks();
 
     const dependencies = this.getDependencies(true, true);
-    // console.log('dependencies***', dependencies);
     dependencies.forEach((dependency) => {
       const isExternal = this.isExternal(dependency);
       const networkName = dependency.service.getNetworkName(dependency.cluster);
@@ -107,10 +117,6 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     });
 
     return volumes;
-  }
-
-  getDependencies(includeExternal?: boolean, includeDepends?: boolean) {
-    return super.getDependencies(includeExternal, includeDepends) as DockerDependency[];
   }
 
   getComposeVolumes() {
@@ -158,8 +164,7 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
       );
 
       // add networks for each depends service
-      const deps = service.getDependencies(cluster, false, true);
-      service.getDependencies(cluster, false, true).forEach((serviceDependency) => {
+      service.getDependencies(cluster, true, true).forEach((serviceDependency) => {
         const networkName = serviceDependency.service.getNetworkName(serviceDependency.cluster);
 
         if (!networks[networkName]) {

@@ -1,17 +1,17 @@
 import DockerService, { type DockerServiceConfig } from '../DockerService';
 import WebProxy from './WebProxy';
 import type WebProxyDependency from '../@types/WebProxyDependency';
-import { useCluster } from '@nodevisor/cluster';
+import { useCluster, type PartialFor } from '@nodevisor/cluster';
 
 export type WebConfig = DockerServiceConfig & {
   domains: string[];
-  proxy: WebProxy | WebProxyDependency;
+  proxy: WebProxy | PartialFor<WebProxyDependency, 'cluster'>;
   port?: number;
 };
 
 export default class Web extends DockerService {
   readonly domains: string[];
-  readonly proxy: WebProxyDependency;
+  readonly proxy: PartialFor<WebProxyDependency, 'cluster'>;
   readonly port: number;
 
   constructor(config: WebConfig) {
