@@ -3,23 +3,23 @@ import { DockerfileStage } from '../dockerfiles';
 import DockerfileBuilder, { type DockerfileBuilderConfig } from './DockerfileBuilder';
 
 type NodeBuilderConfig = DockerfileBuilderConfig & {
+  image?: string;
   node?: string;
-  nodeVersion?: string;
-  nodeImage?: string;
+  version?: string | number;
   distDir?: string;
   dotEnv?: string | Record<string, string>;
-};
+} & ({} | {});
 
 export default class NodeBuilder extends DockerfileBuilder {
-  readonly nodeImage: string;
+  readonly image: string;
   readonly distDir: string;
   private dotEnv?: string | Record<string, string>;
 
   constructor(config: NodeBuilderConfig = {}) {
     const {
       node = 'node',
-      nodeVersion = '20-alpine',
-      nodeImage = `${node}:${nodeVersion}`,
+      version = '20-alpine',
+      image = `${node}:${version}`,
       distDir = 'dist',
       dotEnv,
       ...rest
@@ -27,15 +27,15 @@ export default class NodeBuilder extends DockerfileBuilder {
 
     super(rest);
 
-    this.nodeImage = nodeImage;
+    this.image = image;
     this.distDir = distDir;
     this.dotEnv = dotEnv;
   }
 
   async build(image: string, registry: Registry, options: { push?: boolean; context?: string }) {
-    const { nodeImage, dotEnv, distDir } = this;
+    const { image: builderImage, dotEnv, distDir } = this;
 
-    const builder = new DockerfileStage(nodeImage, 'builder')
+    const builder = new DockerfileStage(builderImage, 'builder')
       .workdir('/app')
       .copy('.', '.')
       .if(!!dotEnv, (stage) => stage.dotEnv(dotEnv))
@@ -43,7 +43,7 @@ export default class NodeBuilder extends DockerfileBuilder {
       .env({ NODE_ENV: 'production' })
       .run('npm run build');
 
-    const exec = new DockerfileStage(nodeImage, 'exec')
+    const exec = new DockerfileStage(builderImage, 'exec')
       .workdir('/app')
       .env('NODE_ENV', 'production')
       .copy('/app/package*.json', '.', { from: builder })

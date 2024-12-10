@@ -3,7 +3,7 @@ import type Duration from './Duration';
 import type UpdateConfig from './UpdateConfig';
 import type Volume from './Volume';
 import type Networks from './Networks';
-import type Depends from './Depends';
+import type DockerDependsOn from './DockerDependsOn';
 
 // https://docs.docker.com/reference/compose-file/services/
 type DockerComposeServiceConfig = {
@@ -17,7 +17,7 @@ type DockerComposeServiceConfig = {
   networks?: Networks;
   ports?: Port[];
   restart?: 'no' | 'always' | 'unless-stopped' | 'on-failure' | `on-failure:${number}`;
-  depends_on?: Record<string, Omit<Depends, 'service'>> | string[]; // swarm has list only
+  depends_on?: Record<string, Omit<DockerDependsOn, 'service'>> | string[]; // swarm has list only
   deploy?: {
     mode?: 'global' | 'replicated';
     replicas?: number;

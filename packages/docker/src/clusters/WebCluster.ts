@@ -9,10 +9,10 @@ export default class WebCluster extends DockerCluster {
   readonly proxy: WebProxy;
 
   constructor(config: WebClusterConfig) {
-    const { proxy, services = [], ...rest } = config;
+    const { proxy, dependencies = [], ...rest } = config;
 
     super({
-      services: [proxy, ...services],
+      dependencies: [proxy, ...dependencies],
       ...rest,
     });
 
