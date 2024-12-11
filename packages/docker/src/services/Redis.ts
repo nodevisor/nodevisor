@@ -1,6 +1,6 @@
 import { type PartialFor } from '@nodevisor/cluster';
 import DockerService, { type DockerServiceConfig } from '../DockerService';
-import type Volume from '../@types/Volume';
+import type DockerVolume from '../@types/DockerVolume';
 
 type MaxmemoryPolicy =
   | 'noeviction'
@@ -15,7 +15,7 @@ type RedisConfig = PartialFor<DockerServiceConfig, 'name'> & {
   appendonly?: boolean;
   maxmemory?: string | number;
   maxmemoryPolicy?: MaxmemoryPolicy;
-  volume?: Volume;
+  volume?: DockerVolume;
   version?: string;
 };
 
@@ -25,7 +25,7 @@ export default class Redis extends DockerService {
   private maxmemory?: string | number;
   private maxmemoryPolicy?: MaxmemoryPolicy;
 
-  private volume?: Volume;
+  private volume?: DockerVolume;
 
   constructor(config: RedisConfig = {}) {
     const {
@@ -58,15 +58,11 @@ export default class Redis extends DockerService {
   getVolumes() {
     const volumes = super.getVolumes();
 
-    const {
-      volume = {
-        source: `${this.name}_data`,
-        target: '/data',
-        type: 'volume',
-      },
-    } = this;
-
-    volumes.push(volume);
+    volumes.push({
+      name: 'data',
+      target: '/data',
+      type: 'volume',
+    });
 
     return volumes;
   }

@@ -63,6 +63,7 @@ export default class Traefik extends WebProxy {
 
     if (!volumes.find((volume) => volume.source === dockerUnixSocket)) {
       volumes.push({
+        name: 'docker-socket',
         type: 'bind',
         source: dockerUnixSocket,
         target: '/var/run/docker.sock',
@@ -72,8 +73,8 @@ export default class Traefik extends WebProxy {
 
     if (ssl) {
       volumes.push({
+        name: 'letsencrypt',
         type: 'volume',
-        source: `${name}_letsencrypt`,
         target: '/letsencrypt',
       });
     }

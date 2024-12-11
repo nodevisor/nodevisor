@@ -1,20 +1,20 @@
 import { type PartialFor } from '@nodevisor/cluster';
 import DockerService, { type DockerServiceConfig } from '../DockerService';
-import type Volume from '../@types/Volume';
+import type DockerVolume from '../@types/DockerVolume';
 
 type PostgresConfig = PartialFor<DockerServiceConfig, 'name'> & {
   password?: string;
   username?: string;
   database?: string;
   version?: string;
-  volume?: Volume;
+  volume?: DockerVolume;
 };
 
 export default class Postgres extends DockerService {
   private password?: string;
   private username?: string;
   private database?: string;
-  private volume?: Volume;
+  private volume?: DockerVolume;
 
   constructor(config: PostgresConfig = {}) {
     const {
@@ -45,15 +45,11 @@ export default class Postgres extends DockerService {
   getVolumes() {
     const volumes = super.getVolumes();
 
-    const {
-      volume = {
-        source: `${this.name}_data`,
-        target: '/var/lib/postgresql/data',
-        type: 'volume',
-      },
-    } = this;
-
-    volumes.push(volume);
+    volumes.push({
+      name: 'data',
+      target: '/var/lib/postgresql/data',
+      type: 'volume',
+    });
 
     return volumes;
   }

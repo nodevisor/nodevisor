@@ -4,28 +4,28 @@ import DockerNode, { type DockerNodeConfig } from './DockerNode';
 import type DockerService from './DockerService';
 import type DockerComposeConfig from './@types/DockerComposeConfig';
 import type DockerComposeServiceConfig from './@types/DockerComposeServiceConfig';
-import type NetworksTopLevel from './@types/NetworksTopLevel';
-import type VolumesTopLevel from './@types/VolumesTopLevel';
+import type DockerNetworkTopLevel from './@types/DockerNetworkTopLevel';
+import type DockerVolumeTopLevel from './@types/DockerVolumeTopLevel';
 import { User } from '@nodevisor/core';
 import DockerClusterType from './constants/DockerClusterType';
 import Registry from '@nodevisor/registry';
 import type DockerDependency from './@types/DockerDependency';
-import type Network from './@types/Network';
+import type DockerNetwork from './@types/DockerNetwork';
 import WebProxy from './services/WebProxy';
 import type WebProxyDependency from './@types/WebProxyDependency';
 
 export type DockerClusterConfig = ClusterConfig<DockerService, DockerNode> & {
   type?: DockerClusterType;
   // version?: number;
-  networks?: NetworksTopLevel;
-  volumes?: VolumesTopLevel;
+  networks?: Record<string, DockerNetworkTopLevel>;
+  volumes?: Record<string, DockerVolumeTopLevel>;
 };
 
 export default class DockerCluster extends Cluster<DockerService, DockerNode> {
   readonly type: DockerClusterType;
   // private version: number;
-  private networks: NetworksTopLevel = {};
-  private volumes: VolumesTopLevel = {};
+  private networks: Record<string, DockerNetworkTopLevel> = {};
+  private volumes: Record<string, DockerVolumeTopLevel> = {};
 
   constructor(config: DockerClusterConfig) {
     const {
@@ -59,7 +59,7 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
   }
 
   getNetworks() {
-    const networks: NetworksTopLevel = {};
+    const networks: Record<string, DockerNetworkTopLevel> = {};
 
     Object.entries(this.networks).forEach(([name, network]) => {
       networks[name] = {
@@ -74,8 +74,8 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     _cluster: DockerCluster,
     _service: DockerService,
     type: DockerClusterType,
-  ): Network {
-    const network: Network = {};
+  ) {
+    const network: DockerNetwork = {};
     if (type === DockerClusterType.COMPOSE) {
       network.priority = 0; // swarm does not support priority
     }
@@ -108,7 +108,7 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
   }
 
   getVolumes() {
-    const volumes: VolumesTopLevel = {};
+    const volumes: Record<string, DockerVolumeTopLevel> = {};
 
     Object.entries(this.volumes).forEach(([name, volume]) => {
       volumes[name] = {
@@ -122,9 +122,10 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
   getComposeVolumes() {
     const volumes = this.getVolumes();
 
+    /* - extract top level volumes from services
     const dependencies = this.getDependencies(false, true);
     dependencies.forEach((dependency) => {
-      const { service } = dependency;
+      const { cluster, service } = dependency;
 
       const serviceVolumes = service.getVolumes();
 
@@ -132,11 +133,12 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
         if (volume.type === 'volume') {
           volumes[volume.source] = {
             driver: 'local',
-            name: service.getVolumeName(volume),
+            name: service.getVolumeName(cluster, volume),
           };
         }
       });
     });
+    */
 
     return volumes;
   }
@@ -151,7 +153,7 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
 
       const { networks = {}, ...serviceCompose } = service.toCompose(cluster, type);
 
-      const network: Network = {};
+      const network: DockerNetwork = {};
       if (type === DockerClusterType.COMPOSE) {
         network.priority = 0; // swarm does not support priority
       }

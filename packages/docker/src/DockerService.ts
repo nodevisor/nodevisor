@@ -4,28 +4,28 @@ import type DockerComposeServiceConfig from './@types/DockerComposeServiceConfig
 import toDockerStringObject from './utils/toDockerStringObject';
 import toDockerPorts from './utils/toDockerPorts';
 import toDockerDepends from './utils/toDockerDepends';
-import type Volume from './@types/Volume';
-import type Network from './@types/Network';
-import type Networks from './@types/Networks';
-import type DockerDependsOn from './@types/DockerDependsOn';
+import type DockerVolume from './@types/DockerVolume';
+import type DockerNetwork from './@types/DockerNetwork';
 import DockerClusterType from './constants/DockerClusterType';
 import type DockerDependency from './@types/DockerDependency';
+import type ServiceVolume from './@types/ServiceVolume';
+import toDockerVolumes from './utils/toDockerVolumes';
 
 type PartialDockerComposeServiceConfig = Omit<
   DockerComposeServiceConfig,
   'image' | 'labels' | 'ports' | 'environment' | 'deploy' | 'networks' | 'volumes'
 > & {
   deploy?: Omit<DockerComposeServiceConfig['deploy'], 'resources' | 'replicas'>;
-  volumes?: Volume[];
-  networks?: Networks;
+  volumes?: ServiceVolume[];
+  networks?: Record<string, DockerNetwork>;
 };
 
 export type DockerServiceConfig = ClusterServiceConfig & PartialDockerComposeServiceConfig;
 
 export default class DockerService extends ClusterService {
   private config: PartialDockerComposeServiceConfig;
-  private volumes: Volume[];
-  private networks: Networks;
+  private volumes: ServiceVolume[];
+  private networks: Record<string, DockerNetwork>;
 
   constructor(config: DockerServiceConfig) {
     const {
@@ -70,7 +70,7 @@ export default class DockerService extends ClusterService {
     return super.getDependencies(cluster, includeExternal, includeDepends) as DockerDependency[];
   }
 
-  addVolume(volume: Volume) {
+  addVolume(volume: ServiceVolume) {
     this.volumes.push(volume);
     return this;
   }
@@ -84,11 +84,7 @@ export default class DockerService extends ClusterService {
     return !!volumes.length;
   }
 
-  getVolumeName(volume: Volume) {
-    return `${this.name}_${volume.source}_volume`;
-  }
-
-  addNetwork(name: string, network: Network) {
+  addNetwork(name: string, network: DockerNetwork) {
     if (this.networks[name]) {
       throw new Error(`Network ${name} already exists`);
     }
@@ -103,7 +99,7 @@ export default class DockerService extends ClusterService {
   }
 
   getNetworks() {
-    const networks: Networks = {};
+    const networks: Record<string, DockerNetwork> = {};
 
     Object.entries(this.networks).forEach(([name, network]) => {
       networks[name] = {
@@ -162,7 +158,7 @@ export default class DockerService extends ClusterService {
       }
 
       if (this.hasVolumes()) {
-        data.volumes = this.getVolumes();
+        data.volumes = toDockerVolumes(cluster, this, this.getVolumes());
       }
 
       if (this.hasNetworks()) {

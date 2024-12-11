@@ -14,3 +14,6 @@ export * from './ClusterNode';
 
 export { default as ClusterService } from './ClusterService';
 export * from './ClusterService';
+
+export { default as ClusterServiceBase } from './ClusterServiceBase';
+export * from './ClusterServiceBase';

@@ -1,6 +1,6 @@
 import type Duration from './Duration';
 
-type UpdateConfig = {
+type DockerUpdateConfig = {
   parallelism?: number; // default: 1,  If set to 0, all containers rollback simultaneously.
   delay?: Duration; // The time to wait between each container group's rollback (default 0s).
   failure_action?: 'continue' | 'pause' | 'rollback'; // default: pause
@@ -10,4 +10,4 @@ type UpdateConfig = {
   order?: 'start-first' | 'stop-first'; // default: stop-first
 };
 
-export default UpdateConfig;
+export default DockerUpdateConfig;

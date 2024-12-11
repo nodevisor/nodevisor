@@ -1,7 +1,6 @@
 // https://docs.docker.com/reference/compose-file/services/#volumes
-
-type Volume = {
-  source: string;
+type DockerVolume = {
+  source?: string;
   target: string;
   read_only?: boolean;
 } & (
@@ -35,4 +34,4 @@ type Volume = {
     }
 );
 
-export default Volume;
+export default DockerVolume;

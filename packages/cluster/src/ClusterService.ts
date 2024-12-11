@@ -13,6 +13,7 @@ import type Dependency from './@types/Dependency';
 import type PartialFor from './@types/PartialFor';
 import uniqDependencies from './utils/uniqDependencies';
 import ClusterContext from './ClusterContext';
+import type Volume from './@types/Volume';
 
 export type ClusterServiceConfig = ClusterServiceBaseConfig & {
   image?: string;
@@ -381,6 +382,10 @@ export default abstract class ClusterService extends ClusterServiceBase {
 
   getNetworkName(cluster: ClusterBase) {
     return cluster.getNetworkName(this);
+  }
+
+  getVolumeName(cluster: ClusterBase, volume: Volume) {
+    return cluster.getVolumeName(this, volume);
   }
 
   run<TReturn>(cluster: ClusterBase, fn: () => TReturn) {

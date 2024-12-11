@@ -89,7 +89,7 @@ describe('Cluster', () => {
               type: 'bind',
             },
             {
-              source: 'traefik_letsencrypt',
+              source: 'traefik-letsencrypt',
               target: '/letsencrypt',
               type: 'volume',
             },
@@ -203,7 +203,7 @@ describe('Cluster', () => {
               type: 'bind',
             },
             {
-              source: 'traefik_letsencrypt',
+              source: 'traefik-letsencrypt',
               target: '/letsencrypt',
               type: 'volume',
             },
@@ -624,7 +624,7 @@ describe('Cluster', () => {
           restart: 'unless-stopped',
           volumes: [
             {
-              source: 'redis_data',
+              source: 'redis-data',
               target: '/data',
               type: 'volume',
             },
@@ -690,6 +690,8 @@ describe('Cluster', () => {
 
     const runnerUser = setupUser.clone({ username: 'runner' });
 
+    const redis = new Redis();
+
     const proxy = new Traefik({
       dashboard: {
         insecure: true,
@@ -700,10 +702,8 @@ describe('Cluster', () => {
       name: 'nodevisor',
       nodes: ['127.0.0.1'],
       users: [setupUser, runnerUser],
-      dependencies: [proxy],
+      dependencies: [proxy, redis],
     });
-
-    const redis = new Redis();
 
     const web = new Whoami({
       proxy: mainCluster.getDependency(proxy),
@@ -722,6 +722,34 @@ describe('Cluster', () => {
 
     const nodevisorResult = {
       services: {
+        redis: {
+          command: 'redis-server',
+          deploy: {
+            replicas: 1,
+            resources: {
+              limits: {
+                cpus: '1',
+                memory: '512mb',
+              },
+              reservations: {
+                cpus: '0.5',
+                memory: '128mb',
+              },
+            },
+          },
+          image: 'redis:7.4.1',
+          networks: {
+            nodevisor_redis_network: {},
+          },
+          restart: 'unless-stopped',
+          volumes: [
+            {
+              source: 'redis-data',
+              target: '/data',
+              type: 'volume',
+            },
+          ],
+        },
         traefik: {
           networks: {
             nodevisor_traefik_network: {},
@@ -770,12 +798,22 @@ describe('Cluster', () => {
           ],
         },
       },
-      volumes: {},
+      volumes: {
+        redis_data: {
+          driver: 'local',
+          name: 'redis_redis_data_volume',
+        },
+      },
       networks: {
         nodevisor_traefik_network: {
           driver: 'overlay',
           attachable: true,
           name: 'nodevisor_traefik_network',
+        },
+        nodevisor_redis_network: {
+          attachable: true,
+          driver: 'overlay',
+          name: 'nodevisor_redis_network',
         },
       },
     };
@@ -839,7 +877,7 @@ describe('Cluster', () => {
           command: 'redis-server',
           volumes: [
             {
-              source: 'redis_data',
+              source: 'redis-data',
               target: '/data',
               type: 'volume',
             },

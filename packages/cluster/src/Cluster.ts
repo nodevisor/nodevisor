@@ -108,12 +108,6 @@ export default abstract class Cluster<
     return dependency;
   }
 
-  getNetworkName(service: TClusterService) {
-    const clusterName = this.name;
-
-    return `${clusterName}_${service.name}_network`;
-  }
-
   toRunner(user: User) {
     return user.clone({ username: 'runner', password: undefined });
   }
