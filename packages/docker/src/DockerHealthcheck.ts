@@ -48,6 +48,21 @@ export default class DockerHealthcheck {
     return this.config.start_period;
   }
 
+  isEnabled() {
+    return !this.config.disable;
+  }
+
+  isActive() {
+    const { command } = this;
+    const { disable, ...rest } = this.config;
+
+    if (disable) {
+      return false;
+    }
+
+    return this.hasCommand();
+  }
+
   set(strings: TemplateStringsArray, ...values: any[]) {
     this.command.set(strings, ...values);
     return this;
@@ -64,7 +79,6 @@ export default class DockerHealthcheck {
   }
 
   toCompose(): DockerHealthcheckConfig | undefined {
-    const { command } = this;
     const { disable, ...rest } = this.config;
 
     if (disable) {
@@ -78,7 +92,7 @@ export default class DockerHealthcheck {
     }
 
     return {
-      ...this.config,
+      ...rest,
       test: this.command.toString(),
     };
   }

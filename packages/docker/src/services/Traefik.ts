@@ -55,6 +55,14 @@ export default class Traefik extends WebProxy {
     this.ssl = ssl;
     this.dashboard = dashboard;
     this.dockerUnixSocket = dockerUnixSocket;
+
+    if (!rest.healthcheck) {
+      this.healthcheck.set`traefik healthcheck --ping`;
+      this.healthcheck.interval = '10s';
+      this.healthcheck.timeout = '2s';
+      this.healthcheck.retries = 3;
+      this.healthcheck.startPeriod = '10s';
+    }
   }
 
   getVolumes() {
@@ -103,6 +111,14 @@ export default class Traefik extends WebProxy {
       '--providers.docker.network': this.getNetworkName(cluster),
     });
 
+    if (this.healthcheck.isActive()) {
+      cb.argument({
+        '--ping': true,
+        '--ping.entryPoint': 'traefik',
+        '--entrypoints.traefik.address': ':8080',
+      });
+    }
+
     if (dashboard) {
       const insecure = 'insecure' in dashboard ? dashboard.insecure : false;
 
@@ -132,6 +148,19 @@ export default class Traefik extends WebProxy {
     let labels = super.getLabels();
 
     const routersPrefix = `traefik.http.routers.${name}`;
+    /*
+    labels = {
+      ...labels,
+      'traefik.http.routers.pingweb.rule': 'PathPrefix(`/ping`)',
+      'traefik.http.routers.pingweb.service': 'ping@internal',
+      'traefik.http.routers.pingweb.entrypoints': 'websecure',
+    };
+
+    /*
+    - "traefik.http.routers.pingweb.rule=PathPrefix(`/ping`)"
+    - "traefik.http.routers.pingweb.service=ping@internal"
+    - "traefik.http.routers.pingweb.entrypoints=websecure"
+    */
 
     // labels['traefik.docker.network'] = this.getNetworkName();
 

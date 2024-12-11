@@ -110,8 +110,15 @@ describe('Cluster', () => {
           },
           image: 'traefik:3.1.7',
           command:
-            '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',
+            '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',
           restart: 'unless-stopped',
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '10s',
+            test: 'traefik healthcheck --ping',
+            timeout: '2s',
+          },
           ports: [
             {
               target: 80,
@@ -223,8 +230,15 @@ describe('Cluster', () => {
           },
           image: 'traefik:3.1.7',
           command:
-            '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',
+            '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',
           restart: 'unless-stopped',
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '10s',
+            test: 'traefik healthcheck --ping',
+            timeout: '2s',
+          },
           ports: [
             {
               target: 80,
@@ -368,8 +382,15 @@ describe('Cluster', () => {
           },
           image: 'traefik:3.1.7',
           command:
-            '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --api.dashboard=true --api.insecure=true',
+            '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --api.dashboard=true --api.insecure=true',
           restart: 'unless-stopped',
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '10s',
+            test: 'traefik healthcheck --ping',
+            timeout: '2s',
+          },
           ports: [
             {
               target: 80,
@@ -544,8 +565,15 @@ describe('Cluster', () => {
           },
           image: 'traefik:3.1.7',
           command:
-            '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --api.dashboard=true --api.insecure=true',
+            '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --api.dashboard=true --api.insecure=true',
           restart: 'unless-stopped',
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '10s',
+            test: 'traefik healthcheck --ping',
+            timeout: '2s',
+          },
           ports: [
             {
               target: 80,
@@ -750,6 +778,13 @@ describe('Cluster', () => {
             nodevisor_traefik_network: {},
           },
           restart: 'unless-stopped',
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '10s',
+            test: 'traefik healthcheck --ping',
+            timeout: '2s',
+          },
           image: 'traefik:3.1.7',
           deploy: {
             resources: {
@@ -768,7 +803,7 @@ describe('Cluster', () => {
             },
           },
           command:
-            '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=nodevisor_traefik_network --api.dashboard=true --api.insecure=true',
+            '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=nodevisor_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --api.dashboard=true --api.insecure=true',
           volumes: [
             {
               type: 'bind',
