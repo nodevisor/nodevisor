@@ -1,4 +1,4 @@
-import { ClusterBase, useCluster, type PartialFor } from '@nodevisor/cluster';
+import { ClusterBase, useCluster, type PartialFor, ClusterType } from '@nodevisor/cluster';
 import type Web from './Web';
 import WebProxy, { type WebProxyConfig } from './WebProxy';
 import { Protocol } from '@nodevisor/endpoint';
@@ -86,14 +86,14 @@ export default class Traefik extends WebProxy {
     const { ssl, dashboard } = this;
     const cb = super.getCommand();
 
-    const cluster = useCluster();
+    const { cluster, type } = useCluster();
     if (!cluster) {
       throw new Error('Cluster is not initialized. Use ClusterContext.run() to initialize it.');
     }
 
     cb.argument({
       '--providers.docker': true,
-      '--providers.swarm': true,
+      '--providers.swarm': type === ClusterType.DOCKER_SWARM,
       // containers are not exposed by default without labels
       '--providers.docker.exposedbydefault': false,
       // default ports

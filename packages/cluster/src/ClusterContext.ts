@@ -1,7 +1,11 @@
 import createContext, { useContext } from 'contexta';
 import type ClusterBase from './ClusterBase';
+import ClusterType from './constants/ClusterType';
 
-const ClusterContext = createContext<ClusterBase | null>(null);
+const ClusterContext = createContext<{
+  cluster?: ClusterBase;
+  type?: ClusterType;
+}>({});
 
 export const useCluster = () => useContext(ClusterContext);
 

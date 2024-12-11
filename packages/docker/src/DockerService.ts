@@ -1,12 +1,16 @@
 import { set } from 'lodash';
-import { ClusterService, type ClusterServiceConfig, ClusterBase } from '@nodevisor/cluster';
+import {
+  ClusterService,
+  type ClusterServiceConfig,
+  ClusterBase,
+  ClusterType,
+} from '@nodevisor/cluster';
 import type DockerComposeServiceConfig from './@types/DockerComposeServiceConfig';
 import toDockerStringObject from './utils/toDockerStringObject';
 import toDockerPorts from './utils/toDockerPorts';
 import toDockerDepends from './utils/toDockerDepends';
 import type DockerVolume from './@types/DockerVolume';
 import type DockerNetwork from './@types/DockerNetwork';
-import DockerClusterType from './constants/DockerClusterType';
 import type DockerDependency from './@types/DockerDependency';
 import type ServiceVolume from './@types/ServiceVolume';
 import toDockerVolumes from './utils/toDockerVolumes';
@@ -135,10 +139,10 @@ export default class DockerService extends ClusterService {
     return deploy;
   }
 
-  toCompose(cluster: ClusterBase, type: DockerClusterType): DockerComposeServiceConfig {
+  toCompose(cluster: ClusterBase, type: ClusterType): DockerComposeServiceConfig {
     const { image } = this;
 
-    return this.run(cluster, () => {
+    return this.run(cluster, type, () => {
       const data: DockerComposeServiceConfig = {
         ...this.config,
         image,

@@ -14,6 +14,7 @@ import type PartialFor from './@types/PartialFor';
 import uniqDependencies from './utils/uniqDependencies';
 import ClusterContext from './ClusterContext';
 import type Volume from './@types/Volume';
+import type ClusterType from './constants/ClusterType';
 
 export type ClusterServiceConfig = ClusterServiceBaseConfig & {
   image?: string;
@@ -388,8 +389,14 @@ export default abstract class ClusterService extends ClusterServiceBase {
     return cluster.getVolumeName(this, volume);
   }
 
-  run<TReturn>(cluster: ClusterBase, fn: () => TReturn) {
-    return ClusterContext.run(cluster, fn);
+  run<TReturn>(cluster: ClusterBase, type: ClusterType, fn: () => TReturn) {
+    return ClusterContext.run(
+      {
+        cluster,
+        type,
+      },
+      fn,
+    );
   }
 
   async build(options: { registry?: Registry; context?: string; push?: boolean } = {}) {

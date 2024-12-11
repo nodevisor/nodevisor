@@ -27,7 +27,7 @@ export default class Web extends DockerService {
   }
 
   getLabels() {
-    const cluster = useCluster();
+    const { cluster } = useCluster();
     if (!cluster) {
       throw new Error('Cluster is not initialized. Use ClusterContext.run() to initialize it.');
     }

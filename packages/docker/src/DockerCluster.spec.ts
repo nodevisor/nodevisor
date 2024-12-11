@@ -8,7 +8,7 @@ import { User } from '@nodevisor/core';
 import Traefik from './services/Traefik';
 import Whoami from './services/Whoami';
 import Redis from './services/Redis';
-import DockerClusterType from './constants/DockerClusterType';
+import { ClusterType } from '@nodevisor/cluster';
 
 describe('Cluster', () => {
   it('should create a empty cluster', async () => {
@@ -32,7 +32,7 @@ describe('Cluster', () => {
       users: [setup, runner],
     });
 
-    const config = await cluster.toCompose({ type: DockerClusterType.COMPOSE });
+    const config = await cluster.toCompose({ type: ClusterType.DOCKER_COMPOSE });
 
     const result = {
       name: 'test',
@@ -73,7 +73,7 @@ describe('Cluster', () => {
       dependencies: [proxy],
     });
 
-    const config = cluster.toCompose({ type: DockerClusterType.COMPOSE });
+    const config = cluster.toCompose({ type: ClusterType.DOCKER_COMPOSE });
 
     const result = {
       name: 'test',
@@ -110,7 +110,7 @@ describe('Cluster', () => {
           },
           image: 'traefik:3.1.7',
           command:
-            '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',
+            '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',
           restart: 'unless-stopped',
           ports: [
             {
@@ -133,11 +133,15 @@ describe('Cluster', () => {
           },
         },
       },
-      volumes: {},
+      volumes: {
+        test_traefik_letsencrypt_volume: {
+          driver: 'local',
+        },
+      },
       networks: {
         test_traefik_network: {
           attachable: true,
-          driver: 'overlay',
+          driver: 'bridge',
           name: 'test_traefik_network',
         },
       },
@@ -180,7 +184,7 @@ describe('Cluster', () => {
       dependencies: [web],
     });
 
-    const config = cluster.toCompose({ type: DockerClusterType.COMPOSE });
+    const config = cluster.toCompose({ type: ClusterType.DOCKER_COMPOSE });
 
     // console.log(JSON.stringify(config, null, 2));
 
@@ -219,7 +223,7 @@ describe('Cluster', () => {
           },
           image: 'traefik:3.1.7',
           command:
-            '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',
+            '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',
           restart: 'unless-stopped',
           ports: [
             {
@@ -277,16 +281,20 @@ describe('Cluster', () => {
           },
         },
       },
-      volumes: {},
+      volumes: {
+        test_traefik_letsencrypt_volume: {
+          driver: 'local',
+        },
+      },
       networks: {
         test_traefik_network: {
           attachable: true,
-          driver: 'overlay',
+          driver: 'bridge',
           name: 'test_traefik_network',
         },
         test_whoami_network: {
           attachable: true,
-          driver: 'overlay',
+          driver: 'bridge',
           name: 'test_whoami_network',
         },
       },
@@ -438,7 +446,11 @@ describe('Cluster', () => {
           ],
         },
       },
-      volumes: {},
+      volumes: {
+        test_redis_data_volume: {
+          driver: 'local',
+        },
+      },
       networks: {
         test_redis_network: {
           attachable: true,
@@ -493,7 +505,7 @@ describe('Cluster', () => {
       dependencies: [web],
     });
 
-    const config = cluster.toCompose({ type: DockerClusterType.COMPOSE });
+    const config = cluster.toCompose({ type: ClusterType.DOCKER_COMPOSE });
 
     const result = {
       name: 'test',
@@ -525,7 +537,7 @@ describe('Cluster', () => {
           },
           image: 'traefik:3.1.7',
           command:
-            '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --api.dashboard=true --api.insecure=true',
+            '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --api.dashboard=true --api.insecure=true',
           restart: 'unless-stopped',
           ports: [
             {
@@ -614,47 +626,31 @@ describe('Cluster', () => {
           ],
         },
       },
-      volumes: {},
+      volumes: {
+        test_redis_data_volume: {
+          driver: 'local',
+        },
+      },
       networks: {
         test_redis_network: {
           attachable: true,
-          driver: 'overlay',
+          driver: 'bridge',
           name: 'test_redis_network',
         },
         test_traefik_network: {
           attachable: true,
-          driver: 'overlay',
+          driver: 'bridge',
           name: 'test_traefik_network',
         },
         test_whoami_network: {
           attachable: true,
-          driver: 'overlay',
+          driver: 'bridge',
           name: 'test_whoami_network',
         },
       },
     };
 
     expect(config).toEqual(result);
-    /*
-    // await cluster.setup();
-
-    const yaml = cluster.yaml();
-    console.log(yaml);
-
-    // safe to write to file
-    const tempDir = os.tmpdir();
-    const filePath = path.join(tempDir, 'docker-compose.yml');
-    fs.writeFileSync(filePath, yaml);
-
-    // run docker compose
-    const runComposeResult = await $`docker compose -f ${filePath} up -d`.text();
-
-    // curl
-    const curlResult = await $`curl -s http://whoami.127.0.0.1.nip.io`.text();
-    console.log(curlResult);
-    expect(curlResult).toContain('Host: whoami.127.0.0.1.nip.io');
-    expect(curlResult).toContain('X-Forwarded-Host: whoami.127.0.0.1.nip.io');
-    */
   });
 
   it('should create a base web proxy cluster with web service without ssl', async () => {
@@ -776,7 +772,11 @@ describe('Cluster', () => {
           ],
         },
       },
-      volumes: {},
+      volumes: {
+        nodevisor_redis_data_volume: {
+          driver: 'local',
+        },
+      },
       networks: {
         nodevisor_traefik_network: {
           driver: 'overlay',
@@ -857,7 +857,11 @@ describe('Cluster', () => {
           ],
         },
       },
-      volumes: {},
+      volumes: {
+        app_redis_data_volume: {
+          driver: 'local',
+        },
+      },
       networks: {
         app_whoami_network: {
           driver: 'overlay',
@@ -876,5 +880,35 @@ describe('Cluster', () => {
     };
 
     expect(appConfig).toEqual(appResult);
-  });
+
+    // await cluster.setup();
+    const yaml = mainCluster.yaml({ type: ClusterType.DOCKER_COMPOSE });
+
+    // safe to write to file
+    const tempDir = os.tmpdir();
+    const filePath = path.join(tempDir, 'docker-compose.yml');
+    fs.writeFileSync(filePath, yaml);
+
+    // run docker compose
+    await $`docker compose -f ${filePath} up -d --wait`.text();
+
+    const yaml2 = appCluster.yaml({ type: ClusterType.DOCKER_COMPOSE });
+
+    // safe to write to file
+    const tempDir2 = os.tmpdir();
+    const filePath2 = path.join(tempDir2, 'docker-compose.yml');
+    fs.writeFileSync(filePath2, yaml2);
+
+    // run docker compose
+    await $`docker compose -f ${filePath2} up -d --wait`.text();
+
+    // wait 3 seconds
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    // curl
+    const curlResult = await $`curl -s http://whoami.127.0.0.1.nip.io`.text();
+    console.log(curlResult);
+    expect(curlResult).toContain('Host: whoami.127.0.0.1.nip.io');
+    expect(curlResult).toContain('X-Forwarded-Host: whoami.127.0.0.1.nip.io');
+  }, 10000);
 });
