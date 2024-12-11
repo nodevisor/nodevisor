@@ -8,7 +8,7 @@ import { User } from '@nodevisor/core';
 import Traefik from './services/Traefik';
 import Whoami from './services/Whoami';
 import Redis from './services/Redis';
-import DockerBuilder from './DockerBuilder';
+import { ClusterType } from '@nodevisor/cluster';
 
 describe('Cluster', () => {
   it('should create a empty cluster', async () => {
@@ -32,7 +32,7 @@ describe('Cluster', () => {
       users: [setup, runner],
     });
 
-    const config = await cluster.toCompose();
+    const config = await cluster.toCompose({ type: ClusterType.DOCKER_COMPOSE });
 
     const result = {
       name: 'test',
@@ -70,12 +70,10 @@ describe('Cluster', () => {
       name: 'test',
       nodes: [primary],
       users: [setupUser, runnerUser],
-      services: [proxy],
+      dependencies: [proxy],
     });
 
-    const config = await cluster.toCompose();
-
-    // console.log(JSON.stringify(config, null, 2));
+    const config = cluster.toCompose({ type: ClusterType.DOCKER_COMPOSE });
 
     const result = {
       name: 'test',
@@ -89,7 +87,7 @@ describe('Cluster', () => {
               type: 'bind',
             },
             {
-              source: 'traefik_letsencrypt',
+              source: 'test_traefik_letsencrypt_volume',
               target: '/letsencrypt',
               type: 'volume',
             },
@@ -112,8 +110,15 @@ describe('Cluster', () => {
           },
           image: 'traefik:3.1.7',
           command:
-            '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',
+            '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',
           restart: 'unless-stopped',
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '10s',
+            test: 'traefik healthcheck --ping',
+            timeout: '2s',
+          },
           ports: [
             {
               target: 80,
@@ -136,15 +141,14 @@ describe('Cluster', () => {
         },
       },
       volumes: {
-        traefik_letsencrypt: {
+        test_traefik_letsencrypt_volume: {
           driver: 'local',
-          name: 'traefik_traefik_letsencrypt_volume',
         },
       },
       networks: {
         test_traefik_network: {
           attachable: true,
-          driver: 'overlay',
+          driver: 'bridge',
           name: 'test_traefik_network',
         },
       },
@@ -184,10 +188,10 @@ describe('Cluster', () => {
       name: 'test',
       nodes: [primary],
       users: [setupUser, runnerUser],
-      services: [proxy, web],
+      dependencies: [web],
     });
 
-    const config = await cluster.toCompose();
+    const config = cluster.toCompose({ type: ClusterType.DOCKER_COMPOSE });
 
     // console.log(JSON.stringify(config, null, 2));
 
@@ -203,7 +207,7 @@ describe('Cluster', () => {
               type: 'bind',
             },
             {
-              source: 'traefik_letsencrypt',
+              source: 'test_traefik_letsencrypt_volume',
               target: '/letsencrypt',
               type: 'volume',
             },
@@ -226,8 +230,15 @@ describe('Cluster', () => {
           },
           image: 'traefik:3.1.7',
           command:
-            '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',
+            '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',
           restart: 'unless-stopped',
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '10s',
+            test: 'traefik healthcheck --ping',
+            timeout: '2s',
+          },
           ports: [
             {
               target: 80,
@@ -285,20 +296,19 @@ describe('Cluster', () => {
         },
       },
       volumes: {
-        traefik_letsencrypt: {
+        test_traefik_letsencrypt_volume: {
           driver: 'local',
-          name: 'traefik_traefik_letsencrypt_volume',
         },
       },
       networks: {
         test_traefik_network: {
           attachable: true,
-          driver: 'overlay',
+          driver: 'bridge',
           name: 'test_traefik_network',
         },
         test_whoami_network: {
           attachable: true,
-          driver: 'overlay',
+          driver: 'bridge',
           name: 'test_whoami_network',
         },
       },
@@ -309,7 +319,7 @@ describe('Cluster', () => {
     //
   });
 
-  it('should create a base web proxy cluster with web service without ssl', async () => {
+  it('should create a base web proxy cluster with web service without ssl for swarm', async () => {
     const setupUser = new User({
       host: '127.0.0.1',
       username: 'root',
@@ -331,18 +341,199 @@ describe('Cluster', () => {
     const web = new Whoami({
       proxy,
       domains: ['whoami.127.0.0.1.nip.io'],
-      depends: [redis],
-      builder: new DockerBuilder(),
+      dependencies: [redis],
     });
 
     const cluster = new Cluster({
       name: 'test',
       nodes: ['127.0.0.1'],
       users: [setupUser, runnerUser],
-      services: [web],
+      dependencies: [web],
     });
 
-    const config = await cluster.toCompose();
+    const config = cluster.toCompose();
+
+    const result = {
+      services: {
+        traefik: {
+          volumes: [
+            {
+              read_only: true,
+              source: '/var/run/docker.sock',
+              target: '/var/run/docker.sock',
+              type: 'bind',
+            },
+          ],
+          deploy: {
+            replicas: 1,
+            resources: {
+              limits: {
+                cpus: '1',
+                memory: '512mb',
+              },
+              reservations: {
+                cpus: '0.5',
+                memory: '128mb',
+              },
+            },
+            placement: {
+              constraints: ['node.role == manager'],
+            },
+          },
+          image: 'traefik:3.1.7',
+          command:
+            '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --api.dashboard=true --api.insecure=true',
+          restart: 'unless-stopped',
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '10s',
+            test: 'traefik healthcheck --ping',
+            timeout: '2s',
+          },
+          ports: [
+            {
+              target: 80,
+              published: 80,
+              protocol: 'tcp',
+              mode: 'host',
+            },
+            {
+              mode: 'host',
+              protocol: 'tcp',
+              published: 8080,
+              target: 8080,
+            },
+          ],
+          networks: { test_traefik_network: {} },
+        },
+        whoami: {
+          image: 'traefik/whoami',
+          labels: {
+            'traefik.enable': 'true',
+            'traefik.docker.network': 'test_traefik_network',
+            'traefik.http.services.whoami.loadbalancer.server.port': '80',
+            'traefik.http.routers.whoami-http.rule': 'Host(`whoami.127.0.0.1.nip.io`)',
+            'traefik.http.routers.whoami-http.entrypoints': 'web',
+            'traefik.http.routers.whoami-http.tls': 'false',
+            'traefik.http.routers.whoami-http.service': 'whoami',
+          },
+          depends_on: ['redis', 'traefik'],
+          deploy: {
+            replicas: 1,
+            resources: {
+              limits: {
+                cpus: '1',
+                memory: '512mb',
+              },
+              reservations: {
+                cpus: '0.5',
+                memory: '128mb',
+              },
+            },
+          },
+          networks: {
+            test_redis_network: {},
+            test_traefik_network: {},
+            test_whoami_network: {},
+          },
+        },
+        redis: {
+          command: 'redis-server',
+          deploy: {
+            replicas: 1,
+            resources: {
+              limits: {
+                cpus: '1',
+                memory: '512mb',
+              },
+              reservations: {
+                cpus: '0.5',
+                memory: '128mb',
+              },
+            },
+          },
+          image: 'redis:7.4.1',
+          networks: {
+            test_redis_network: {},
+          },
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '5s',
+            test: 'redis-cli ping | grep PONG',
+            timeout: '2s',
+          },
+          restart: 'unless-stopped',
+          volumes: [
+            {
+              source: 'test_redis_data_volume',
+              target: '/data',
+              type: 'volume',
+            },
+          ],
+        },
+      },
+      volumes: {
+        test_redis_data_volume: {
+          driver: 'local',
+        },
+      },
+      networks: {
+        test_redis_network: {
+          attachable: true,
+          driver: 'overlay',
+          name: 'test_redis_network',
+        },
+        test_traefik_network: {
+          attachable: true,
+          driver: 'overlay',
+          name: 'test_traefik_network',
+        },
+        test_whoami_network: {
+          attachable: true,
+          driver: 'overlay',
+          name: 'test_whoami_network',
+        },
+      },
+    };
+
+    expect(config).toEqual(result);
+  });
+
+  it('should create a base web proxy cluster with web service without ssl for compose', async () => {
+    const setupUser = new User({
+      host: '127.0.0.1',
+      username: 'root',
+      password: 'root-password',
+      privateKeyPath: '~/.ssh/id_rsa',
+      passphrase: 'my-passphrase',
+    });
+
+    const runnerUser = setupUser.clone({ username: 'runner' });
+
+    const proxy = new Traefik({
+      dashboard: {
+        insecure: true,
+      },
+    });
+
+    const redis = new Redis();
+
+    const web = new Whoami({
+      proxy,
+      domains: ['whoami.127.0.0.1.nip.io'],
+      dependencies: [redis],
+    });
+
+    const cluster = new Cluster({
+      name: 'test',
+      nodes: ['127.0.0.1'],
+      users: [setupUser, runnerUser],
+      dependencies: [web],
+    });
+
+    const config = cluster.toCompose({ type: ClusterType.DOCKER_COMPOSE });
 
     const result = {
       name: 'test',
@@ -374,8 +565,15 @@ describe('Cluster', () => {
           },
           image: 'traefik:3.1.7',
           command:
-            '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --api.dashboard=true --api.insecure=true',
+            '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --api.dashboard=true --api.insecure=true',
           restart: 'unless-stopped',
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '10s',
+            test: 'traefik healthcheck --ping',
+            timeout: '2s',
+          },
           ports: [
             {
               target: 80,
@@ -453,10 +651,17 @@ describe('Cluster', () => {
               priority: 0,
             },
           },
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '5s',
+            test: 'redis-cli ping | grep PONG',
+            timeout: '2s',
+          },
           restart: 'unless-stopped',
           volumes: [
             {
-              source: 'redis_data',
+              source: 'test_redis_data_volume',
               target: '/data',
               type: 'volume',
             },
@@ -464,35 +669,283 @@ describe('Cluster', () => {
         },
       },
       volumes: {
-        redis_data: {
+        test_redis_data_volume: {
           driver: 'local',
-          name: 'redis_redis_data_volume',
         },
       },
       networks: {
         test_redis_network: {
           attachable: true,
-          driver: 'overlay',
+          driver: 'bridge',
           name: 'test_redis_network',
         },
         test_traefik_network: {
           attachable: true,
-          driver: 'overlay',
+          driver: 'bridge',
           name: 'test_traefik_network',
         },
         test_whoami_network: {
           attachable: true,
-          driver: 'overlay',
+          driver: 'bridge',
           name: 'test_whoami_network',
         },
       },
     };
 
     expect(config).toEqual(result);
-    // await cluster.setup();
+  });
 
-    const yaml = cluster.yaml();
-    console.log(yaml);
+  it('should create a base web proxy cluster with web service without ssl', async () => {
+    const setupUser = new User({
+      host: '127.0.0.1',
+      username: 'root',
+      password: 'root-password',
+      privateKeyPath: '~/.ssh/id_rsa',
+      passphrase: 'my-passphrase',
+    });
+
+    const runnerUser = setupUser.clone({ username: 'runner' });
+
+    const redis = new Redis();
+
+    const proxy = new Traefik({
+      dashboard: {
+        insecure: true,
+      },
+    });
+
+    const mainCluster = new Cluster({
+      name: 'nodevisor',
+      nodes: ['127.0.0.1'],
+      users: [setupUser, runnerUser],
+      dependencies: [proxy, redis],
+    });
+
+    const web = new Whoami({
+      proxy: mainCluster.getDependency(proxy),
+      domains: ['whoami.127.0.0.1.nip.io'],
+      dependencies: [redis],
+    });
+
+    const appCluster = new Cluster({
+      name: 'app',
+      nodes: ['127.0.0.1'],
+      users: [setupUser, runnerUser],
+      dependencies: [web],
+    });
+
+    const nodevisorConfig = mainCluster.toCompose();
+
+    const nodevisorResult = {
+      services: {
+        redis: {
+          command: 'redis-server',
+          deploy: {
+            replicas: 1,
+            resources: {
+              limits: {
+                cpus: '1',
+                memory: '512mb',
+              },
+              reservations: {
+                cpus: '0.5',
+                memory: '128mb',
+              },
+            },
+          },
+          image: 'redis:7.4.1',
+          networks: {
+            nodevisor_redis_network: {},
+          },
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '5s',
+            test: 'redis-cli ping | grep PONG',
+            timeout: '2s',
+          },
+          restart: 'unless-stopped',
+          volumes: [
+            {
+              source: 'nodevisor_redis_data_volume',
+              target: '/data',
+              type: 'volume',
+            },
+          ],
+        },
+        traefik: {
+          networks: {
+            nodevisor_traefik_network: {},
+          },
+          restart: 'unless-stopped',
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '10s',
+            test: 'traefik healthcheck --ping',
+            timeout: '2s',
+          },
+          image: 'traefik:3.1.7',
+          deploy: {
+            resources: {
+              limits: {
+                cpus: '1',
+                memory: '512mb',
+              },
+              reservations: {
+                cpus: '0.5',
+                memory: '128mb',
+              },
+            },
+            replicas: 1,
+            placement: {
+              constraints: ['node.role == manager'],
+            },
+          },
+          command:
+            '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=nodevisor_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --api.dashboard=true --api.insecure=true',
+          volumes: [
+            {
+              type: 'bind',
+              source: '/var/run/docker.sock',
+              target: '/var/run/docker.sock',
+              read_only: true,
+            },
+          ],
+          ports: [
+            {
+              target: 80,
+              published: 80,
+              protocol: 'tcp',
+              mode: 'host',
+            },
+            {
+              target: 8080,
+              published: 8080,
+              protocol: 'tcp',
+              mode: 'host',
+            },
+          ],
+        },
+      },
+      volumes: {
+        nodevisor_redis_data_volume: {
+          driver: 'local',
+        },
+      },
+      networks: {
+        nodevisor_traefik_network: {
+          driver: 'overlay',
+          attachable: true,
+          name: 'nodevisor_traefik_network',
+        },
+        nodevisor_redis_network: {
+          attachable: true,
+          driver: 'overlay',
+          name: 'nodevisor_redis_network',
+        },
+      },
+    };
+
+    expect(nodevisorConfig).toEqual(nodevisorResult);
+
+    const appConfig = appCluster.toCompose();
+
+    const appResult = {
+      services: {
+        whoami: {
+          networks: {
+            app_whoami_network: {},
+            app_redis_network: {},
+            nodevisor_traefik_network: {},
+          },
+          image: 'traefik/whoami',
+          deploy: {
+            resources: {
+              limits: {
+                cpus: '1',
+                memory: '512mb',
+              },
+              reservations: {
+                cpus: '0.5',
+                memory: '128mb',
+              },
+            },
+            replicas: 1,
+          },
+          labels: {
+            'traefik.enable': 'true',
+            'traefik.docker.network': 'nodevisor_traefik_network',
+            'traefik.http.services.whoami.loadbalancer.server.port': '80',
+            'traefik.http.routers.whoami-http.rule': 'Host(`whoami.127.0.0.1.nip.io`)',
+            'traefik.http.routers.whoami-http.entrypoints': 'web',
+            'traefik.http.routers.whoami-http.tls': 'false',
+            'traefik.http.routers.whoami-http.service': 'whoami',
+          },
+          depends_on: ['redis'],
+        },
+        redis: {
+          networks: {
+            app_redis_network: {},
+          },
+          restart: 'unless-stopped',
+          image: 'redis:7.4.1',
+          deploy: {
+            resources: {
+              limits: {
+                cpus: '1',
+                memory: '512mb',
+              },
+              reservations: {
+                cpus: '0.5',
+                memory: '128mb',
+              },
+            },
+            replicas: 1,
+          },
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '5s',
+            test: 'redis-cli ping | grep PONG',
+            timeout: '2s',
+          },
+          command: 'redis-server',
+          volumes: [
+            {
+              source: 'app_redis_data_volume',
+              target: '/data',
+              type: 'volume',
+            },
+          ],
+        },
+      },
+      volumes: {
+        app_redis_data_volume: {
+          driver: 'local',
+        },
+      },
+      networks: {
+        app_whoami_network: {
+          driver: 'overlay',
+          attachable: true,
+          name: 'app_whoami_network',
+        },
+        app_redis_network: {
+          driver: 'overlay',
+          attachable: true,
+          name: 'app_redis_network',
+        },
+        nodevisor_traefik_network: {
+          external: true,
+        },
+      },
+    };
+
+    expect(appConfig).toEqual(appResult);
+
+    // await cluster.setup();
+    const yaml = mainCluster.yaml({ type: ClusterType.DOCKER_COMPOSE });
 
     // safe to write to file
     const tempDir = os.tmpdir();
@@ -500,12 +953,22 @@ describe('Cluster', () => {
     fs.writeFileSync(filePath, yaml);
 
     // run docker compose
-    const runComposeResult = await $`docker compose -f ${filePath} up -d`.text();
+    await $`docker compose -f ${filePath} up -d --wait`.text();
+
+    const yaml2 = appCluster.yaml({ type: ClusterType.DOCKER_COMPOSE });
+
+    // safe to write to file
+    const tempDir2 = os.tmpdir();
+    const filePath2 = path.join(tempDir2, 'docker-compose.yml');
+    fs.writeFileSync(filePath2, yaml2);
+
+    // run docker compose
+    await $`docker compose -f ${filePath2} up -d --wait`.text();
 
     // curl
     const curlResult = await $`curl -s http://whoami.127.0.0.1.nip.io`.text();
-    console.log(curlResult);
+
     expect(curlResult).toContain('Host: whoami.127.0.0.1.nip.io');
     expect(curlResult).toContain('X-Forwarded-Host: whoami.127.0.0.1.nip.io');
-  });
+  }, 100000);
 });

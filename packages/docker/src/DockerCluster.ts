@@ -1,33 +1,36 @@
 import YAML from 'yaml';
-import Cluster, { type ClusterConfig } from '@nodevisor/cluster';
+import Cluster, { type ClusterConfig, ClusterType } from '@nodevisor/cluster';
 import DockerNode, { type DockerNodeConfig } from './DockerNode';
 import type DockerService from './DockerService';
 import type DockerComposeConfig from './@types/DockerComposeConfig';
 import type DockerComposeServiceConfig from './@types/DockerComposeServiceConfig';
-import type NetworksTopLevel from './@types/NetworksTopLevel';
-import type VolumesTopLevel from './@types/VolumesTopLevel';
+import type DockerNetworkTopLevel from './@types/DockerNetworkTopLevel';
+import type DockerVolumeTopLevel from './@types/DockerVolumeTopLevel';
 import { User } from '@nodevisor/core';
-// import DockerCompose from './DockerCompose';
-import DockerClusterType from './constants/DockerClusterType';
+import Registry from '@nodevisor/registry';
+import type DockerDependency from './@types/DockerDependency';
+import type DockerNetwork from './@types/DockerNetwork';
+import WebProxy from './services/WebProxy';
+import type WebProxyDependency from './@types/WebProxyDependency';
 
 export type DockerClusterConfig = ClusterConfig<DockerService, DockerNode> & {
-  type?: DockerClusterType;
+  type?: ClusterType;
   // version?: number;
-  networks?: NetworksTopLevel;
-  volumes?: VolumesTopLevel;
+  networks?: Record<string, DockerNetworkTopLevel>;
+  volumes?: Record<string, DockerVolumeTopLevel>;
 };
 
 export default class DockerCluster extends Cluster<DockerService, DockerNode> {
-  readonly type: DockerClusterType;
+  readonly type: ClusterType;
   // private version: number;
-  private networks: NetworksTopLevel = {};
-  private volumes: VolumesTopLevel = {};
+  private networks: Record<string, DockerNetworkTopLevel> = {};
+  private volumes: Record<string, DockerVolumeTopLevel> = {};
 
   constructor(config: DockerClusterConfig) {
     const {
       /* version = 3.8, */ networks = {},
       volumes = {},
-      type = DockerClusterType.SWARM,
+      type = ClusterType.DOCKER_SWARM,
       ...rest
     } = config;
 
@@ -40,12 +43,22 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     this.volumes = volumes;
   }
 
+  getDependencies(includeExternal?: boolean, includeDepends?: boolean) {
+    return super.getDependencies(includeExternal, includeDepends) as DockerDependency[];
+  }
+
+  getDependency(service: WebProxy): WebProxyDependency;
+  getDependency(service: DockerService): DockerDependency;
+  getDependency(service: DockerService | WebProxy) {
+    return super.getDependency(service);
+  }
+
   protected createClusterNode(config: DockerNodeConfig) {
     return new DockerNode(config);
   }
 
   getNetworks() {
-    const networks: NetworksTopLevel = {};
+    const networks: Record<string, DockerNetworkTopLevel> = {};
 
     Object.entries(this.networks).forEach(([name, network]) => {
       networks[name] = {
@@ -56,27 +69,49 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     return networks;
   }
 
-  getComposeNetworks() {
+  getServiceComposeNetwork(_cluster: DockerCluster, _service: DockerService, type: ClusterType) {
+    const network: DockerNetwork = {};
+    if (type === ClusterType.DOCKER_COMPOSE) {
+      network.priority = 0; // swarm does not support priority
+    }
+
+    return network;
+  }
+
+  getComposeNetworks(type: ClusterType) {
     const networks = this.getNetworks();
 
-    const allServices = this.getAllComposeServices();
+    const dependencies = this.getDependencies(true, true);
+    dependencies.forEach((dependency) => {
+      const isExternal = this.isExternal(dependency);
+      const networkName = dependency.service.getNetworkName(dependency.cluster);
 
-    allServices.forEach((service) => {
-      const networkName = service.getNetworkName();
-
-      // create network for each service
-      networks[networkName] = {
-        driver: 'overlay',
-        attachable: true,
-        name: networkName, // use same network name otherwise traefik will not work
-      };
+      if (isExternal) {
+        networks[networkName] = {
+          external: true,
+        };
+      } else {
+        if (type === ClusterType.DOCKER_COMPOSE) {
+          networks[networkName] = {
+            driver: 'bridge',
+            attachable: true,
+            name: networkName, // use same network name otherwise traefik will not work
+          };
+        } else {
+          networks[networkName] = {
+            driver: 'overlay',
+            attachable: true,
+            name: networkName, // use same network name otherwise traefik will not work
+          };
+        }
+      }
     });
 
     return networks;
   }
 
   getVolumes() {
-    const volumes: VolumesTopLevel = {};
+    const volumes: Record<string, DockerVolumeTopLevel> = {};
 
     Object.entries(this.volumes).forEach(([name, volume]) => {
       volumes[name] = {
@@ -90,17 +125,28 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
   getComposeVolumes() {
     const volumes = this.getVolumes();
 
-    const allServices = this.getAllComposeServices();
+    // - extract top level volumes from services
+    const dependencies = this.getDependencies(false, true);
+    dependencies.forEach((dependency) => {
+      const { cluster, service } = dependency;
 
-    allServices.map((service) => {
       const serviceVolumes = service.getVolumes();
-
       serviceVolumes.forEach((volume) => {
         if (volume.type === 'volume') {
-          volumes[volume.source] = {
+          // volume need to have top level for type === volume
+          const uniqueName = volume.source ?? service.getVolumeName(cluster, volume);
+          volumes[uniqueName] = {
             driver: 'local',
-            name: service.getVolumeName(volume),
           };
+        } else if (volume.topLevel) {
+          /*
+          if (volume.type === 'volume') {
+            volumes[volume.source] = {
+              driver: 'local',
+              name: service.getVolumeName(cluster, volume),
+            };
+          }
+          */
         }
       });
     });
@@ -108,42 +154,38 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     return volumes;
   }
 
-  getAllComposeServices(): DockerService[] {
-    const services: Set<DockerService> = new Set(this.services);
-
-    this.services.forEach((service) => {
-      service.getDepends().forEach((depend) => {
-        const { service: dependService } = depend;
-
-        services.add(dependService);
-      });
-    });
-
-    return Array.from(services);
-  }
-
-  getComposeServices(type: DockerClusterType = DockerClusterType.SWARM) {
+  getComposeServices(type: ClusterType = ClusterType.DOCKER_SWARM) {
     const services: Record<string, DockerComposeServiceConfig> = {};
 
-    const allServices = this.getAllComposeServices();
+    const dependencies = this.getDependencies(false, true);
 
-    allServices.forEach((service) => {
-      const { networks = {}, ...serviceCompose } = service.toCompose(type);
+    dependencies.forEach((dependency) => {
+      const { service, cluster } = dependency;
+
+      const { networks = {}, ...serviceCompose } = service.toCompose(cluster, type);
+
+      const network: DockerNetwork = {};
+      if (type === ClusterType.DOCKER_COMPOSE) {
+        network.priority = 0; // swarm does not support priority
+      }
 
       // add current service network to networks
-      networks[service.getNetworkName()] = {
-        // priority: 0, // swarm does not support priority
-      };
+      networks[service.getNetworkName(cluster)] = this.getServiceComposeNetwork(
+        cluster,
+        service,
+        type,
+      );
 
       // add networks for each depends service
-      service.getDepends().forEach((depend) => {
-        const { service: dependService } = depend;
-        const networkName = dependService.getNetworkName();
+      service.getDependencies(cluster, true, true).forEach((serviceDependency) => {
+        const networkName = serviceDependency.service.getNetworkName(serviceDependency.cluster);
 
         if (!networks[networkName]) {
-          networks[networkName] = {
-            // priority: 0,
-          };
+          networks[networkName] = this.getServiceComposeNetwork(
+            serviceDependency.cluster,
+            serviceDependency.service,
+            type,
+          );
         }
       });
 
@@ -156,10 +198,19 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     return services;
   }
 
-  async deployNode(node: DockerNode, runner: User, manager: DockerNode) {
-    const yaml = this.yaml();
+  async deploy(
+    options: {
+      skipBuild?: boolean;
+      registry?: Registry;
+      type?: ClusterType;
+    } = {},
+  ) {
+    const { type, ...restOptions } = options;
 
-    await node.deploy(this.name, runner, manager, { yaml, type: this.type });
+    super.deploy({
+      ...restOptions,
+      yaml: this.yaml({ type }),
+    });
   }
 
   async setupNode(node: DockerNode, admin: User, runner: User, manager: DockerNode) {
@@ -168,17 +219,18 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     await node.setup(admin, runner, manager, { token });
   }
 
-  toCompose(): DockerComposeConfig {
-    const { name, type /* version */ } = this;
+  toCompose(options: { type?: ClusterType } = {}): DockerComposeConfig {
+    const { type = this.type } = options;
+    const { name /* version */ } = this;
 
     const compose: DockerComposeConfig = {
       // version: version.toString(),
       services: this.getComposeServices(type),
       volumes: this.getComposeVolumes(),
-      networks: this.getComposeNetworks(),
+      networks: this.getComposeNetworks(type),
     };
 
-    if (type === DockerClusterType.COMPOSE) {
+    if (type === ClusterType.DOCKER_COMPOSE) {
       // name is required for compose
       compose.name = name;
     }
@@ -186,8 +238,8 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     return compose;
   }
 
-  yaml() {
-    const compose = this.toCompose();
+  yaml(options: { type?: ClusterType } = {}) {
+    const compose = this.toCompose(options);
 
     return YAML.stringify(compose);
   }

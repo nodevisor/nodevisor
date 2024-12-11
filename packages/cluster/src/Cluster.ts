@@ -3,15 +3,18 @@ import { uniq } from 'lodash';
 import Registry from '@nodevisor/registry';
 import ClusterService from './ClusterService';
 import ClusterNode, { type ClusterNodeConfig } from './ClusterNode';
+import ClusterBase, { type ClusterBaseConfig } from './ClusterBase';
+import Dependency from './@types/Dependency';
+import type PartialFor from './@types/PartialFor';
+import uniqDependencies from './utils/uniqDependencies';
 
 export type ClusterConfig<
   TClusterService extends ClusterService,
   TClusterNode extends ClusterNode,
-> = {
-  name: string;
+> = ClusterBaseConfig & {
   users?: Array<User | UserConfig>;
   nodes?: Array<TClusterNode | string>;
-  services?: TClusterService[];
+  dependencies?: Array<TClusterService | PartialFor<Dependency, 'cluster'>>;
   context?: string;
   registry?: Registry;
 };
@@ -19,18 +22,17 @@ export type ClusterConfig<
 export default abstract class Cluster<
   TClusterService extends ClusterService,
   TClusterNode extends ClusterNode,
-> {
-  readonly name: string;
+> extends ClusterBase {
   protected users: User[];
   protected nodes: TClusterNode[];
-  protected services: TClusterService[] = [];
+  protected dependencies: Dependency[] = [];
   protected context?: string;
   protected registry?: Registry;
 
   constructor(config: ClusterConfig<TClusterService, TClusterNode>) {
-    const { name, users = [], nodes = [], services = [], registry } = config;
+    const { users = [], nodes = [], dependencies = [], registry, ...restConfig } = config;
 
-    this.name = name;
+    super(restConfig);
 
     this.users = users.map((user) => (user instanceof User ? user : new User(user)));
 
@@ -38,18 +40,72 @@ export default abstract class Cluster<
       node instanceof ClusterNode ? node : this.createClusterNode({ host: node }),
     );
 
-    services.forEach((service) => this.addService(service));
+    dependencies.forEach((dependency) => this.addDependency(dependency));
 
     this.registry = registry;
   }
 
   protected abstract createClusterNode(config: ClusterNodeConfig): TClusterNode;
 
-  addService(service: TClusterService) {
-    service.setClusterName(this.name);
+  addDependency(input: TClusterService | PartialFor<Dependency, 'cluster'>) {
+    const dependency: Dependency =
+      input instanceof ClusterService
+        ? {
+            service: input as TClusterService,
+            cluster: this,
+          }
+        : {
+            cluster: this,
+            ...(input as PartialFor<Dependency, 'cluster'>),
+          };
 
-    this.services = [...this.services, service];
+    this.dependencies = uniqDependencies([...this.dependencies, dependency]);
     return this;
+  }
+
+  isExternal(dependency: Dependency) {
+    return dependency.cluster && dependency.cluster.name !== this.name;
+  }
+
+  getDependencies(includeExternal = false, includeDepends = false) {
+    const dependencies: Dependency[] = [];
+
+    this.dependencies.forEach((dependency) => {
+      const isDependencyExternal = this.isExternal(dependency);
+
+      const process = includeExternal ? true : !isDependencyExternal;
+      if (!process) {
+        return;
+      }
+
+      dependencies.push(dependency);
+
+      // only include depends if the dependency is not external, external dependencies have dependencies processed in different cluster
+      if (includeDepends && !isDependencyExternal) {
+        const dependServices = dependency.service.getDependencies(
+          dependency.cluster,
+          includeExternal,
+          includeDepends,
+        );
+
+        dependServices.forEach((dependService) => {
+          dependencies.push(dependService);
+        });
+      }
+    });
+
+    return uniqDependencies(dependencies);
+  }
+
+  getDependency(service: TClusterService) {
+    const dependencies = this.getDependencies(false, true);
+
+    const dependency = dependencies.find((dependency) => dependency.service === service);
+    if (!dependency) {
+      throw new Error(`Dependency ${service.name} not found in cluster ${this.name}`);
+    }
+
+    return dependency;
   }
 
   toRunner(user: User) {
@@ -67,7 +123,7 @@ export default abstract class Cluster<
       registries.push(currentRegistry);
     }
 
-    this.services.forEach((service) => {
+    this.dependencies.forEach(({ service }) => {
       if (service.registry) {
         registries.push(service.registry);
       }
@@ -78,7 +134,7 @@ export default abstract class Cluster<
 
   async build(options: { registry?: Registry; context?: string; push?: boolean } = {}) {
     const { registry = this.registry, context = this.context, ...restOptions } = options;
-    const { services } = this;
+    const { dependencies } = this;
 
     /*
     ~/.docker/config.json
@@ -104,7 +160,7 @@ export default abstract class Cluster<
     */
 
     await Promise.all(
-      services.map((service) =>
+      dependencies.map(({ service }) =>
         service.build({
           registry,
           context,
@@ -114,12 +170,19 @@ export default abstract class Cluster<
     );
   }
 
-  async deployNode(node: TClusterNode, runner: User, manager: TClusterNode) {
-    await node.deploy(this.name, runner, manager);
+  async deployNode<TOptions extends {}>(
+    node: TClusterNode,
+    runner: User,
+    manager: TClusterNode,
+    options: TOptions,
+  ) {
+    await node.deploy(this.name, runner, manager, options);
   }
 
-  async deploy(options: { skipBuild?: boolean; registry?: Registry } = {}) {
-    const { skipBuild = false, registry = this.registry } = options;
+  async deploy<TDeployOptions extends { skipBuild?: boolean; registry?: Registry }>(
+    options: TDeployOptions,
+  ) {
+    const { skipBuild = false, registry = this.registry, ...restOptions } = options;
 
     if (!skipBuild) {
       await this.build({ registry });
@@ -146,9 +209,11 @@ export default abstract class Cluster<
     );
 
     // primary node must be setup first, because other nodes will use it as a source of truth
-    await this.deployNode(manager, runnerUser, manager);
+    await this.deployNode(manager, runnerUser, manager, restOptions);
 
-    await Promise.all(workers.map((worker) => this.deployNode(worker, runnerUser, manager)));
+    await Promise.all(
+      workers.map((worker) => this.deployNode(worker, runnerUser, manager, restOptions)),
+    );
   }
 
   async setupNode(node: TClusterNode, admin: User, runner: User, manager: TClusterNode) {
@@ -177,11 +242,11 @@ export default abstract class Cluster<
   }
 
   toObject() {
-    const { name, services = [] } = this;
+    const { name, dependencies } = this;
 
     return {
       name,
-      services: services.map((service) => service.toObject()),
+      services: dependencies.map(({ cluster, service }) => service.toObject()),
     };
   }
 }

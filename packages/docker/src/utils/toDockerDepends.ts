@@ -1,22 +1,25 @@
-import Depends from '../@types/Depends';
-import DockerClusterType from '../constants/DockerClusterType';
+import type DockerDependency from '../@types/DockerDependency';
+import type DockerDependsOn from '../@types/DockerDependsOn';
+import { ClusterType } from '@nodevisor/cluster';
 
-type DockerDepend = Omit<Depends, 'service'>;
-type DockerDepends = Record<string, DockerDepend> | string[];
+type DockerDepends = Record<string, DockerDependsOn> | string[];
 
 export default function toDockerDepends(
-  depends: Depends[] = [],
-  type: DockerClusterType = DockerClusterType.COMPOSE,
+  depends: DockerDependency[] = [],
+  type: ClusterType = ClusterType.DOCKER_COMPOSE,
 ): DockerDepends {
   const result: DockerDepends = {};
 
   depends.forEach((depend) => {
-    const { service, ...rest } = depend;
+    const { service, cluster, ...rest } = depend;
 
-    result[service.name] = rest;
+    result[service.name] = {
+      condition: 'service_started',
+      ...rest,
+    };
   });
 
-  if (type === DockerClusterType.SWARM) {
+  if (type === ClusterType.DOCKER_SWARM) {
     // return just list of service names
     return depends.map((depend) => depend.service.name);
   }

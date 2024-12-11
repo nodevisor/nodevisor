@@ -1,34 +1,39 @@
 import { set } from 'lodash';
-import { ClusterService, type ClusterServiceConfig } from '@nodevisor/cluster';
+import {
+  ClusterService,
+  type ClusterServiceConfig,
+  ClusterBase,
+  ClusterType,
+} from '@nodevisor/cluster';
 import type DockerComposeServiceConfig from './@types/DockerComposeServiceConfig';
 import toDockerStringObject from './utils/toDockerStringObject';
 import toDockerPorts from './utils/toDockerPorts';
 import toDockerDepends from './utils/toDockerDepends';
-import type Volume from './@types/Volume';
-import type Network from './@types/Network';
-import type Networks from './@types/Networks';
-import type Depends from './@types/Depends';
-import DockerClusterType from './constants/DockerClusterType';
-
-type DependsOrService = Depends | DockerService;
+import type DockerVolume from './@types/DockerVolume';
+import type DockerNetwork from './@types/DockerNetwork';
+import type DockerDependency from './@types/DockerDependency';
+import type ServiceVolume from './@types/ServiceVolume';
+import toDockerVolumes from './utils/toDockerVolumes';
+import type DockerHealthcheckConfig from './@types/DockerHealthcheckConfig';
+import DockerHealthcheck from './DockerHealthcheck';
 
 type PartialDockerComposeServiceConfig = Omit<
   DockerComposeServiceConfig,
   'image' | 'labels' | 'ports' | 'environment' | 'deploy' | 'networks' | 'volumes'
 > & {
   deploy?: Omit<DockerComposeServiceConfig['deploy'], 'resources' | 'replicas'>;
-  volumes?: Volume[];
-  networks?: Networks;
-  depends?: DependsOrService[];
+  volumes?: ServiceVolume[];
+  networks?: Record<string, DockerNetwork>;
+  healthcheck?: DockerHealthcheckConfig;
 };
 
 export type DockerServiceConfig = ClusterServiceConfig & PartialDockerComposeServiceConfig;
 
 export default class DockerService extends ClusterService {
   private config: PartialDockerComposeServiceConfig;
-  private volumes: Volume[];
-  private networks: Networks;
-  private depends: Depends[] = [];
+  private volumes: ServiceVolume[];
+  private networks: Record<string, DockerNetwork>;
+  readonly healthcheck: DockerHealthcheck;
 
   constructor(config: DockerServiceConfig) {
     const {
@@ -43,9 +48,10 @@ export default class DockerService extends ClusterService {
       replicas,
       volumes = [],
       networks = {},
-      depends = [],
       context,
       registry,
+      dependencies = [],
+      healthcheck = {},
       ...rest
     } = config;
 
@@ -61,44 +67,20 @@ export default class DockerService extends ClusterService {
       ports,
       registry,
       context,
+      dependencies,
     });
 
     this.config = rest;
     this.volumes = volumes;
     this.networks = networks;
-
-    depends.forEach((depend) => this.addDepends(depend));
+    this.healthcheck = new DockerHealthcheck(healthcheck);
   }
 
-  addDepends(depend: DependsOrService) {
-    const data: Depends =
-      depend instanceof DockerService
-        ? {
-            service: depend,
-            condition: 'service_started',
-          }
-        : depend;
-
-    const { service } = data;
-
-    service.setClusterName(this.clusterName);
-
-    this.depends.push(data);
-    return this;
+  getDependencies(cluster: ClusterBase, includeExternal?: boolean, includeDepends?: boolean) {
+    return super.getDependencies(cluster, includeExternal, includeDepends) as DockerDependency[];
   }
 
-  setClusterName(clusterName: string | undefined) {
-    super.setClusterName(clusterName);
-
-    this.getDepends().forEach((depend) => {
-      const { service } = depend;
-      service.setClusterName(clusterName);
-    });
-
-    return this;
-  }
-
-  addVolume(volume: Volume) {
+  addVolume(volume: ServiceVolume) {
     this.volumes.push(volume);
     return this;
   }
@@ -112,11 +94,7 @@ export default class DockerService extends ClusterService {
     return !!volumes.length;
   }
 
-  getVolumeName(volume: Volume) {
-    return `${this.name}_${volume.source}_volume`;
-  }
-
-  addNetwork(name: string, network: Network) {
+  addNetwork(name: string, network: DockerNetwork) {
     if (this.networks[name]) {
       throw new Error(`Network ${name} already exists`);
     }
@@ -131,7 +109,7 @@ export default class DockerService extends ClusterService {
   }
 
   getNetworks() {
-    const networks: Networks = {};
+    const networks: Record<string, DockerNetwork> = {};
 
     Object.entries(this.networks).forEach(([name, network]) => {
       networks[name] = {
@@ -145,15 +123,6 @@ export default class DockerService extends ClusterService {
   hasNetworks() {
     const networks = this.getNetworks();
     return !!Object.keys(networks).length;
-  }
-
-  getDepends(): Depends[] {
-    return this.depends.map((depend) => ({ condition: 'service_started', ...depend }));
-  }
-
-  hasDepends() {
-    const depends = this.getDepends();
-    return !!depends.length;
   }
 
   getDeploy(): Exclude<DockerComposeServiceConfig['deploy'], undefined> {
@@ -176,43 +145,51 @@ export default class DockerService extends ClusterService {
     return deploy;
   }
 
-  toCompose(type: DockerClusterType = DockerClusterType.SWARM): DockerComposeServiceConfig {
+  toCompose(cluster: ClusterBase, type: ClusterType): DockerComposeServiceConfig {
     const { image } = this;
 
-    const data: DockerComposeServiceConfig = {
-      ...this.config,
-      image,
-      deploy: this.getDeploy(),
-    };
+    return this.run(cluster, type, () => {
+      const data: DockerComposeServiceConfig = {
+        ...this.config,
+        image,
+        deploy: this.getDeploy(),
+      };
 
-    if (this.hasCommand()) {
-      data.command = this.getCommand().toString();
-    }
+      if (this.hasCommand()) {
+        data.command = this.getCommand().toString();
+      }
 
-    if (this.hasEnvironments()) {
-      data.environment = toDockerStringObject(this.getEnvironments());
-    }
+      if (this.hasEnvironments()) {
+        data.environment = toDockerStringObject(this.getEnvironments());
+      }
 
-    if (this.hasLabels()) {
-      data.labels = toDockerStringObject(this.getLabels());
-    }
+      if (this.hasLabels()) {
+        data.labels = toDockerStringObject(this.getLabels());
+      }
 
-    if (this.hasVolumes()) {
-      data.volumes = this.getVolumes();
-    }
+      if (this.hasVolumes()) {
+        data.volumes = toDockerVolumes(cluster, this, this.getVolumes());
+      }
 
-    if (this.hasNetworks()) {
-      data.networks = this.getNetworks();
-    }
+      if (this.hasNetworks()) {
+        data.networks = this.getNetworks();
+      }
 
-    if (this.hasPorts()) {
-      data.ports = toDockerPorts(this.getPorts());
-    }
+      if (this.hasPorts()) {
+        data.ports = toDockerPorts(this.getPorts());
+      }
 
-    if (this.hasDepends()) {
-      data.depends_on = toDockerDepends(this.getDepends(), type);
-    }
+      const dependencies = this.getDependencies(cluster);
+      if (dependencies.length) {
+        data.depends_on = toDockerDepends(dependencies, type);
+      }
 
-    return data;
+      const healthcheck = this.healthcheck.toCompose();
+      if (healthcheck) {
+        data.healthcheck = healthcheck;
+      }
+
+      return data;
+    });
   }
 }

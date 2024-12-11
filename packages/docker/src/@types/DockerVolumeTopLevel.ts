@@ -1,10 +1,10 @@
 // https://docs.docker.com/reference/compose-file/volumes/
 
-type VolumeTopLevel = {
+type DockerVolumeTopLevel = {
   driver: 'local';
   name?: string;
   labels?: Record<string, string>;
   external?: boolean;
 };
 
-export default VolumeTopLevel;
+export default DockerVolumeTopLevel;

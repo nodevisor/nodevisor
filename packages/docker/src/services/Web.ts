@@ -1,16 +1,17 @@
 import DockerService, { type DockerServiceConfig } from '../DockerService';
-import type WebProxy from './WebProxy';
-import type Depends from '../@types/Depends';
+import WebProxy from './WebProxy';
+import type WebProxyDependency from '../@types/WebProxyDependency';
+import { useCluster, type PartialFor } from '@nodevisor/cluster';
 
 export type WebConfig = DockerServiceConfig & {
   domains: string[];
-  proxy: WebProxy;
+  proxy: WebProxy | PartialFor<WebProxyDependency, 'cluster'>;
   port?: number;
 };
 
 export default class Web extends DockerService {
   readonly domains: string[];
-  readonly proxy: WebProxy;
+  readonly proxy: PartialFor<WebProxyDependency, 'cluster'>;
   readonly port: number;
 
   constructor(config: WebConfig) {
@@ -18,26 +19,26 @@ export default class Web extends DockerService {
 
     super(rest);
 
-    this.proxy = proxy;
     this.domains = domains;
     this.port = port;
-  }
+    this.proxy = proxy instanceof WebProxy ? { service: proxy } : proxy;
 
-  getDepends(): Depends[] {
-    const depends = super.getDepends();
-    return [
-      ...depends,
-      {
-        service: this.proxy,
-        condition: 'service_started',
-      },
-    ];
+    this.addDependency(this.proxy);
   }
 
   getLabels() {
+    const { cluster } = useCluster();
+    if (!cluster) {
+      throw new Error('Cluster is not initialized. Use ClusterContext.run() to initialize it.');
+    }
+
+    const proxyCluster = this.proxy.cluster ?? cluster;
+
+    const proxyLabels = this.proxy.service.getWebLabels(proxyCluster, this);
+
     return {
       ...super.getLabels(),
-      ...this.proxy.getWebLabels(this),
+      ...proxyLabels,
     };
   }
 }

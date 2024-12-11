@@ -1,4 +1,4 @@
-import { type PartialFor } from '@nodevisor/cluster';
+import { ClusterBase, useCluster, type PartialFor, ClusterType } from '@nodevisor/cluster';
 import type Web from './Web';
 import WebProxy, { type WebProxyConfig } from './WebProxy';
 import { Protocol } from '@nodevisor/endpoint';
@@ -25,7 +25,7 @@ type TraefikConfig = PartialFor<WebProxyConfig, 'name'> & {
   ssl?: SSLConfig;
   dashboard?: DashboardConfig;
   dockerUnixSocket?: string;
-  version?: string;
+  version?: string | number;
 };
 
 export default class Traefik extends WebProxy {
@@ -55,6 +55,14 @@ export default class Traefik extends WebProxy {
     this.ssl = ssl;
     this.dashboard = dashboard;
     this.dockerUnixSocket = dockerUnixSocket;
+
+    if (!rest.healthcheck) {
+      this.healthcheck.set`traefik healthcheck --ping`;
+      this.healthcheck.interval = '10s';
+      this.healthcheck.timeout = '2s';
+      this.healthcheck.retries = 3;
+      this.healthcheck.startPeriod = '10s';
+    }
   }
 
   getVolumes() {
@@ -63,6 +71,7 @@ export default class Traefik extends WebProxy {
 
     if (!volumes.find((volume) => volume.source === dockerUnixSocket)) {
       volumes.push({
+        name: 'docker-socket',
         type: 'bind',
         source: dockerUnixSocket,
         target: '/var/run/docker.sock',
@@ -72,8 +81,8 @@ export default class Traefik extends WebProxy {
 
     if (ssl) {
       volumes.push({
+        name: 'letsencrypt',
         type: 'volume',
-        source: `${name}_letsencrypt`,
         target: '/letsencrypt',
       });
     }
@@ -85,17 +94,30 @@ export default class Traefik extends WebProxy {
     const { ssl, dashboard } = this;
     const cb = super.getCommand();
 
+    const { cluster, type } = useCluster();
+    if (!cluster) {
+      throw new Error('Cluster is not initialized. Use ClusterContext.run() to initialize it.');
+    }
+
     cb.argument({
       '--providers.docker': true,
-      '--providers.swarm': true,
+      '--providers.swarm': type === ClusterType.DOCKER_SWARM,
       // containers are not exposed by default without labels
       '--providers.docker.exposedbydefault': false,
       // default ports
       '--entrypoints.web.address': ':80',
       // https://doc.traefik.io/traefik/providers/docker/#network
       // use correct network for comunnication with web services
-      '--providers.docker.network': this.getNetworkName(),
+      '--providers.docker.network': this.getNetworkName(cluster),
     });
+
+    if (this.healthcheck.isActive()) {
+      cb.argument({
+        '--ping': true,
+        '--ping.entryPoint': 'traefik',
+        '--entrypoints.traefik.address': ':8080',
+      });
+    }
 
     if (dashboard) {
       const insecure = 'insecure' in dashboard ? dashboard.insecure : false;
@@ -126,6 +148,19 @@ export default class Traefik extends WebProxy {
     let labels = super.getLabels();
 
     const routersPrefix = `traefik.http.routers.${name}`;
+    /*
+    labels = {
+      ...labels,
+      'traefik.http.routers.pingweb.rule': 'PathPrefix(`/ping`)',
+      'traefik.http.routers.pingweb.service': 'ping@internal',
+      'traefik.http.routers.pingweb.entrypoints': 'websecure',
+    };
+
+    /*
+    - "traefik.http.routers.pingweb.rule=PathPrefix(`/ping`)"
+    - "traefik.http.routers.pingweb.service=ping@internal"
+    - "traefik.http.routers.pingweb.entrypoints=websecure"
+    */
 
     // labels['traefik.docker.network'] = this.getNetworkName();
 
@@ -215,7 +250,7 @@ export default class Traefik extends WebProxy {
     return ports;
   }
 
-  getWebLabels(web: Web) {
+  getWebLabels(proxyCluster: ClusterBase, web: Web) {
     const { ssl } = this;
     const { port, domains, name } = web;
 
@@ -228,7 +263,7 @@ export default class Traefik extends WebProxy {
       'traefik.enable': true,
       // https://doc.traefik.io/traefik/routing/providers/docker/#traefikdockernetwork
       // without it it will use random network
-      [`traefik.docker.network`]: this.getNetworkName(),
+      [`traefik.docker.network`]: this.getNetworkName(proxyCluster),
       [`${servicesPrefix}.loadbalancer.server.port`]: port,
 
       // allow http traffic

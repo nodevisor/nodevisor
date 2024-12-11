@@ -1,6 +1,6 @@
 // https://docs.docker.com/reference/compose-file/networks/#driver
 // https://docs.docker.com/engine/network/drivers/
-type NetworkTopLevel = {
+type DockerNetworkTopLevel = {
   driver?: 'overlay' | 'bridge'; // default: overlay for swarm, bridge is for standalone
   driver_opts?: Record<string, string>;
   // allow other services to join the network
@@ -14,4 +14,4 @@ type NetworkTopLevel = {
   enable_ipv6?: boolean;
 };
 
-export default NetworkTopLevel;
+export default DockerNetworkTopLevel;

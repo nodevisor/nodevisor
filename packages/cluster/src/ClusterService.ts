@@ -7,13 +7,22 @@ import type Environment from './@types/Environment';
 import type PortObject from './@types/PortObject';
 import type Port from './@types/Port';
 import portToPortObject from './utils/portToPortObject';
+import ClusterBase from './ClusterBase';
+import ClusterServiceBase, { type ClusterServiceBaseConfig } from './ClusterServiceBase';
+import type Dependency from './@types/Dependency';
+import type PartialFor from './@types/PartialFor';
+import uniqDependencies from './utils/uniqDependencies';
+import ClusterContext from './ClusterContext';
+import type Volume from './@types/Volume';
+import type ClusterType from './constants/ClusterType';
 
-export type ClusterServiceConfig = {
-  name: string;
+export type ClusterServiceConfig = ClusterServiceBaseConfig & {
   image?: string;
   context?: string;
   registry?: Registry;
   builder?: Builder;
+
+  dependencies?: Array<ClusterService | PartialFor<Dependency, 'cluster'>>;
   labels?: Labels;
   environment?: Environment;
   cpus?: {
@@ -34,15 +43,13 @@ export type ClusterServiceConfig = {
   command?: string;
 };
 
-export default class ClusterService {
-  readonly name: string;
+export default abstract class ClusterService extends ClusterServiceBase {
   readonly image?: string;
   readonly context?: string;
   readonly registry?: Registry;
   readonly builder?: Builder;
 
-  protected clusterName?: string;
-
+  private dependencies: PartialFor<Dependency, 'cluster'>[] = [];
   private labels: Labels;
   private environment: Environment;
   private cpus: {
@@ -64,7 +71,6 @@ export default class ClusterService {
 
   constructor(config: ClusterServiceConfig) {
     const {
-      name,
       image,
       context,
       registry,
@@ -75,10 +81,13 @@ export default class ClusterService {
       memory = {},
       replicas = {},
       ports = [],
+      dependencies = [],
       command,
+      ...baseConfig
     } = config;
 
-    this.name = name;
+    super(baseConfig);
+
     this.image = image;
     this.context = context;
     this.registry = registry;
@@ -93,11 +102,66 @@ export default class ClusterService {
     if (command) {
       this.command.append`${raw(command)}`;
     }
+
+    dependencies.forEach((dependency) => this.addDependency(dependency));
   }
 
-  setClusterName(clusterName: string | undefined) {
-    this.clusterName = clusterName;
+  addDependency(input: ClusterService | PartialFor<Dependency, 'cluster'>) {
+    const dependency =
+      input instanceof ClusterService
+        ? {
+            service: input,
+          }
+        : {
+            ...input,
+          };
+
+    // todo add uniq
+    this.dependencies = [...this.dependencies, dependency];
     return this;
+  }
+
+  isExternal(cluster: ClusterBase, dependency: Dependency) {
+    return dependency.cluster && dependency.cluster.name !== cluster.name;
+  }
+
+  getDependencies(cluster: ClusterBase, includeExternal = false, includeDepends = false) {
+    const dependencies: Dependency[] = [];
+
+    if (!cluster) {
+      throw new Error('Cluster is required to get dependencies');
+    }
+
+    this.dependencies.forEach((dep) => {
+      const dependency = {
+        cluster,
+        ...dep,
+      };
+
+      const isDependencyExternal = this.isExternal(cluster, dependency);
+
+      const process = includeExternal ? true : !isDependencyExternal;
+      if (!process) {
+        return;
+      }
+
+      dependencies.push(dependency);
+
+      // only include depends if the dependency is not external, external dependencies have dependencies processed in different cluster
+      if (includeDepends && !isDependencyExternal) {
+        const dependServices = dependency.service.getDependencies(
+          dependency.cluster,
+          includeExternal,
+          includeDepends,
+        );
+
+        dependServices.forEach((dependService) => {
+          dependencies.push(dependService);
+        });
+      }
+    });
+
+    return uniqDependencies(dependencies);
   }
 
   getPorts() {
@@ -233,7 +297,7 @@ export default class ClusterService {
   }
 
   getLabel(key: string) {
-    const { labels } = this;
+    const labels = this.getLabels();
     return labels[key];
   }
 
@@ -248,8 +312,8 @@ export default class ClusterService {
   }
 
   getEnvironment(key: string) {
-    const { environment } = this;
-    return environment[key];
+    const environments = this.getEnvironments();
+    return environments[key];
   }
 
   addCommandArgument(key: string, value: string | number | boolean | undefined) {
@@ -266,6 +330,31 @@ export default class ClusterService {
     const command = this.getCommand();
     return !command.isEmpty();
   }
+
+  /*
+  toJSON() {
+    return {
+      name: this.name,
+      image: this.image,
+      environment: {
+        ...this.environment,
+      },
+      labels: {
+        ...this.labels,
+      },
+      ports: this.ports.map((port) => ({ ...port })),
+      cpus: {
+        ...this.cpus,
+      },
+      memory: {
+        ...this.memory,
+      },
+      replicas: {
+        ...this.replicas,
+      },
+    };
+  }
+  */
 
   toObject() {
     const data: ClusterServiceConfig = {
@@ -292,19 +381,22 @@ export default class ClusterService {
     return data;
   }
 
-  clone() {
-    return new ClusterService(this.toObject());
+  getNetworkName(cluster: ClusterBase) {
+    return cluster.getNetworkName(this);
   }
 
-  getNetworkName() {
-    const { clusterName } = this;
-    if (!clusterName) {
-      throw new Error(
-        'You must set cluster name before getting network name. Did you forget to assign service to cluster?',
-      );
-    }
+  getVolumeName(cluster: ClusterBase, volume: Volume) {
+    return cluster.getVolumeName(this, volume);
+  }
 
-    return `${clusterName}_${this.name}_network`;
+  run<TReturn>(cluster: ClusterBase, type: ClusterType, fn: () => TReturn) {
+    return ClusterContext.run(
+      {
+        cluster,
+        type,
+      },
+      fn,
+    );
   }
 
   async build(options: { registry?: Registry; context?: string; push?: boolean } = {}) {

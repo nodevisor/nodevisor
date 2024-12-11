@@ -1,9 +1,10 @@
 import { type Port } from '@nodevisor/cluster';
 import type Duration from './Duration';
-import type UpdateConfig from './UpdateConfig';
-import type Volume from './Volume';
-import type Networks from './Networks';
-import type Depends from './Depends';
+import type DockerUpdateConfig from './DockerUpdateConfig';
+import type DockerVolume from './DockerVolume';
+import type DockerNetwork from './DockerNetwork';
+import type DockerDependsOn from './DockerDependsOn';
+import type DockerHealthcheckConfig from './DockerHealthcheckConfig';
 
 // https://docs.docker.com/reference/compose-file/services/
 type DockerComposeServiceConfig = {
@@ -13,11 +14,12 @@ type DockerComposeServiceConfig = {
   command?: string;
   labels?: Record<string, string>;
   environment?: Record<string, string>;
-  volumes?: Volume[];
-  networks?: Networks;
+  volumes?: DockerVolume[];
+  networks?: Record<string, DockerNetwork>;
   ports?: Port[];
   restart?: 'no' | 'always' | 'unless-stopped' | 'on-failure' | `on-failure:${number}`;
-  depends_on?: Record<string, Omit<Depends, 'service'>> | string[]; // swarm has list only
+  depends_on?: Record<string, Omit<DockerDependsOn, 'service'>> | string[]; // swarm has list only
+  healthcheck?: DockerHealthcheckConfig;
   deploy?: {
     mode?: 'global' | 'replicated';
     replicas?: number;
@@ -44,9 +46,9 @@ type DockerComposeServiceConfig = {
     };
     // https://docs.docker.com/reference/compose-file/deploy/#rollback_config
     // configures how the service should be rollbacked in case of a failing update.
-    rollback_config?: UpdateConfig;
+    rollback_config?: DockerUpdateConfig;
     // configures how the service should be updated. Useful for configuring rolling updates.
-    update_config?: UpdateConfig;
+    update_config?: DockerUpdateConfig;
   };
 };
 

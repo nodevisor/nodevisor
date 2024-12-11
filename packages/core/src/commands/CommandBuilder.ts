@@ -155,6 +155,11 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     return this;
   }
 
+  set(strings: TemplateStringsArray, ...values: any[]) {
+    this.clear().append(strings, ...values);
+    return this;
+  }
+
   // command methods
   append(strings: TemplateStringsArray, ...values: any[]) {
     this.command.push({ type: 'token', strings: [...strings.raw], values });
@@ -316,6 +321,11 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
 
   stdin(stdin: string | undefined) {
     this.#stdin = stdin;
+    return this;
+  }
+
+  clear() {
+    this.command = [];
     return this;
   }
 
