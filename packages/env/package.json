@@ -1,6 +1,6 @@
 {
   "name": "@nodevisor/env",
-  "version": "0.0.33",
+  "version": "0.0.35",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -22,7 +22,7 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/core": "^0.0.33"
+    "@nodevisor/core": "^0.0.35"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
