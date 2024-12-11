@@ -14,6 +14,8 @@ import type DockerNetwork from './@types/DockerNetwork';
 import type DockerDependency from './@types/DockerDependency';
 import type ServiceVolume from './@types/ServiceVolume';
 import toDockerVolumes from './utils/toDockerVolumes';
+import type DockerHealthcheckConfig from './@types/DockerHealthcheckConfig';
+import DockerHealthcheck from './DockerHealthcheck';
 
 type PartialDockerComposeServiceConfig = Omit<
   DockerComposeServiceConfig,
@@ -22,6 +24,7 @@ type PartialDockerComposeServiceConfig = Omit<
   deploy?: Omit<DockerComposeServiceConfig['deploy'], 'resources' | 'replicas'>;
   volumes?: ServiceVolume[];
   networks?: Record<string, DockerNetwork>;
+  healthcheck?: DockerHealthcheckConfig;
 };
 
 export type DockerServiceConfig = ClusterServiceConfig & PartialDockerComposeServiceConfig;
@@ -30,6 +33,7 @@ export default class DockerService extends ClusterService {
   private config: PartialDockerComposeServiceConfig;
   private volumes: ServiceVolume[];
   private networks: Record<string, DockerNetwork>;
+  readonly healthcheck: DockerHealthcheck;
 
   constructor(config: DockerServiceConfig) {
     const {
@@ -47,6 +51,7 @@ export default class DockerService extends ClusterService {
       context,
       registry,
       dependencies = [],
+      healthcheck = {},
       ...rest
     } = config;
 
@@ -68,6 +73,7 @@ export default class DockerService extends ClusterService {
     this.config = rest;
     this.volumes = volumes;
     this.networks = networks;
+    this.healthcheck = new DockerHealthcheck(healthcheck);
   }
 
   getDependencies(cluster: ClusterBase, includeExternal?: boolean, includeDepends?: boolean) {
@@ -176,6 +182,11 @@ export default class DockerService extends ClusterService {
       const dependencies = this.getDependencies(cluster);
       if (dependencies.length) {
         data.depends_on = toDockerDepends(dependencies, type);
+      }
+
+      const healthcheck = this.healthcheck.toCompose();
+      if (healthcheck) {
+        data.healthcheck = healthcheck;
       }
 
       return data;

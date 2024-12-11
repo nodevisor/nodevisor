@@ -4,6 +4,7 @@ import type DockerUpdateConfig from './DockerUpdateConfig';
 import type DockerVolume from './DockerVolume';
 import type DockerNetwork from './DockerNetwork';
 import type DockerDependsOn from './DockerDependsOn';
+import type DockerHealthcheckConfig from './DockerHealthcheckConfig';
 
 // https://docs.docker.com/reference/compose-file/services/
 type DockerComposeServiceConfig = {
@@ -18,6 +19,7 @@ type DockerComposeServiceConfig = {
   ports?: Port[];
   restart?: 'no' | 'always' | 'unless-stopped' | 'on-failure' | `on-failure:${number}`;
   depends_on?: Record<string, Omit<DockerDependsOn, 'service'>> | string[]; // swarm has list only
+  healthcheck?: DockerHealthcheckConfig;
   deploy?: {
     mode?: 'global' | 'replicated';
     replicas?: number;

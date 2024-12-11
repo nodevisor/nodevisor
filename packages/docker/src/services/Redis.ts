@@ -53,6 +53,14 @@ export default class Redis extends DockerService {
     this.maxmemory = maxmemory;
     this.maxmemoryPolicy = maxmemoryPolicy;
     this.volume = volume;
+
+    if (!rest.healthcheck) {
+      this.healthcheck.set`redis-cli ping | grep PONG`;
+      this.healthcheck.interval = '10s';
+      this.healthcheck.timeout = '2s';
+      this.healthcheck.retries = 3;
+      this.healthcheck.startPeriod = '5s';
+    }
   }
 
   getVolumes() {

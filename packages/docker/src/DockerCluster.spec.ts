@@ -436,6 +436,13 @@ describe('Cluster', () => {
           networks: {
             test_redis_network: {},
           },
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '5s',
+            test: 'redis-cli ping | grep PONG',
+            timeout: '2s',
+          },
           restart: 'unless-stopped',
           volumes: [
             {
@@ -616,6 +623,13 @@ describe('Cluster', () => {
               priority: 0,
             },
           },
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '5s',
+            test: 'redis-cli ping | grep PONG',
+            timeout: '2s',
+          },
           restart: 'unless-stopped',
           volumes: [
             {
@@ -714,6 +728,13 @@ describe('Cluster', () => {
           image: 'redis:7.4.1',
           networks: {
             nodevisor_redis_network: {},
+          },
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '5s',
+            test: 'redis-cli ping | grep PONG',
+            timeout: '2s',
           },
           restart: 'unless-stopped',
           volumes: [
@@ -847,6 +868,13 @@ describe('Cluster', () => {
             },
             replicas: 1,
           },
+          healthcheck: {
+            interval: '10s',
+            retries: 3,
+            start_period: '5s',
+            test: 'redis-cli ping | grep PONG',
+            timeout: '2s',
+          },
           command: 'redis-server',
           volumes: [
             {
@@ -902,13 +930,10 @@ describe('Cluster', () => {
     // run docker compose
     await $`docker compose -f ${filePath2} up -d --wait`.text();
 
-    // wait 3 seconds
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
     // curl
     const curlResult = await $`curl -s http://whoami.127.0.0.1.nip.io`.text();
-    console.log(curlResult);
+
     expect(curlResult).toContain('Host: whoami.127.0.0.1.nip.io');
     expect(curlResult).toContain('X-Forwarded-Host: whoami.127.0.0.1.nip.io');
-  }, 10000);
+  }, 100000);
 });

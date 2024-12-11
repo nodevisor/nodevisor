@@ -40,6 +40,14 @@ export default class Postgres extends DockerService {
     this.username = username;
     this.database = database;
     this.volume = volume;
+
+    if (!rest.healthcheck) {
+      this.healthcheck.set`pg_isready -U postgres`;
+      this.healthcheck.interval = '10s';
+      this.healthcheck.timeout = '5s';
+      this.healthcheck.retries = 5;
+      this.healthcheck.startPeriod = '15s'; // 30 seconds
+    }
   }
 
   getVolumes() {
