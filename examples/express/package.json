@@ -1,6 +1,7 @@
 {
   "name": "express-example",
   "version": "1.0.0",
+  "private": true,
   "description": "Example Express application with Nodevisor",
   "main": "dist/index.js",
   "scripts": {
@@ -12,11 +13,11 @@
   },
   "dependencies": {
     "express": "^4.21.2",
-    "nodevisor": "^0.0.33",
+    "nodevisor": "^0.0.36",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@nodevisor/cli": "^0.0.33",
+    "@nodevisor/cli": "^0.0.36",
     "@types/express": "^5.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
