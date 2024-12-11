@@ -207,7 +207,7 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
   ) {
     const { type, ...restOptions } = options;
 
-    super.deploy({
+    await super.deploy({
       ...restOptions,
       yaml: this.yaml({ type }),
     });
