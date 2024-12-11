@@ -122,23 +122,25 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
   getComposeVolumes() {
     const volumes = this.getVolumes();
 
-    /* - extract top level volumes from services
+    // - extract top level volumes from services
     const dependencies = this.getDependencies(false, true);
     dependencies.forEach((dependency) => {
       const { cluster, service } = dependency;
 
       const serviceVolumes = service.getVolumes();
-
       serviceVolumes.forEach((volume) => {
-        if (volume.type === 'volume') {
-          volumes[volume.source] = {
-            driver: 'local',
-            name: service.getVolumeName(cluster, volume),
-          };
+        if (volume.topLevel) {
+          /*
+          if (volume.type === 'volume') {
+            volumes[volume.source] = {
+              driver: 'local',
+              name: service.getVolumeName(cluster, volume),
+            };
+          }
+          */
         }
       });
     });
-    */
 
     return volumes;
   }

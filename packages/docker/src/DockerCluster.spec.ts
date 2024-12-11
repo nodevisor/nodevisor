@@ -75,8 +75,6 @@ describe('Cluster', () => {
 
     const config = cluster.toCompose({ type: DockerClusterType.COMPOSE });
 
-    // console.log(JSON.stringify(config, null, 2));
-
     const result = {
       name: 'test',
       services: {
@@ -89,7 +87,7 @@ describe('Cluster', () => {
               type: 'bind',
             },
             {
-              source: 'traefik-letsencrypt',
+              source: 'test_traefik_letsencrypt_volume',
               target: '/letsencrypt',
               type: 'volume',
             },
@@ -135,12 +133,7 @@ describe('Cluster', () => {
           },
         },
       },
-      volumes: {
-        traefik_letsencrypt: {
-          driver: 'local',
-          name: 'traefik_traefik_letsencrypt_volume',
-        },
-      },
+      volumes: {},
       networks: {
         test_traefik_network: {
           attachable: true,
@@ -203,7 +196,7 @@ describe('Cluster', () => {
               type: 'bind',
             },
             {
-              source: 'traefik-letsencrypt',
+              source: 'test_traefik_letsencrypt_volume',
               target: '/letsencrypt',
               type: 'volume',
             },
@@ -284,12 +277,7 @@ describe('Cluster', () => {
           },
         },
       },
-      volumes: {
-        traefik_letsencrypt: {
-          driver: 'local',
-          name: 'traefik_traefik_letsencrypt_volume',
-        },
-      },
+      volumes: {},
       networks: {
         test_traefik_network: {
           attachable: true,
@@ -443,19 +431,14 @@ describe('Cluster', () => {
           restart: 'unless-stopped',
           volumes: [
             {
-              source: 'redis_data',
+              source: 'test_redis_data_volume',
               target: '/data',
               type: 'volume',
             },
           ],
         },
       },
-      volumes: {
-        redis_data: {
-          driver: 'local',
-          name: 'redis_redis_data_volume',
-        },
-      },
+      volumes: {},
       networks: {
         test_redis_network: {
           attachable: true,
@@ -624,19 +607,14 @@ describe('Cluster', () => {
           restart: 'unless-stopped',
           volumes: [
             {
-              source: 'redis-data',
+              source: 'test_redis_data_volume',
               target: '/data',
               type: 'volume',
             },
           ],
         },
       },
-      volumes: {
-        redis_data: {
-          driver: 'local',
-          name: 'redis_redis_data_volume',
-        },
-      },
+      volumes: {},
       networks: {
         test_redis_network: {
           attachable: true,
@@ -744,7 +722,7 @@ describe('Cluster', () => {
           restart: 'unless-stopped',
           volumes: [
             {
-              source: 'redis-data',
+              source: 'nodevisor_redis_data_volume',
               target: '/data',
               type: 'volume',
             },
@@ -798,12 +776,7 @@ describe('Cluster', () => {
           ],
         },
       },
-      volumes: {
-        redis_data: {
-          driver: 'local',
-          name: 'redis_redis_data_volume',
-        },
-      },
+      volumes: {},
       networks: {
         nodevisor_traefik_network: {
           driver: 'overlay',
@@ -877,19 +850,14 @@ describe('Cluster', () => {
           command: 'redis-server',
           volumes: [
             {
-              source: 'redis-data',
+              source: 'app_redis_data_volume',
               target: '/data',
               type: 'volume',
             },
           ],
         },
       },
-      volumes: {
-        redis_data: {
-          driver: 'local',
-          name: 'redis_redis_data_volume',
-        },
-      },
+      volumes: {},
       networks: {
         app_whoami_network: {
           driver: 'overlay',
