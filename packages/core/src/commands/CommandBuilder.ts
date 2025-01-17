@@ -57,24 +57,39 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
     this.as = typeof as === 'string' ? { user: as } : as;
   }
 
-  argument(key: string | Record<string, ArgumentValue>, value?: ArgumentValue) {
+  argument(
+    key: string | Record<string, ArgumentValue>,
+    value?: ArgumentValue,
+    separator: string | true = true, // true: --long-options=value -short value, https://blog.heroku.com/cli-flags-get-started-with-oclif, http://docopt.org/
+    subSeparator: string = '=', // lp -o key=value -o key2=value2
+  ) {
     if (isObject(key)) {
       Object.entries(key).forEach(([key, value]) => {
-        this.argument(key, value);
+        this.argument(key, value, separator);
       });
     } else {
       if (Array.isArray(value)) {
         value.forEach((v) => {
-          this.argument(key, v);
+          this.argument(key, v, separator);
         });
         return this;
       } else if (isObject(value)) {
+        const entities = Object.entries(value);
+        const hasDefinedArgument = entities.some(([_, subValue]) => subValue !== undefined);
+        if (!hasDefinedArgument) {
+          return this;
+        }
+
         Object.entries(value).forEach(([subKey, subValue]) => {
+          if (subValue === undefined) {
+            return;
+          }
+
           if (!this.isEmpty()) {
             this.append` `;
           }
 
-          this.append`${raw(key)}`.argument(subKey, subValue);
+          this.append`${raw(key)}`.argument(subKey, subValue, subSeparator);
         });
         return this;
       } else if (value === undefined) {
@@ -85,15 +100,19 @@ export default class CommandBuilder implements PromiseLike<CommandOutput> {
         this.append` `;
       }
 
+      const isLongArgument = key.startsWith('--');
+      const automaticSeparator = isLongArgument ? '=' : ' ';
+      const selectedSeparator = separator === true ? automaticSeparator : separator;
+
       if (value === null) {
         // include key as a flag without a value
         this.append`${raw(key)}`;
       } else if (typeof value === 'boolean') {
-        this.append`${raw(key)}=${raw(value ? 'true' : 'false')}`;
+        this.append`${raw(key)}${raw(selectedSeparator)}${raw(value ? 'true' : 'false')}`;
       } else if (typeof value === 'number') {
-        this.append`${raw(key)}=${raw(value.toString())}`;
+        this.append`${raw(key)}${raw(selectedSeparator)}${raw(value.toString())}`;
       } else {
-        this.append`${raw(key)}=${value.toString()}`;
+        this.append`${raw(key)}${raw(selectedSeparator)}${value.toString()}`;
       }
     }
 
