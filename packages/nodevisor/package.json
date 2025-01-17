@@ -1,7 +1,7 @@
 {
   "name": "nodevisor",
   "description": "Server Management and Scalable Application Deployment",
-  "version": "0.0.38",
+  "version": "0.0.39",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -24,26 +24,26 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/auth": "^0.0.38",
-    "@nodevisor/authorized-keys": "^0.0.38",
-    "@nodevisor/aws": "^0.0.38",
-    "@nodevisor/builder": "^0.0.38",
-    "@nodevisor/cluster": "^0.0.38",
-    "@nodevisor/core": "^0.0.38",
-    "@nodevisor/docker": "^0.0.38",
-    "@nodevisor/endpoint": "^0.0.38",
-    "@nodevisor/env": "^0.0.38",
-    "@nodevisor/fs": "^0.0.38",
-    "@nodevisor/groups": "^0.0.38",
-    "@nodevisor/os": "^0.0.38",
-    "@nodevisor/packages": "^0.0.38",
-    "@nodevisor/pwsh": "^0.0.38",
-    "@nodevisor/registry": "^0.0.38",
-    "@nodevisor/schema": "^0.0.38",
-    "@nodevisor/services": "^0.0.38",
-    "@nodevisor/ssh": "^0.0.38",
-    "@nodevisor/ufw": "^0.0.38",
-    "@nodevisor/users": "^0.0.38"
+    "@nodevisor/auth": "^0.0.39",
+    "@nodevisor/authorized-keys": "^0.0.39",
+    "@nodevisor/aws": "^0.0.39",
+    "@nodevisor/builder": "^0.0.39",
+    "@nodevisor/cluster": "^0.0.39",
+    "@nodevisor/core": "^0.0.39",
+    "@nodevisor/docker": "^0.0.39",
+    "@nodevisor/endpoint": "^0.0.39",
+    "@nodevisor/env": "^0.0.39",
+    "@nodevisor/fs": "^0.0.39",
+    "@nodevisor/groups": "^0.0.39",
+    "@nodevisor/os": "^0.0.39",
+    "@nodevisor/packages": "^0.0.39",
+    "@nodevisor/pwsh": "^0.0.39",
+    "@nodevisor/registry": "^0.0.39",
+    "@nodevisor/schema": "^0.0.39",
+    "@nodevisor/services": "^0.0.39",
+    "@nodevisor/ssh": "^0.0.39",
+    "@nodevisor/ufw": "^0.0.39",
+    "@nodevisor/users": "^0.0.39"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -52,5 +52,5 @@
     "ts-jest": "^29.2.5",
     "typescript": "5.7.2"
   },
-  "gitHead": "9d54b26867ef1fa66a832f040bf12101e0c9d62a"
+  "gitHead": "cf9df5ad6ceb25bfa7dfdc1c42f8b3fff149abb6"
 }

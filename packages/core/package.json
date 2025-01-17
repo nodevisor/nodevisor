@@ -1,6 +1,6 @@
 {
   "name": "@nodevisor/core",
-  "version": "0.0.38",
+  "version": "0.0.39",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -46,5 +46,5 @@
     "ts-jest": "^29.2.5",
     "typescript": "5.7.2"
   },
-  "gitHead": "36b13f1c5639d5dc83b28c43fdefe590a4644294"
+  "gitHead": "cf9df5ad6ceb25bfa7dfdc1c42f8b3fff149abb6"
 }
