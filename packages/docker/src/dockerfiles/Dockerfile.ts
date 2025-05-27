@@ -20,18 +20,25 @@ export default class Dockerfile {
     return this.stages.some((stage) => stage.name === name);
   }
 
-  add(stage: DockerfileStage) {
+  add(name: string, from: string | DockerfileStage) {
+    const stage = new DockerfileStage(name, from);
+
     // check if stage is already in the array
     if (this.stages.some((s) => s.name === stage.name)) {
       throw new Error(`Stage ${stage.name} already exists`);
     }
 
     this.stages.push(stage);
-    return this;
+    return stage;
   }
 
-  get(name: string) {
-    return this.stages.find((stage) => stage.name === name);
+  getStage(name: string) {
+    const stage = this.stages.find((stage) => stage.name === name);
+    if (!stage) {
+      throw new Error(`Stage ${name} not found`);
+    }
+
+    return stage;
   }
 
   clear() {

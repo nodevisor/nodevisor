@@ -1,6 +1,9 @@
 export { default as Express } from './Express';
 export * from './Express';
 
+export { default as Nextjs } from './Nextjs';
+export * from './Nextjs';
+
 export { default as Postgres } from './Postgres';
 export * from './Postgres';
 

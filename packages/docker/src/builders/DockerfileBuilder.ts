@@ -3,19 +3,11 @@ import Registry from '@nodevisor/registry';
 import DockerBuilder, { type DockerBuilderConfig } from './DockerBuilder';
 import { Dockerfile } from '../dockerfiles';
 
-export type DockerfileBuilderConfig = DockerBuilderConfig & {
-  dockerfile?: Dockerfile;
-};
+export type DockerfileBuilderConfig = DockerBuilderConfig & {};
 
 export default class DockerfileBuilder extends DockerBuilder {
-  readonly dockerfile: Dockerfile;
-
   constructor(config: DockerfileBuilderConfig = {}) {
-    const { dockerfile = new Dockerfile(), ...rest } = config;
-
-    super(rest);
-
-    this.dockerfile = dockerfile;
+    super(config);
   }
 
   async build(image: string, registry: Registry, options: { push?: boolean; context?: string }) {
@@ -32,6 +24,18 @@ export default class DockerfileBuilder extends DockerBuilder {
       // remove the Dockerfile
       await fs.unlink(dockerfilePath);
     }
+  }
+
+  protected prepareDockerfile() {
+    return new Dockerfile();
+  }
+
+  get dockerfile(): Dockerfile {
+    return this.prepareDockerfile();
+  }
+
+  getStage(name: string) {
+    return this.dockerfile.getStage(name);
   }
 
   async getDockerfileContent() {

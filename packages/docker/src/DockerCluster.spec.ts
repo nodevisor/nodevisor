@@ -193,8 +193,6 @@ describe('Cluster', () => {
 
     const config = cluster.toCompose({ type: ClusterType.DOCKER_COMPOSE });
 
-    // console.log(JSON.stringify(config, null, 2));
-
     const result = {
       name: 'test',
       services: {
