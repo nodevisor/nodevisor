@@ -12,6 +12,7 @@ export default class Nextjs extends Web {
       appDir,
       builder = new NodeBuilder({
         appDir,
+        distDir: '/.next',
       }),
       ...rest
     } = config;
