@@ -214,9 +214,14 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
   }
 
   async setupNode(node: DockerNode, admin: User, runner: User, manager: DockerNode) {
-    const token = await manager.getWorkerToken(runner);
+    const isManager = node === manager;
 
-    await node.setup(admin, runner, manager, { token });
+    const options: { token?: string } = {};
+    if (isManager) {
+      options.token = await manager.getWorkerToken(runner);
+    }
+
+    await node.setup(admin, runner, manager, options);
   }
 
   toCompose(options: { type?: ClusterType } = {}): DockerComposeConfig {

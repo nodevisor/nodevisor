@@ -75,7 +75,7 @@ export default class DockerNode extends ClusterNode {
     }
   }
 
-  async setup(admin: User, runner: User, manager: DockerNode, options: { token: string }) {
+  async setup(admin: User, runner: User, manager: DockerNode, options: { token?: string }) {
     if (!runner.username) {
       throw new Error('Runner user is required for docker node setup');
     }
@@ -118,6 +118,9 @@ export default class DockerNode extends ClusterNode {
       const { host } = this;
       await $con(DockerSwarm).init(host);
     } else {
+      if (!token) {
+        throw new Error('Token is required for worker node setup');
+      }
       // join as worker
       await $runner(DockerSwarm).join(token, manager.host);
     }
