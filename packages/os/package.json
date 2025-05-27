@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/os",
   "description": "Module provides operating system-related utility methods and properties",
-  "version": "0.0.44",
+  "version": "0.0.45",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -24,8 +24,8 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/core": "^0.0.44",
-    "@nodevisor/pwsh": "^0.0.44"
+    "@nodevisor/core": "^0.0.45",
+    "@nodevisor/pwsh": "^0.0.45"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
