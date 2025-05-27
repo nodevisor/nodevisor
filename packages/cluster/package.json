@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/cluster",
   "description": "Module provides ability to manage cluster of services",
-  "version": "0.0.40",
+  "version": "0.0.41",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -27,17 +27,17 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/auth": "^0.0.40",
-    "@nodevisor/authorized-keys": "^0.0.40",
-    "@nodevisor/builder": "^0.0.40",
-    "@nodevisor/core": "^0.0.40",
-    "@nodevisor/endpoint": "^0.0.40",
-    "@nodevisor/packages": "^0.0.40",
-    "@nodevisor/registry": "^0.0.40",
-    "@nodevisor/services": "^0.0.40",
-    "@nodevisor/ssh": "^0.0.40",
-    "@nodevisor/ufw": "^0.0.40",
-    "@nodevisor/users": "^0.0.40",
+    "@nodevisor/auth": "^0.0.41",
+    "@nodevisor/authorized-keys": "^0.0.41",
+    "@nodevisor/builder": "^0.0.41",
+    "@nodevisor/core": "^0.0.41",
+    "@nodevisor/endpoint": "^0.0.41",
+    "@nodevisor/packages": "^0.0.41",
+    "@nodevisor/registry": "^0.0.41",
+    "@nodevisor/services": "^0.0.41",
+    "@nodevisor/ssh": "^0.0.41",
+    "@nodevisor/ufw": "^0.0.41",
+    "@nodevisor/users": "^0.0.41",
     "contexta": "^1.0.1",
     "lodash": "^4.17.21"
   },
