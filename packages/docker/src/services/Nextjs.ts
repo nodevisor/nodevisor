@@ -3,13 +3,15 @@ import NodeBuilder from '../builders/NodeBuilder';
 
 type NextjsConfig = Omit<WebConfig, 'builder'> & {
   builder?: NodeBuilder;
+  appDir?: string;
 };
 
 export default class Nextjs extends Web {
   constructor(config: NextjsConfig) {
     const {
+      appDir,
       builder = new NodeBuilder({
-        distDir: '.next',
+        appDir,
       }),
       ...rest
     } = config;
