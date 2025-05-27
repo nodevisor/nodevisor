@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/authorized-keys",
   "description": "Module provides ability to manage authorized keys",
-  "version": "0.0.43",
+  "version": "0.0.44",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -24,9 +24,9 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/core": "^0.0.43",
-    "@nodevisor/env": "^0.0.43",
-    "@nodevisor/fs": "^0.0.43"
+    "@nodevisor/core": "^0.0.44",
+    "@nodevisor/env": "^0.0.44",
+    "@nodevisor/fs": "^0.0.44"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
