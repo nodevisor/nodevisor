@@ -69,14 +69,14 @@ export default class NodeBuilder extends DockerfileBuilder {
     runner
       .add('artifacts')
       // copy main monorepo package.json and package-lock.json
-      .copy('/app/package*.json', '.', { from: builder })
+      .copy('/app/package*.json', './', { from: builder })
       // for auth packages
-      .copy('/app/.npmrc', '.', { from: builder })
+      .copy('/app/.npmrc', './', { from: builder })
 
       // copy app package.json and package-lock.json for specific app
-      .copy(`/app${appDir}/package*.json`, `.${appDir}`, { from: builder })
+      .copy(`/app${appDir}/package*.json`, `.${appDir}/`, { from: builder })
 
-      .copy(`/app${appDir}${distDir}`, `.${appDir}${distDir}`, { from: builder })
+      .copy(`/app${appDir}${distDir}`, `.${appDir}${distDir}/`, { from: builder })
       .if(!!dotEnv, (stage) =>
         stage.copy(`/app${appDir}/.env`, `.${appDir}/.env`, { from: builder }),
       );
@@ -106,6 +106,6 @@ export default class NodeBuilder extends DockerfileBuilder {
     const { appDir } = this;
     const builder = this.getBuilder();
 
-    this.getArtifacts().copy(`/app${appDir}/${filename}`, `.${appDir}`, { from: builder });
+    this.getArtifacts().copy(`/app${appDir}/${filename}`, `.${appDir}/`, { from: builder });
   }
 }

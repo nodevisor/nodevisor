@@ -88,10 +88,10 @@ RUN npm run build
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=builder /app/package*.json .
-COPY --from=builder /app/.npmrc .
-COPY --from=builder /app/package*.json .
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/.npmrc ./
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/dist ./dist/
 RUN npm ci --omit=dev --ignore-scripts
 WORKDIR /app
 CMD ["sh", "-c", "npm run start"]`;
@@ -129,10 +129,10 @@ RUN yarn build
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=builder /app/package*.json .
-COPY --from=builder /app/.npmrc .
-COPY --from=builder /app/apps/api/package*.json ./apps/api
-COPY --from=builder /app/apps/api/build ./apps/api/build
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/.npmrc ./
+COPY --from=builder /app/apps/api/package*.json ./apps/api/
+COPY --from=builder /app/apps/api/build ./apps/api/build/
 COPY --from=builder /app/apps/api/.env ./apps/api/.env
 RUN npm ci --omit=dev --ignore-scripts
 WORKDIR /app/apps/api
@@ -163,10 +163,10 @@ RUN npm run build
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=builder /app/package*.json .
-COPY --from=builder /app/.npmrc .
-COPY --from=builder /app/packages/ui/package*.json ./packages/ui
-COPY --from=builder /app/packages/ui/dist ./packages/ui/dist
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/.npmrc ./
+COPY --from=builder /app/packages/ui/package*.json ./packages/ui/
+COPY --from=builder /app/packages/ui/dist ./packages/ui/dist/
 COPY --from=builder /app/packages/ui/.env ./packages/ui/.env
 RUN npm ci --omit=dev --ignore-scripts
 WORKDIR /app/packages/ui

@@ -17,6 +17,8 @@ export default class Nextjs extends Web {
       ...rest
     } = config;
 
+    builder.addArtifact('/public');
+
     super({
       builder,
       ...rest,
