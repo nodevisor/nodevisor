@@ -217,7 +217,7 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     const isManager = node === manager;
 
     const options: { token?: string } = {};
-    if (isManager) {
+    if (!isManager) {
       options.token = await manager.getWorkerToken(runner);
     }
 
