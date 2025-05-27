@@ -108,10 +108,11 @@ export default class DockerNode extends ClusterNode {
     •	TCP and UDP port 7946: Communication among nodes
     •	UDP port 4789: Overlay network traffic
     */
-    await $runner(UFW).allow({ port: 2377, protocol: Protocol.TCP });
-    await $runner(UFW).allow({ port: 7946, protocol: Protocol.TCP });
-    await $runner(UFW).allow({ port: 7946, protocol: Protocol.UDP });
-    await $runner(UFW).allow({ port: 4789, protocol: Protocol.UDP });
+    // only admin can change UFW rules
+    await $con(UFW).allow({ port: 2377, protocol: Protocol.TCP });
+    await $con(UFW).allow({ port: 7946, protocol: Protocol.TCP });
+    await $con(UFW).allow({ port: 7946, protocol: Protocol.UDP });
+    await $con(UFW).allow({ port: 4789, protocol: Protocol.UDP });
 
     if (isManager) {
       // join swarm as manager

@@ -46,6 +46,11 @@ export default class SSH extends Service {
     await this
       .$`sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config`;
 
+    await this
+      .$`sed -i 's/^#ChallengeResponseAuthentication yes/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config`;
+    await this
+      .$`sed -i 's/^ChallengeResponseAuthentication yes/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config`;
+
     if (!skipRestart) {
       await this.restart();
     }
@@ -57,8 +62,29 @@ export default class SSH extends Service {
     await this
       .$`sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config`;
 
+    await this
+      .$`sed -i 's/^#ChallengeResponseAuthentication no/ChallengeResponseAuthentication yes/' /etc/ssh/sshd_config`;
+    await this
+      .$`sed -i 's/^ChallengeResponseAuthentication no/ChallengeResponseAuthentication yes/' /etc/ssh/sshd_config`;
+
     if (!skipRestart) {
       await this.restart();
     }
+  }
+
+  async testPasswordAuthentication() {
+    const result = await this.$`ssh`.argument({
+      '-n': true,
+      '-o': {
+        Batchmode: 'yes',
+        StrictHostKeyChecking: 'no',
+        UserKnownHostsFile: '/dev/null',
+      },
+      'fakeuser@localhost': true,
+    }).append` 2>&1 | grep password`.text();
+
+    console.log('RESULT***', result);
+
+    return result.includes('Permission denied');
   }
 }
