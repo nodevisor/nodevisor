@@ -76,7 +76,7 @@ export default class NodeBuilder extends DockerfileBuilder {
       // copy app package.json and package-lock.json for specific app
       .copy(`/app${appDir}/package*.json`, `.${appDir}/`, { from: builder })
 
-      .copy(`/app${appDir}${distDir}`, `.${appDir}${distDir}/`, { from: builder })
+      .copy(`/app${appDir}${distDir}`, `.${appDir}/`, { from: builder })
       .if(!!dotEnv, (stage) =>
         stage.copy(`/app${appDir}/.env`, `.${appDir}/.env`, { from: builder }),
       );
