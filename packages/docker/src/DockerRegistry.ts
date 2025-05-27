@@ -5,34 +5,32 @@ import Docker from './Docker';
 export type DockerRegistryConfig = RegistryConfig & {
   username?: string; // Optional username for login
   password?: string; // Optional password for login
-  url?: string; // Docker registry URL, e.g., 'registry.example.com'
+  server?: string; // Docker registry URL, e.g., 'registry.example.com'
 };
 
 export default class DockerRegistry extends Registry {
-  private url: string;
+  private server: string;
   private username?: string;
   private password?: string;
 
   constructor(config: DockerRegistryConfig) {
-    const { url = 'docker.io', username, password } = config;
+    const { server = 'docker.io', username, password } = config;
 
     super(config);
 
-    this.url = url;
+    this.server = server;
     this.username = username;
     this.password = password;
   }
 
-  // 123456789.dkr.ecr.eu-central-1.amazonaws.com/project-web
   getURI(image: string, options: { tag?: string } = {}) {
     const { tag } = options;
-    const uri = `${this.url}/${image}`;
 
-    return tag ? `${uri}:${tag}` : uri;
+    return tag ? `${image}:${tag}` : image;
   }
 
   async getLoginCredentials() {
-    const { username, password, url } = this;
+    const { username, password, server } = this;
 
     if (!username || !password) {
       throw new Error('Username and password are required');
@@ -41,7 +39,7 @@ export default class DockerRegistry extends Registry {
     return {
       password,
       username,
-      server: url,
+      server,
     };
   }
 
