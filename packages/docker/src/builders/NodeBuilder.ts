@@ -69,20 +69,20 @@ export default class NodeBuilder extends DockerfileBuilder {
     runner
       .add('artifacts')
       // copy main monorepo package.json and package-lock.json
-      .copy('/app/package.json', './', { from: builder })
-      // copy main monorepo package-lock.json - from builder is npm ci mismatched
-      .copy('./package-lock.json', './')
+      .copy('/app/package.json', '/app', { from: builder })
+      // copy main monorepo package-lock.json - from builder is npm
+      .copy('/app/package-lock.json', '/app', { from: builder })
       // for auth packages
-      .copy('/app/.npmrc', './', { from: builder })
+      .copy('/app/.npmrc', '/app', { from: builder })
 
       // copy app package.json and package-lock.json for specific app
-      .copy(`/app${appDir}/package.json`, `.${appDir}/`, { from: builder })
+      .copy(`/app${appDir}/package.json`, `/app${appDir}/`, { from: builder })
       // copy app package-lock.json
-      .copy(`./${appDir}/package-lock.json`, `.${appDir}/`)
+      .copy(`/app${appDir}/package-lock.json`, `/app${appDir}/`, { from: builder })
 
-      .copy(`/app${appDir}${distDir}`, `.${appDir}/`, { from: builder })
+      .copy(`/app${appDir}${distDir}`, `/app${appDir}${distDir}/`, { from: builder })
       .if(!!dotEnv, (stage) =>
-        stage.copy(`/app${appDir}/.env`, `.${appDir}/.env`, { from: builder }),
+        stage.copy(`/app${appDir}/.env`, `/app${appDir}/.env`, { from: builder }),
       );
 
     runner
