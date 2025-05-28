@@ -69,12 +69,16 @@ export default class NodeBuilder extends DockerfileBuilder {
     runner
       .add('artifacts')
       // copy main monorepo package.json and package-lock.json
-      .copy('/app/package*.json', './', { from: builder })
+      .copy('/app/package.json', './', { from: builder })
+      // copy main monorepo package-lock.json - from builder is npm ci mismatched
+      .copy('./package-lock.json', './')
       // for auth packages
       .copy('/app/.npmrc', './', { from: builder })
 
       // copy app package.json and package-lock.json for specific app
-      .copy(`/app${appDir}/package*.json`, `.${appDir}/`, { from: builder })
+      .copy(`/app${appDir}/package.json`, `.${appDir}/`, { from: builder })
+      // copy app package-lock.json
+      .copy(`./${appDir}/package-lock.json`, `.${appDir}/`)
 
       .copy(`/app${appDir}${distDir}`, `.${appDir}/`, { from: builder })
       .if(!!dotEnv, (stage) =>
