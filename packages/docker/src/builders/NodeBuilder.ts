@@ -1,6 +1,6 @@
 import DockerfileBuilder, { type DockerfileBuilderConfig } from './DockerfileBuilder';
 
-type NodeBuilderConfig = Omit<DockerfileBuilderConfig, 'dockerfile'> & {
+export type NodeBuilderConfig = Omit<DockerfileBuilderConfig, 'dockerfile'> & {
   image?: string;
   node?: string;
   version?: string | number;
@@ -9,7 +9,7 @@ type NodeBuilderConfig = Omit<DockerfileBuilderConfig, 'dockerfile'> & {
   dotEnv?: string | Record<string, string>;
   buildCommand?: string;
   startCommand?: string;
-} & ({} | {});
+};
 
 export default class NodeBuilder extends DockerfileBuilder {
   readonly image: string;

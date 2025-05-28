@@ -17,7 +17,7 @@ import type Volume from './@types/Volume';
 import type ClusterType from './constants/ClusterType';
 
 export type ClusterServiceConfig = ClusterServiceBaseConfig & {
-  image?: string;
+  image?: string; // Format: 'name:tag' (e.g. 'myapp:1.0.0')
   context?: string;
   registry?: Registry;
   builder?: Builder;

@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import $, { NodevisorProxy } from '@nodevisor/core';
+import $ from '@nodevisor/core';
 import Docker from '../Docker';
 import type TargetPlatform from '../@types/TargetPlatform';
 import Builder, { type BuilderConfig } from '@nodevisor/builder';
@@ -67,13 +67,13 @@ export default class DockerBuilder extends Builder {
     // login to the registry
     await registry.login($con);
 
-    const imageTags = tags.map((tag) => registry.getURI(image, { tag }));
-
+    // tags are here format 'image:tag' and 'repository:tag'
+    const imageTags = tags.map((tag) => Registry.getImageWithTag(image, tag));
     log('imageTags', imageTags);
 
     await $con(Docker).buildx(dockerfilePath, {
       context: contextResolved,
-      tags: imageTags,
+      tags,
       args,
       platform: getPlatform(arch),
       push,

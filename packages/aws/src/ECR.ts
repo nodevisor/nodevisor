@@ -22,8 +22,8 @@ export default class ECR extends Registry {
   }
 
   // 123456789.dkr.ecr.eu-central-1.amazonaws.com/project-web
-  getURI(image: string, options: { region?: string; tag?: string } = {}) {
-    const { region = this.region, tag } = options;
+  getURI(image: string, options: { region?: string } = {}) {
+    const { region = this.region } = options;
 
     if (!image) {
       throw new Error('Repository is required');
@@ -31,10 +31,6 @@ export default class ECR extends Registry {
 
     const endpoint = this.aws.getECRDockerRegistryEndpoint(this.registryId, { region });
     const uri = `${endpoint}/${image}`;
-
-    if (tag) {
-      return `${uri}:${tag}`;
-    }
 
     return uri;
   }
@@ -53,7 +49,7 @@ export default class ECR extends Registry {
     throw new Error('Not implemented');
   }
 
-  async push(image: string, tag: string = 'latest', options: { region?: string } = {}) {
+  async push(image: string, options: { region?: string; tags?: string[] } = {}) {
     throw new Error('Not implemented');
     /*
     const { region = this.region } = options;

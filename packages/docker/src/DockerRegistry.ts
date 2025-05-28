@@ -23,12 +23,6 @@ export default class DockerRegistry extends Registry {
     this.password = password;
   }
 
-  getURI(image: string, options: { tag?: string } = {}) {
-    const { tag } = options;
-
-    return tag ? `${image}:${tag}` : image;
-  }
-
   async getLoginCredentials() {
     const { username, password, server } = this;
 
@@ -50,13 +44,30 @@ export default class DockerRegistry extends Registry {
     await docker.login(credentials);
   }
 
-  async push(image: string, tag: string = 'latest', $con = $) {
+  // todo add support for multiple tags
+  async push(image: string, options: { tags?: string[] } = {}, $con = $) {
+    const { tags = [] } = options;
+
     await this.login($);
 
-    const imageTag = this.getURI(image, { tag });
+    const imageWithoutTag = Registry.getImage(image);
+
+    const currentTags = [...tags];
+
+    const tag = Registry.getTag(image);
+    if (tag) {
+      currentTags.push(tag);
+    }
 
     const docker = $con(Docker);
-    await docker.tag(image, imageTag);
-    await docker.push(imageTag);
+
+    await Promise.all(currentTags.map((tag) => docker.tag(imageWithoutTag, tag)));
+
+    throw new Error('Not implemented');
+    /*
+    currentTags.forEach(async (tag) => {
+      docker.push(tag);
+    });
+    */
   }
 }

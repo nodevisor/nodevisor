@@ -23,7 +23,7 @@ export default class DockerStack extends Module {
   ) {
     const {
       composeFile = 'docker-compose.yml',
-      detach = false,
+      detach = true,
       prune,
       quiet,
       resolveImage,
