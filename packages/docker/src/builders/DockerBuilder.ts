@@ -73,7 +73,7 @@ export default class DockerBuilder extends Builder {
 
     await $con(Docker).buildx(dockerfilePath, {
       context: contextResolved,
-      tags,
+      tags: imageTags,
       args,
       platform: getPlatform(arch),
       push,
