@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/cli",
   "description": "Module provides CLI for Nodevisor",
-  "version": "0.0.52",
+  "version": "0.0.53",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "bin": {
