@@ -134,7 +134,8 @@ export default abstract class Cluster<
 
   async build(options: { registry?: Registry; context?: string; push?: boolean } = {}) {
     const { registry = this.registry, context = this.context, ...restOptions } = options;
-    const { dependencies } = this;
+
+    const dependencies = this.getDependencies(false, true);
 
     /*
     ~/.docker/config.json

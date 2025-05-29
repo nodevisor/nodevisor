@@ -6,7 +6,6 @@ export type NodeBuilderConfig = Omit<DockerfileBuilderConfig, 'dockerfile'> & {
   image?: string;
   node?: string;
   version?: string | number;
-  distDir?: string;
   appDir?: string;
   dotEnv?: string | Record<string, string>;
   artifacts?: Artifact[];
@@ -16,7 +15,6 @@ export type NodeBuilderConfig = Omit<DockerfileBuilderConfig, 'dockerfile'> & {
 
 export default class NodeBuilder extends DockerfileBuilder {
   readonly image: string;
-  readonly distDir: string;
   readonly appDir: string;
   private dotEnv?: string | Record<string, string>;
   private artifacts: Artifact[];
@@ -28,7 +26,6 @@ export default class NodeBuilder extends DockerfileBuilder {
       node = 'node',
       version = '22-alpine',
       image = `${node}:${version}`,
-      distDir = '/dist',
       appDir = '', // /apps/api default /.
       artifacts = [],
       dotEnv,
@@ -40,7 +37,6 @@ export default class NodeBuilder extends DockerfileBuilder {
     super(rest);
 
     this.image = image;
-    this.distDir = distDir;
     this.appDir = appDir;
     this.dotEnv = dotEnv;
     this.artifacts = artifacts;
@@ -49,7 +45,7 @@ export default class NodeBuilder extends DockerfileBuilder {
   }
 
   protected prepareDockerfile() {
-    const { image, dotEnv, distDir, appDir } = this;
+    const { image, dotEnv, appDir } = this;
 
     const dockerfile = super.prepareDockerfile();
 
@@ -107,7 +103,7 @@ export default class NodeBuilder extends DockerfileBuilder {
 
   // add artifacts to the runner, user can add files or directories, and use custom source/dest paths
   addArtifact(source: string, dest: string, from: DockerfileStage | string = this.getBuilder()) {
-    this.getArtifacts().copy(source, dest, { from });
+    this.getArtifacts().copy(`/app${source}`, `/app${dest}`, { from });
     return this;
   }
 }

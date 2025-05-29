@@ -5,7 +5,6 @@ import type Artifact from '../@types/Artifact';
 type NextjsConfig = Omit<WebConfig, 'builder'> & {
   builder?: NodeBuilder;
   appDir?: string;
-  distDir?: string;
   tags?: string[];
   artifacts?: Artifact[];
 };
@@ -14,20 +13,12 @@ export default class Nextjs extends Web {
   constructor(config: NextjsConfig) {
     const {
       appDir,
-      distDir = '/.next',
       tags,
-      artifacts = [],
+      artifacts,
       builder = new NodeBuilder({
         tags,
         appDir,
-        distDir,
-        artifacts: [
-          ...artifacts,
-          {
-            source: `/${appDir}/public`,
-            dest: `/${appDir}/public/`,
-          },
-        ],
+        artifacts,
       }),
       ...rest
     } = config;
