@@ -1,4 +1,6 @@
+import { DockerfileStage } from '../dockerfiles';
 import DockerfileBuilder, { type DockerfileBuilderConfig } from './DockerfileBuilder';
+import type Artifact from '../@types/Artifact';
 
 export type NodeBuilderConfig = Omit<DockerfileBuilderConfig, 'dockerfile'> & {
   image?: string;
@@ -7,6 +9,7 @@ export type NodeBuilderConfig = Omit<DockerfileBuilderConfig, 'dockerfile'> & {
   distDir?: string;
   appDir?: string;
   dotEnv?: string | Record<string, string>;
+  artifacts?: Artifact[];
   buildCommand?: string;
   startCommand?: string;
 };
@@ -16,6 +19,7 @@ export default class NodeBuilder extends DockerfileBuilder {
   readonly distDir: string;
   readonly appDir: string;
   private dotEnv?: string | Record<string, string>;
+  private artifacts: Artifact[];
   private buildCommand: string;
   private startCommand: string;
 
@@ -26,6 +30,7 @@ export default class NodeBuilder extends DockerfileBuilder {
       image = `${node}:${version}`,
       distDir = '/dist',
       appDir = '', // /apps/api default /.
+      artifacts = [],
       dotEnv,
       buildCommand = 'npm run build',
       startCommand = 'npm run start',
@@ -38,6 +43,7 @@ export default class NodeBuilder extends DockerfileBuilder {
     this.distDir = distDir;
     this.appDir = appDir;
     this.dotEnv = dotEnv;
+    this.artifacts = artifacts;
     this.buildCommand = buildCommand;
     this.startCommand = startCommand;
   }
@@ -72,6 +78,15 @@ export default class NodeBuilder extends DockerfileBuilder {
       .copy('/app/package*.json', '/app', { from: builder })
       // for auth packages
       .copy('/app/.npmrc', '/app', { from: builder })
+      // copy deps package.json and package-lock.json
+      .forEach(this.artifacts, (artifact) => {
+        const { source, dest = appDir ? `${appDir}/` : '/', from = builder } = artifact;
+        if (!source) {
+          throw new Error('Source is required');
+        }
+
+        runner.add('artifacts').copy(`/app${source}`, `/app${dest}`, { from });
+      })
 
       // copy app package.json and package-lock.json for specific app
       .copy(`/app${appDir}/package*.json`, `/app${appDir}/`, { from: builder })
@@ -102,10 +117,9 @@ export default class NodeBuilder extends DockerfileBuilder {
     return this.getRunner().getPart('artifacts');
   }
 
-  addArtifact(filename: string) {
-    const { appDir } = this;
-    const builder = this.getBuilder();
-
-    this.getArtifacts().copy(`/app${appDir}/${filename}`, `.${appDir}/`, { from: builder });
+  // add artifacts to the runner, user can add files or directories, and use custom source/dest paths
+  addArtifact(source: string, dest: string, from: DockerfileStage | string = this.getBuilder()) {
+    this.getArtifacts().copy(source, dest, { from });
+    return this;
   }
 }
