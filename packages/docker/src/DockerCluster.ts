@@ -12,6 +12,7 @@ import type DockerDependency from './@types/DockerDependency';
 import type DockerNetwork from './@types/DockerNetwork';
 import WebProxy from './services/WebProxy';
 import type WebProxyDependency from './@types/WebProxyDependency';
+import Web from './services/Web';
 
 export type DockerClusterConfig = ClusterConfig<DockerService, DockerNode> & {
   type?: ClusterType;
@@ -69,10 +70,37 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     return networks;
   }
 
-  getServiceComposeNetwork(_cluster: DockerCluster, _service: DockerService, type: ClusterType) {
+  getServiceComposeNetwork(
+    cluster: DockerCluster,
+    service: DockerService,
+    type: ClusterType,
+    isDependency: boolean = false,
+  ) {
     const network: DockerNetwork = {};
     if (type === ClusterType.DOCKER_COMPOSE) {
       network.priority = 0; // swarm does not support priority
+    }
+
+    const allDependencies = cluster.getDependencies(false, true);
+
+    // add aliases into web proxy
+    if (service instanceof WebProxy && !isDependency) {
+      const aliases = new Set<string>();
+
+      allDependencies.forEach((dependency) => {
+        const { service: dependencyService } = dependency;
+        if (dependencyService instanceof Web && service === dependencyService.proxy.service) {
+          const { domains } = dependencyService;
+
+          domains.forEach((domain) => {
+            aliases.add(domain);
+          });
+        }
+      });
+
+      if (aliases.size > 0) {
+        network.aliases = Array.from(aliases);
+      }
     }
 
     return network;
@@ -169,22 +197,23 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
         network.priority = 0; // swarm does not support priority
       }
 
+      const networkName = service.getNetworkName(cluster);
+
       // add current service network to networks
-      networks[service.getNetworkName(cluster)] = this.getServiceComposeNetwork(
-        cluster,
-        service,
-        type,
-      );
+      networks[networkName] = this.getServiceComposeNetwork(cluster, service, type);
 
-      // add networks for each depends service
-      service.getDependencies(cluster, true, true).forEach((serviceDependency) => {
-        const networkName = serviceDependency.service.getNetworkName(serviceDependency.cluster);
+      // add networks for each depends service, only direct dependencies need to have access to each other via networks
+      service.getDependencies(cluster, true, false).forEach((serviceDependency) => {
+        const dependencyNetworkName = serviceDependency.service.getNetworkName(
+          serviceDependency.cluster,
+        );
 
-        if (!networks[networkName]) {
-          networks[networkName] = this.getServiceComposeNetwork(
+        if (!networks[dependencyNetworkName]) {
+          networks[dependencyNetworkName] = this.getServiceComposeNetwork(
             serviceDependency.cluster,
             serviceDependency.service,
             type,
+            true,
           );
         }
       });
