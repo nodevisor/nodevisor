@@ -160,15 +160,14 @@ export default abstract class Cluster<
     }
     */
 
-    await Promise.all(
-      dependencies.map(({ service }) =>
-        service.build({
-          registry,
-          context,
-          ...restOptions,
-        }),
-      ),
-    );
+    // I need to do it in serial to avoid race conditions
+    for (const dependency of dependencies) {
+      await dependency.service.build({
+        registry,
+        context,
+        ...restOptions,
+      });
+    }
   }
 
   async deployNode<TOptions extends {}>(
