@@ -77,13 +77,13 @@ export default class NodeBuilder extends DockerfileBuilder {
       .copy('/app', '/app/', { from: builder })
 
       // copy all artifacts from builder to runner
-      .forEach(this.artifacts, (artifact) => {
+      .forEach(this.artifacts, (stage, artifact) => {
         const { source, dest = appDir ? `${appDir}/` : '/', from = builder } = artifact;
         if (!source) {
           throw new Error('Source is required');
         }
 
-        runner.add('artifacts').copy(`/app${source}`, `/app${dest}`, { from });
+        stage.copy(`/app${source}`, `/app${dest}`, { from });
       })
 
       .if(!!dotEnv, (stage) => stage.workdir(`/app${appDir}`).dotEnv(dotEnv));

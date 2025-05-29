@@ -216,8 +216,11 @@ export default class DockerfileStagePart {
     return this;
   }
 
-  forEach<TItem>(items: TItem[], cb: (item: TItem) => void) {
-    items.forEach((item) => cb(item));
+  forEach<TItem>(
+    items: TItem[],
+    cb: (stage: DockerfileStagePart, item: TItem, index: number) => void,
+  ) {
+    items.forEach((item, index) => cb(this, item, index));
     return this;
   }
 }
