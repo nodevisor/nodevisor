@@ -399,7 +399,10 @@ export default abstract class ClusterService extends ClusterServiceBase {
     );
   }
 
-  async build(options: { registry?: Registry; context?: string; push?: boolean } = {}) {
+  async build(
+    options: { registry?: Registry; context?: string; push?: boolean; labels?: Labels } = {},
+  ) {
+    const { labels = {}, ...restOptions } = options;
     const { builder } = this;
     if (!builder) {
       return;
@@ -420,10 +423,11 @@ export default abstract class ClusterService extends ClusterServiceBase {
     const image = this.image ?? this.name;
 
     await builder.build(image, registry, {
-      ...options,
+      ...restOptions,
       context,
       labels: {
         service: this.name,
+        ...labels,
       },
     });
   }

@@ -165,6 +165,9 @@ export default abstract class Cluster<
       await dependency.service.build({
         registry,
         context,
+        labels: {
+          name: `${this.name}-${dependency.service.name}`,
+        },
         ...restOptions,
       });
     }
