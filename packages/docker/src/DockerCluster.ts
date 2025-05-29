@@ -208,6 +208,11 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
           serviceDependency.cluster,
         );
 
+        if (service instanceof Web && serviceDependency.service instanceof Web) {
+          // skip adding network connection for web services
+          return;
+        }
+
         if (!networks[dependencyNetworkName]) {
           networks[dependencyNetworkName] = this.getServiceComposeNetwork(
             serviceDependency.cluster,
