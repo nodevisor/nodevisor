@@ -1,4 +1,5 @@
 import DockerService, { type DockerServiceConfig } from '../DockerService';
+import { type ClusterBase } from '@nodevisor/cluster';
 import WebProxy from './WebProxy';
 import type WebProxyDependency from '../@types/WebProxyDependency';
 import { useCluster, type PartialFor } from '@nodevisor/cluster';
@@ -40,5 +41,29 @@ export default class Web extends DockerService {
       ...super.getLabels(),
       ...proxyLabels,
     };
+  }
+
+  getExtraHosts(cluster: ClusterBase) {
+    const depServices = this.getDependencies(cluster, false, false);
+
+    // web can access domains from direct dependencies
+    const extraHosts: Record<string, string> = {};
+    depServices.forEach(({ service }) => {
+      if (service instanceof Web) {
+        const { domains } = service;
+
+        domains.forEach((domain) => {
+          extraHosts[domain] = this.proxy.service.name;
+        });
+      }
+    });
+
+    // web can access own domains
+    const { domains } = this;
+    domains.forEach((domain) => {
+      extraHosts[domain] = this.proxy.service.name;
+    });
+
+    return extraHosts;
   }
 }

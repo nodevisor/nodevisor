@@ -125,6 +125,10 @@ export default class DockerService extends ClusterService {
     return !!Object.keys(networks).length;
   }
 
+  getExtraHosts(_cluster: ClusterBase) {
+    return {};
+  }
+
   getDeploy(): Exclude<DockerComposeServiceConfig['deploy'], undefined> {
     const cpus = this.getCpus();
     const memory = this.getMemory();
@@ -177,6 +181,11 @@ export default class DockerService extends ClusterService {
 
       if (this.hasPorts()) {
         data.ports = toDockerPorts(this.getPorts());
+      }
+
+      const extraHosts = this.getExtraHosts(cluster);
+      if (Object.keys(extraHosts).length) {
+        data.extra_hosts = extraHosts;
       }
 
       const dependencies = this.getDependencies(cluster);

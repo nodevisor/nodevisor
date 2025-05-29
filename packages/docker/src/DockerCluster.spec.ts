@@ -254,6 +254,9 @@ describe('Cluster', () => {
           networks: { test_traefik_network: { priority: 0 } },
         },
         whoami: {
+          extra_hosts: {
+            'whoami.127.0.0.1.nip.io': 'traefik',
+          },
           image: 'traefik/whoami',
           labels: {
             'traefik.enable': 'true',
@@ -406,6 +409,9 @@ describe('Cluster', () => {
           networks: { test_traefik_network: {} },
         },
         whoami: {
+          extra_hosts: {
+            'whoami.127.0.0.1.nip.io': 'traefik',
+          },
           image: 'traefik/whoami',
           labels: {
             'traefik.enable': 'true',
@@ -561,6 +567,7 @@ describe('Cluster', () => {
               constraints: ['node.role == manager'],
             },
           },
+
           image: 'traefik:3.1.7',
           command:
             '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --api.dashboard=true --api.insecure=true',
@@ -589,6 +596,9 @@ describe('Cluster', () => {
           networks: { test_traefik_network: { priority: 0 } },
         },
         whoami: {
+          extra_hosts: {
+            'whoami.127.0.0.1.nip.io': 'traefik',
+          },
           image: 'traefik/whoami',
           labels: {
             'traefik.enable': 'true',
@@ -856,6 +866,9 @@ describe('Cluster', () => {
             app_whoami_network: {},
             app_redis_network: {},
             nodevisor_traefik_network: {},
+          },
+          extra_hosts: {
+            'whoami.127.0.0.1.nip.io': 'traefik',
           },
           image: 'traefik/whoami',
           deploy: {
