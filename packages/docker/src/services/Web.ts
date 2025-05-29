@@ -44,6 +44,7 @@ export default class Web extends DockerService {
   }
 
   getExtraHosts(cluster: ClusterBase) {
+    return {}; /*
     const depServices = this.getDependencies(cluster, false, false);
 
     // web can access domains from direct dependencies
@@ -65,5 +66,6 @@ export default class Web extends DockerService {
     });
 
     return extraHosts;
+    */
   }
 }
