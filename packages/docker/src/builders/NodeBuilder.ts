@@ -55,18 +55,16 @@ export default class NodeBuilder extends DockerfileBuilder {
 
     const builder = dockerfile.add('builder', image);
 
-    builder
-      .add('setup')
-      .workdir('/app')
-      .copy('.', '.')
-      .if(!!dotEnv, (stage) => stage.workdir(`/app${appDir}`).dotEnv(dotEnv));
+    builder.add('setup').workdir('/app').copy('.', '.');
 
     builder
       .add('build')
       .workdir(`/app`)
       .run('npm ci --ignore-scripts')
       .env('NODE_ENV', 'production')
-      .run(this.buildCommand);
+      .run(this.buildCommand)
+      // remove dev dependencies
+      .run('npm prune --production');
 
     const runner = dockerfile.add('runner', image);
 
@@ -74,11 +72,11 @@ export default class NodeBuilder extends DockerfileBuilder {
 
     runner
       .add('artifacts')
-      // copy main monorepo package.json and package-lock.json
-      .copy('/app/package*.json', '/app', { from: builder })
-      // for auth packages
-      .copy('/app/.npmrc', '/app', { from: builder })
-      // copy deps package.json and package-lock.json
+
+      // copy all files from builder to runner
+      .copy('/app', '/app/', { from: builder })
+
+      // copy all artifacts from builder to runner
       .forEach(this.artifacts, (artifact) => {
         const { source, dest = appDir ? `${appDir}/` : '/', from = builder } = artifact;
         if (!source) {
@@ -88,19 +86,9 @@ export default class NodeBuilder extends DockerfileBuilder {
         runner.add('artifacts').copy(`/app${source}`, `/app${dest}`, { from });
       })
 
-      // copy app package.json and package-lock.json for specific app
-      .copy(`/app${appDir}/package*.json`, `/app${appDir}/`, { from: builder })
+      .if(!!dotEnv, (stage) => stage.workdir(`/app${appDir}`).dotEnv(dotEnv));
 
-      .copy(`/app${appDir}${distDir}`, `/app${appDir}${distDir}/`, { from: builder })
-      .if(!!dotEnv, (stage) =>
-        stage.copy(`/app${appDir}/.env`, `/app${appDir}/.env`, { from: builder }),
-      );
-
-    runner
-      .add('exec')
-      .run('npm ci --omit=dev --ignore-scripts')
-      .workdir(`/app${appDir}`)
-      .cmd(this.startCommand);
+    runner.add('exec').workdir(`/app${appDir}`).cmd(this.startCommand);
 
     return dockerfile;
   }
