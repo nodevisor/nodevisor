@@ -1,8 +1,10 @@
 import { type PartialFor } from '@nodevisor/cluster';
 import DockerService, { type DockerServiceConfig } from '../DockerService';
 import type DockerVolume from '../@types/DockerVolume';
+import type PortService from './PortService';
 
 type PostgresConfig = PartialFor<DockerServiceConfig, 'name'> & {
+  port?: number;
   password?: string;
   username?: string;
   database?: string;
@@ -10,7 +12,8 @@ type PostgresConfig = PartialFor<DockerServiceConfig, 'name'> & {
   volume?: DockerVolume;
 };
 
-export default class Postgres extends DockerService {
+export default class Postgres extends DockerService implements PortService {
+  readonly port: number;
   private password?: string;
   private username?: string;
   private database?: string;
@@ -18,12 +21,13 @@ export default class Postgres extends DockerService {
 
   constructor(config: PostgresConfig = {}) {
     const {
+      port = 5432,
       password,
       username,
       database,
       volume,
       restart = 'unless-stopped',
-      version = '15',
+      version = '17.5',
       name = 'postgres',
       image = `postgres:${version}`,
       ...rest
@@ -36,6 +40,7 @@ export default class Postgres extends DockerService {
       ...rest,
     });
 
+    this.port = port;
     this.password = password;
     this.username = username;
     this.database = database;
@@ -65,7 +70,7 @@ export default class Postgres extends DockerService {
   getEnvironments() {
     const environments = super.getEnvironments();
 
-    const { password, username, database } = this;
+    const { password, username, database, port } = this;
 
     if (password) {
       environments.POSTGRES_PASSWORD = password;
@@ -78,6 +83,8 @@ export default class Postgres extends DockerService {
     if (database) {
       environments.POSTGRES_DB = database;
     }
+
+    environments.POSTGRES_PORT = port.toString();
 
     return environments;
   }

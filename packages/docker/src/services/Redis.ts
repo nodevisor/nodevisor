@@ -1,6 +1,7 @@
 import { type PartialFor } from '@nodevisor/cluster';
 import DockerService, { type DockerServiceConfig } from '../DockerService';
 import type DockerVolume from '../@types/DockerVolume';
+import PortService from './PortService';
 
 type MaxmemoryPolicy =
   | 'noeviction'
@@ -11,6 +12,7 @@ type MaxmemoryPolicy =
   | 'volatile-ttl';
 
 type RedisConfig = PartialFor<DockerServiceConfig, 'name'> & {
+  port?: number;
   password?: string;
   appendonly?: boolean;
   maxmemory?: string | number;
@@ -19,7 +21,8 @@ type RedisConfig = PartialFor<DockerServiceConfig, 'name'> & {
   version?: string;
 };
 
-export default class Redis extends DockerService {
+export default class Redis extends DockerService implements PortService {
+  readonly port: number;
   private password?: string;
   private appendonly?: boolean;
   private maxmemory?: string | number;
@@ -29,6 +32,7 @@ export default class Redis extends DockerService {
 
   constructor(config: RedisConfig = {}) {
     const {
+      port = 6379,
       password,
       appendonly,
       maxmemory,
@@ -36,7 +40,7 @@ export default class Redis extends DockerService {
       volume,
       restart = 'unless-stopped',
       name = 'redis',
-      version = '7.4.1',
+      version = '8.0.2',
       image = `redis:${version}`,
       ...rest
     } = config;
@@ -48,6 +52,7 @@ export default class Redis extends DockerService {
       ...rest,
     });
 
+    this.port = port;
     this.password = password;
     this.appendonly = appendonly;
     this.maxmemory = maxmemory;
