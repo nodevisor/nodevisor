@@ -1,9 +1,8 @@
 import { type PartialFor } from '@nodevisor/cluster';
-import DockerService, { type DockerServiceConfig } from '../DockerService';
 import type DockerVolume from '../@types/DockerVolume';
-import type PortService from './PortService';
+import PortDockerService, { type PortDockerServiceConfig } from './PortDockerService';
 
-type PostgresConfig = PartialFor<DockerServiceConfig, 'name'> & {
+type PostgresConfig = PartialFor<PortDockerServiceConfig, 'name'> & {
   port?: number;
   password?: string;
   username?: string;
@@ -12,8 +11,7 @@ type PostgresConfig = PartialFor<DockerServiceConfig, 'name'> & {
   volume?: DockerVolume;
 };
 
-export default class Postgres extends DockerService implements PortService {
-  readonly port: number;
+export default class Postgres extends PortDockerService {
   private password?: string;
   private username?: string;
   private database?: string;
@@ -34,13 +32,13 @@ export default class Postgres extends DockerService implements PortService {
     } = config;
 
     super({
+      port,
       name,
       image,
       restart,
       ...rest,
     });
 
-    this.port = port;
     this.password = password;
     this.username = username;
     this.database = database;

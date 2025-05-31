@@ -1,7 +1,7 @@
 import { type PartialFor } from '@nodevisor/cluster';
 import DockerService, { type DockerServiceConfig } from '../DockerService';
 import { Protocol } from '@nodevisor/endpoint';
-import PortService from './PortService';
+import PortDockerService from './PortDockerService';
 
 type SocatConfig = PartialFor<DockerServiceConfig, 'name'> & {
   version?: string;
@@ -22,7 +22,7 @@ export default class Socat extends DockerService {
       throw new Error('Socat requires at least one dependency');
     }
 
-    if (!dependencies.every((dep) => dep instanceof PortService)) {
+    if (!dependencies.every((dep) => dep instanceof PortDockerService)) {
       throw new Error('All Socat dependencies must implement PortService');
     }
 
@@ -37,7 +37,7 @@ export default class Socat extends DockerService {
     });
   }
 
-  static prepareCommand(services: PortService[]) {
+  static prepareCommand(services: PortDockerService[]) {
     return services
       .map((service) => {
         const { port, name } = service;
@@ -46,7 +46,7 @@ export default class Socat extends DockerService {
       .join('; ');
   }
 
-  static getPorts(services: PortService[]) {
+  static getPorts(services: PortDockerService[]) {
     return services.map((service) => {
       const { port } = service;
       return {
