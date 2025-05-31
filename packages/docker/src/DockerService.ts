@@ -149,19 +149,6 @@ export default class DockerService extends ClusterService {
     return deploy;
   }
 
-  getPorts() {
-    const ports = super.getPorts();
-    return ports.map((port) => {
-      const { ip, ...rest } = port;
-
-      // https://docs.docker.com/reference/compose-file/services/#long-syntax-3
-      return {
-        ...rest,
-        host_ip: ip ?? '127.0.0.1',
-      };
-    });
-  }
-
   toCompose(cluster: ClusterBase, type: ClusterType): DockerComposeServiceConfig {
     const { image } = this;
 

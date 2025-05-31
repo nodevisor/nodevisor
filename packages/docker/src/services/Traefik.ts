@@ -223,7 +223,7 @@ export default class Traefik extends WebProxy {
       published: 80,
       protocol: Protocol.TCP,
       mode: 'host',
-      host_ip: '0.0.0.0',
+      ip: '0.0.0.0',
     });
 
     if (ssl) {
@@ -234,7 +234,7 @@ export default class Traefik extends WebProxy {
         published: port,
         protocol: Protocol.TCP,
         mode: 'host',
-        host_ip: '0.0.0.0',
+        ip: '0.0.0.0',
       });
     }
 
@@ -246,7 +246,7 @@ export default class Traefik extends WebProxy {
           published: port,
           protocol: Protocol.TCP,
           mode: 'host',
-          host_ip: '127.0.0.1',
+          ip: '127.0.0.1',
         });
       }
     }

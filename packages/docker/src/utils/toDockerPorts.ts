@@ -23,10 +23,11 @@ export default function toDockerPorts(ports: Port[] = []): PortObject[] {
       );
     }
 
+    // https://docs.docker.com/reference/compose-file/services/#long-syntax-3
     return omitUndefined({
       target,
       published,
-      ip,
+      host_ip: ip,
       protocol,
       mode,
     });
