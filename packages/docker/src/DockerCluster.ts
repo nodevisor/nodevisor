@@ -1,4 +1,5 @@
 import YAML from 'yaml';
+import $ from '@nodevisor/core';
 import Cluster, { type ClusterConfig, ClusterType } from '@nodevisor/cluster';
 import DockerNode, { type DockerNodeConfig } from './DockerNode';
 import type DockerService from './DockerService';
@@ -245,6 +246,14 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
       ...restOptions,
       yaml: this.yaml({ type }),
     });
+  }
+
+  async deployLocal() {
+    await super.deployLocal();
+
+    const yaml = this.yaml({ type: ClusterType.DOCKER_COMPOSE });
+
+    await DockerNode.deployToConnection($, this.name, yaml, 'compose');
   }
 
   async setupNode(node: DockerNode, admin: User, runner: User, manager: DockerNode) {

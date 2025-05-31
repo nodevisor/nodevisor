@@ -10,7 +10,11 @@ export default class DockerfileBuilder extends DockerBuilder {
     super(config);
   }
 
-  async build(image: string, registry: Registry, options: { push?: boolean; context?: string }) {
+  async build(
+    image: string,
+    registry: Registry,
+    options: { push?: boolean; load?: boolean; context?: string },
+  ) {
     const { dockerfilePath } = this;
 
     const dockerfileContent = await this.getDockerfileContent();

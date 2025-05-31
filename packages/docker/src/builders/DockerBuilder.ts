@@ -48,12 +48,13 @@ export default class DockerBuilder extends Builder {
     registry: Registry,
     options: {
       push?: boolean;
+      load?: boolean;
       context?: string;
       labels?: Record<string, string>;
     },
     $con = $,
   ) {
-    const { push = true, context = this.context, labels } = options;
+    const { push = true, load = false, context = this.context, labels } = options;
 
     const { arch, args, tags, dockerfilePath } = this;
 
@@ -77,6 +78,7 @@ export default class DockerBuilder extends Builder {
       args,
       platform: getPlatform(arch),
       push,
+      load,
       labels,
     });
 

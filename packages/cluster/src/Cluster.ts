@@ -132,7 +132,9 @@ export default abstract class Cluster<
     return uniq(registries);
   }
 
-  async build(options: { registry?: Registry; context?: string; push?: boolean } = {}) {
+  async build(
+    options: { registry?: Registry; context?: string; push?: boolean; load?: boolean } = {},
+  ) {
     const { registry = this.registry, context = this.context, ...restOptions } = options;
 
     const dependencies = this.getDependencies(false, true);
@@ -188,7 +190,7 @@ export default abstract class Cluster<
     const { skipBuild = false, registry = this.registry, ...restOptions } = options;
 
     if (!skipBuild) {
-      await this.build({ registry });
+      await this.build({ registry, push: true, load: false });
     }
 
     const { nodes, users } = this;
@@ -217,6 +219,10 @@ export default abstract class Cluster<
     await Promise.all(
       workers.map((worker) => this.deployNode(worker, runnerUser, manager, restOptions)),
     );
+  }
+
+  async deployLocal() {
+    await this.build({ load: true, push: false });
   }
 
   async setupNode(node: TClusterNode, admin: User, runner: User, manager: TClusterNode) {

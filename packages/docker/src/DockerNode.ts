@@ -1,6 +1,6 @@
 import FS from '@nodevisor/fs';
 import UFW from '@nodevisor/ufw';
-import { User, log as baseLog } from '@nodevisor/core';
+import { Nodevisor, NodevisorProxy, User, log as baseLog } from '@nodevisor/core';
 import { Protocol } from '@nodevisor/endpoint';
 import { ClusterNode, type ClusterNodeConfig } from '@nodevisor/cluster';
 import DockerCompose from './DockerCompose';
@@ -25,23 +25,12 @@ export default class DockerNode extends ClusterNode {
     return this.host === node.host;
   }
 
-  async deploy(
+  static async deployToConnection(
+    $con: NodevisorProxy,
     name: string,
-    runner: User,
-    manager: DockerNode,
-    options: { yaml: string; type?: 'swarm' | 'compose' },
+    yaml: string,
+    type: 'swarm' | 'compose',
   ) {
-    const { type = 'swarm' } = options;
-    const isManager = this.isEqual(manager);
-    if (!isManager) {
-      return;
-    }
-
-    const { yaml } = options;
-
-    const $con = this.$(runner);
-
-    // save docker compose file to temp file
     const tempFile = await $con(FS).temp();
     logDeploy('temp file', tempFile);
 
@@ -73,6 +62,25 @@ export default class DockerNode extends ClusterNode {
       // remove temp file
       await $con(FS).rm(tempFile);
     }
+  }
+
+  async deploy(
+    name: string,
+    runner: User,
+    manager: DockerNode,
+    options: { yaml: string; type?: 'swarm' | 'compose' },
+  ) {
+    const { type = 'swarm' } = options;
+    const isManager = this.isEqual(manager);
+    if (!isManager) {
+      return;
+    }
+
+    const { yaml } = options;
+
+    const $con = this.$(runner);
+
+    await DockerNode.deployToConnection($con, name, yaml, type);
   }
 
   async setup(admin: User, runner: User, manager: DockerNode, options: { token?: string }) {

@@ -159,17 +159,27 @@ export default class Docker extends Service {
       tags?: string[]; // image tags
       context?: string; // build context, which is the directory Docker will use for the build
       push?: boolean; // push the built image to the registry
+      load?: boolean; // push the built image to the local docker daemon
       target?: string;
       labels?: Record<string, string>;
     } = {},
   ) {
-    const { platform, args = {}, tags = [], context = '.', push = false, labels = {} } = options;
+    const {
+      platform,
+      args = {},
+      tags = [],
+      context = '.',
+      push = false,
+      load = false,
+      labels = {},
+    } = options;
 
     const cb = this.$`docker buildx build`.argument({
       '-f': dockerfilePath,
       '-t': tags,
       '--build-arg': args,
       '--push': push ? null : undefined,
+      '--load': load ? null : undefined,
       '--platform': Array.isArray(platform) ? platform.join(',') : platform,
       '--label': labels,
     });

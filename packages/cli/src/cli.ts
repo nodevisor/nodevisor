@@ -39,6 +39,7 @@ program
   .option('-e, --env <path>', 'Path to .env file')
   .option('-d, --deploy', 'Deploy cluster')
   .option('-s, --setup', 'Setup cluster')
+  .option('-l, --deploy-local', 'Deploy cluster to local docker daemon')
   .action(async (file, options) => {
     try {
       let filePath = path.resolve(file);
@@ -79,6 +80,10 @@ program
 
       if (options.deploy) {
         await result.deploy();
+      }
+
+      if (options.deployLocal) {
+        await result.deployLocal();
       }
 
       if (options.setup) {
