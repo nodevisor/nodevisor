@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/pwsh",
   "description": "Module provides PowerShell-related utility methods and properties",
-  "version": "0.0.65",
+  "version": "0.0.66",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -24,7 +24,7 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/core": "^0.0.65"
+    "@nodevisor/core": "^0.0.66"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
