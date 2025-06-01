@@ -39,14 +39,18 @@ export default class DockerCompose extends Module {
   async up(
     options: DockerComposeOptions & {
       detach?: boolean;
+      wait?: boolean;
+      waitTimeout?: number;
       forceRecreate?: boolean;
     } = {},
   ) {
-    const { detach = true, forceRecreate, ...composeOptions } = options;
+    const { detach = true, wait = true, waitTimeout, forceRecreate, ...composeOptions } = options;
 
     return this.composeCommand('up', composeOptions)
       .argument({
         '--detach': detach,
+        '--wait': wait,
+        '--wait-timeout': waitTimeout,
         '--force-recreate': forceRecreate,
       })
       .text();

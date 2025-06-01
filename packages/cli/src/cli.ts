@@ -44,7 +44,7 @@ program
   .option('-c, --connect', 'Connect to cluster')
   .option('-f, --forward', 'Forward all ports to local machine')
   .option('-p, --passphrase <passphrase>', 'Passphrase for private key')
-  .option('-g, --generate', 'Generate new SSH key')
+  .option('-g, --generate-keys', 'Generate new SSH keys')
   .option('-i, --identity <path>', 'Path to SSH key', '~/.ssh/nodevisor_id_ed25519')
   .action(async (file, options) => {
     try {
@@ -107,14 +107,18 @@ program
         });
       }
 
-      if (options.generate) {
+      if (options.generateKEys) {
         const { identity } = options;
         if (!identity) {
           throw new Error('Error: --identity is required when --generate is used');
         }
 
-        const passphrase = options.passphrase ? options.passphrase : undefined;
-        await generateKey(identity, passphrase);
+        if (fs.existsSync(identity)) {
+          console.log(`Identity file ${identity} already exists. Skipping generation.`);
+        } else {
+          const passphrase = options.passphrase ? options.passphrase : undefined;
+          await generateKey(identity, passphrase);
+        }
       }
 
       process.exit(0);

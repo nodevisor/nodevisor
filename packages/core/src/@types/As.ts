@@ -1,6 +1,6 @@
 type As = {
   user: string;
-  method?: 'su' | 'runuser';
+  method?: 'su' | 'sudo' | 'runuser';
 };
 
 export default As;

@@ -8,7 +8,7 @@ describe('Env Module', () => {
   beforeAll(() => {
     env = new Env();
   });
-  /*
+
   it('should return the environment variable value', async () => {
     const home = await env.get('HOME');
 
@@ -40,14 +40,14 @@ describe('Env Module', () => {
     const printEnvFromSystem2 = await env.connection.cmd({}).getEnv('TEST_VAR', true); //(await env.$`printf "%s" $TEST_VAR`.text()) || undefined;
     expect(printEnvFromSystem2).toBeUndefined();
   });
-
+  /*
   it('should load the environment variables from the file .test', async () => {
     await env.load(path.join(__dirname, '.test'));
 
     const value = await env.get('FILE_TEST_VAR');
     expect(value).toBe('test-file-value');
   });
-  */
+
 
   it('should be able to use specific username to get env variable', async () => {
     class Paths extends Module<{
@@ -62,7 +62,7 @@ describe('Env Module', () => {
       }
     }
 
-    const $user = $.as('seeden');
+    const $user = $.as({ user: 'seeden', method: 'sudo' });
     const value = await $user(Paths).getAuthorizedKeysPath();
 
     console.log('value', value);

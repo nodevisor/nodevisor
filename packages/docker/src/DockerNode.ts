@@ -45,7 +45,8 @@ export default class DockerNode extends ClusterNode {
         const dockerCompose = await $con(DockerCompose);
         const result = await dockerCompose.up({
           file: tempFile,
-          detach: true,
+          detach: true, // run in background
+          wait: true, // wait for services to be ready
         });
 
         logDeploy('deploy result', result);

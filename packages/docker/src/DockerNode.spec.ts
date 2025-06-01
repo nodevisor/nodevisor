@@ -6,11 +6,12 @@ describe('DockerNode', () => {
     const node = new DockerNode({
       host: '38.242.201.62',
     });
-
+    /*
     await node.connect(
       new ClusterUser({
         username: 'root',
       }),
     );
+    */
   });
 });

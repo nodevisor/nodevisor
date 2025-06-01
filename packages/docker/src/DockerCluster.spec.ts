@@ -954,8 +954,7 @@ describe('Cluster', () => {
     const yaml2 = appCluster.yaml({ type: ClusterType.DOCKER_COMPOSE });
 
     // safe to write to file
-    const tempDir2 = os.tmpdir();
-    const filePath2 = path.join(tempDir2, 'docker-compose.yml');
+    const filePath2 = path.join(tempDir, 'docker-compose2.yml');
     fs.writeFileSync(filePath2, yaml2);
 
     // run docker compose
@@ -966,5 +965,13 @@ describe('Cluster', () => {
 
     expect(curlResult).toContain('Host: whoami.127.0.0.1.nip.io');
     expect(curlResult).toContain('X-Forwarded-Host: whoami.127.0.0.1.nip.io');
-  }, 100000);
+
+    // shut down docker compose
+    await $`docker compose -f ${filePath} down --volumes`.text();
+    await $`docker compose -f ${filePath2} down --volumes`.text();
+
+    // remove temp files
+    fs.unlinkSync(filePath);
+    fs.unlinkSync(filePath2);
+  }, 300000); // 300 seconds
 });

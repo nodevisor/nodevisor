@@ -1,5 +1,6 @@
 enum ExecAsMethod {
   SU = 'su',
+  SUDO = 'sudo',
   RUNUSER = 'runuser',
 }
 
