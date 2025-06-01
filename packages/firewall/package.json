@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/firewall",
   "description": "Module provides ability to manage firewall",
-  "version": "0.0.69",
+  "version": "0.0.70",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -24,8 +24,8 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/core": "^0.0.69",
-    "@nodevisor/ufw": "^0.0.69"
+    "@nodevisor/core": "^0.0.70",
+    "@nodevisor/ufw": "^0.0.70"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
