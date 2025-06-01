@@ -38,7 +38,7 @@ export type UserConfig = {
   );
 
 export default class User {
-  private config: UserConfig;
+  protected config: UserConfig;
 
   static get local() {
     return new User({

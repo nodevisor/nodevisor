@@ -1,4 +1,3 @@
-import { User, UserConfig } from '@nodevisor/core';
 import { uniq } from 'lodash';
 import Registry from '@nodevisor/registry';
 import ClusterService from './ClusterService';
@@ -7,12 +6,13 @@ import ClusterBase, { type ClusterBaseConfig } from './ClusterBase';
 import Dependency from './@types/Dependency';
 import type PartialFor from './@types/PartialFor';
 import uniqDependencies from './utils/uniqDependencies';
+import ClusterUser, { type ClusterUserConfig } from './ClusterUser';
 
 export type ClusterConfig<
   TClusterService extends ClusterService,
   TClusterNode extends ClusterNode,
 > = ClusterBaseConfig & {
-  users?: Array<User | UserConfig>;
+  users?: Array<ClusterUser | ClusterUserConfig>;
   nodes?: Array<TClusterNode | string>;
   dependencies?: Array<TClusterService | PartialFor<Dependency, 'cluster'>>;
   context?: string;
@@ -23,7 +23,7 @@ export default abstract class Cluster<
   TClusterService extends ClusterService,
   TClusterNode extends ClusterNode,
 > extends ClusterBase {
-  protected users: User[];
+  protected users: ClusterUser[];
   protected nodes: TClusterNode[];
   protected dependencies: Dependency[] = [];
   protected context?: string;
@@ -34,7 +34,7 @@ export default abstract class Cluster<
 
     super(restConfig);
 
-    this.users = users.map((user) => (user instanceof User ? user : new User(user)));
+    this.users = users.map((user) => (user instanceof ClusterUser ? user : new ClusterUser(user)));
 
     this.nodes = nodes.map((node) =>
       node instanceof ClusterNode ? node : this.createClusterNode({ host: node }),
@@ -108,7 +108,7 @@ export default abstract class Cluster<
     return dependency;
   }
 
-  toRunner(user: User) {
+  toRunner(user: ClusterUser) {
     return user.clone({ username: 'runner', password: undefined });
   }
 
@@ -177,7 +177,7 @@ export default abstract class Cluster<
 
   async deployNode<TOptions extends {}>(
     node: TClusterNode,
-    runner: User,
+    runner: ClusterUser,
     manager: TClusterNode,
     options: TOptions,
   ) {
@@ -225,7 +225,12 @@ export default abstract class Cluster<
     await this.build({ load: true, push: false });
   }
 
-  async setupNode(node: TClusterNode, admin: User, runner: User, manager: TClusterNode) {
+  async setupNode(
+    node: TClusterNode,
+    admin: ClusterUser,
+    runner: ClusterUser,
+    manager: TClusterNode,
+  ) {
     await node.setup(admin, runner, manager);
   }
 
@@ -235,6 +240,13 @@ export default abstract class Cluster<
     const [admin, runner] = users;
     if (!admin) {
       throw new Error('Admin user is required for cluster setup');
+    }
+
+    const privateKey = await admin.getPrivateKey();
+    if (!privateKey) {
+      throw new Error(
+        'Admin user private key is not set. Please run `nodevisor-cli generate` to generate it.',
+      );
     }
 
     const runnerUser = runner ?? this.toRunner(admin);

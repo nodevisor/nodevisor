@@ -12,6 +12,7 @@ import InMemoryWriteStream from '../utils/InMemoryWriteStream';
 import CommandOutputError from '../errors/CommandOutputError';
 import CommandOutput from '../commands/CommandOutput';
 import User, { type UserConfig } from '../User';
+import { ShellOptions } from 'ssh2';
 
 const log = baseLog.extend('ssh-connection');
 const logExec = log.extend('exec');
@@ -185,5 +186,11 @@ export default class SSHConnection extends Connection {
     } finally {
       await sftp.end();
     }
+  }
+
+  async requestShell(options?: ShellOptions) {
+    return await this.ssh.requestShell({
+      ...options,
+    });
   }
 }

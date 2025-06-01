@@ -4,20 +4,17 @@ import fs from 'node:fs';
 import $ from '@nodevisor/core';
 import Cluster from './DockerCluster';
 import ClusterNode from './DockerNode';
-import { User } from '@nodevisor/core';
 import Traefik from './services/Traefik';
 import Whoami from './services/Whoami';
 import Redis from './services/Redis';
-import { ClusterType } from '@nodevisor/cluster';
+import { ClusterType, ClusterUser } from '@nodevisor/cluster';
 
 describe('Cluster', () => {
   it('should create a empty cluster', async () => {
-    const setup = new User({
+    const setup = new ClusterUser({
       host: '127.0.0.1',
       username: 'root',
       password: 'root-password',
-      privateKeyPath: '~/.ssh/id_rsa',
-      passphrase: 'my-passphrase',
     });
 
     const runner = setup.clone({ username: 'runner' });
@@ -46,12 +43,10 @@ describe('Cluster', () => {
   });
 
   it('should create a empty web proxy cluster', async () => {
-    const setupUser = new User({
+    const setupUser = new ClusterUser({
       host: '127.0.0.1',
       username: 'root',
       password: 'root-password',
-      privateKeyPath: '~/.ssh/id_rsa',
-      passphrase: 'my-passphrase',
     });
 
     const runnerUser = setupUser.clone({ username: 'runner' });
@@ -121,12 +116,14 @@ describe('Cluster', () => {
           },
           ports: [
             {
+              host_ip: '0.0.0.0',
               target: 80,
               published: 80,
               protocol: 'tcp',
               mode: 'host',
             },
             {
+              host_ip: '0.0.0.0',
               target: 443,
               published: 443,
               protocol: 'tcp',
@@ -159,12 +156,10 @@ describe('Cluster', () => {
   });
 
   it('should create a base web proxy cluster with web service', async () => {
-    const setupUser = new User({
+    const setupUser = new ClusterUser({
       host: '127.0.0.1',
       username: 'root',
       password: 'root-password',
-      privateKeyPath: '~/.ssh/id_rsa',
-      passphrase: 'my-passphrase',
     });
 
     const runnerUser = setupUser.clone({ username: 'runner' });
@@ -239,24 +234,23 @@ describe('Cluster', () => {
           },
           ports: [
             {
+              host_ip: '0.0.0.0',
               target: 80,
               published: 80,
               protocol: 'tcp',
               mode: 'host',
             },
             {
+              host_ip: '0.0.0.0',
               target: 443,
               published: 443,
               protocol: 'tcp',
               mode: 'host',
             },
           ],
-          networks: { test_traefik_network: { priority: 0 } },
+          networks: { test_traefik_network: { priority: 0, aliases: ['whoami.127.0.0.1.nip.io'] } },
         },
         whoami: {
-          extra_hosts: {
-            'whoami.127.0.0.1.nip.io': 'traefik',
-          },
           image: 'traefik/whoami',
           labels: {
             'traefik.enable': 'true',
@@ -321,12 +315,10 @@ describe('Cluster', () => {
   });
 
   it('should create a base web proxy cluster with web service without ssl for swarm', async () => {
-    const setupUser = new User({
+    const setupUser = new ClusterUser({
       host: '127.0.0.1',
       username: 'root',
       password: 'root-password',
-      privateKeyPath: '~/.ssh/id_rsa',
-      passphrase: 'my-passphrase',
     });
 
     const runnerUser = setupUser.clone({ username: 'runner' });
@@ -394,24 +386,23 @@ describe('Cluster', () => {
           },
           ports: [
             {
+              host_ip: '0.0.0.0',
               target: 80,
               published: 80,
               protocol: 'tcp',
               mode: 'host',
             },
             {
+              host_ip: '127.0.0.1',
               mode: 'host',
               protocol: 'tcp',
               published: 8080,
               target: 8080,
             },
           ],
-          networks: { test_traefik_network: {} },
+          networks: { test_traefik_network: { aliases: ['whoami.127.0.0.1.nip.io'] } },
         },
         whoami: {
-          extra_hosts: {
-            'whoami.127.0.0.1.nip.io': 'traefik',
-          },
           image: 'traefik/whoami',
           labels: {
             'traefik.enable': 'true',
@@ -457,7 +448,7 @@ describe('Cluster', () => {
               },
             },
           },
-          image: 'redis:7.4.1',
+          image: 'redis:8.0.2',
           networks: {
             test_redis_network: {},
           },
@@ -506,12 +497,10 @@ describe('Cluster', () => {
   });
 
   it('should create a base web proxy cluster with web service without ssl for compose', async () => {
-    const setupUser = new User({
+    const setupUser = new ClusterUser({
       host: '127.0.0.1',
       username: 'root',
       password: 'root-password',
-      privateKeyPath: '~/.ssh/id_rsa',
-      passphrase: 'my-passphrase',
     });
 
     const runnerUser = setupUser.clone({ username: 'runner' });
@@ -581,24 +570,23 @@ describe('Cluster', () => {
           },
           ports: [
             {
+              host_ip: '0.0.0.0',
               target: 80,
               published: 80,
               protocol: 'tcp',
               mode: 'host',
             },
             {
+              host_ip: '127.0.0.1',
               mode: 'host',
               protocol: 'tcp',
               published: 8080,
               target: 8080,
             },
           ],
-          networks: { test_traefik_network: { priority: 0 } },
+          networks: { test_traefik_network: { priority: 0, aliases: ['whoami.127.0.0.1.nip.io'] } },
         },
         whoami: {
-          extra_hosts: {
-            'whoami.127.0.0.1.nip.io': 'traefik',
-          },
           image: 'traefik/whoami',
           labels: {
             'traefik.enable': 'true',
@@ -653,7 +641,7 @@ describe('Cluster', () => {
               },
             },
           },
-          image: 'redis:7.4.1',
+          image: 'redis:8.0.2',
           networks: {
             test_redis_network: {
               priority: 0,
@@ -704,12 +692,10 @@ describe('Cluster', () => {
   });
 
   it('should create a base web proxy cluster with web service without ssl', async () => {
-    const setupUser = new User({
+    const setupUser = new ClusterUser({
       host: '127.0.0.1',
       username: 'root',
       password: 'root-password',
-      privateKeyPath: '~/.ssh/id_rsa',
-      passphrase: 'my-passphrase',
     });
 
     const runnerUser = setupUser.clone({ username: 'runner' });
@@ -761,7 +747,7 @@ describe('Cluster', () => {
               },
             },
           },
-          image: 'redis:7.4.1',
+          image: 'redis:8.0.2',
           networks: {
             nodevisor_redis_network: {},
           },
@@ -822,12 +808,14 @@ describe('Cluster', () => {
           ],
           ports: [
             {
+              host_ip: '0.0.0.0',
               target: 80,
               published: 80,
               protocol: 'tcp',
               mode: 'host',
             },
             {
+              host_ip: '127.0.0.1',
               target: 8080,
               published: 8080,
               protocol: 'tcp',
@@ -867,9 +855,6 @@ describe('Cluster', () => {
             app_redis_network: {},
             nodevisor_traefik_network: {},
           },
-          extra_hosts: {
-            'whoami.127.0.0.1.nip.io': 'traefik',
-          },
           image: 'traefik/whoami',
           deploy: {
             resources: {
@@ -900,7 +885,7 @@ describe('Cluster', () => {
             app_redis_network: {},
           },
           restart: 'unless-stopped',
-          image: 'redis:7.4.1',
+          image: 'redis:8.0.2',
           deploy: {
             resources: {
               limits: {

@@ -5,6 +5,7 @@ import * as tsNode from 'ts-node';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as dotenv from 'dotenv';
+import { generateKey } from '@nodevisor/core';
 
 const program = new Command();
 
@@ -40,8 +41,18 @@ program
   .option('-d, --deploy', 'Deploy cluster')
   .option('-s, --setup', 'Setup cluster')
   .option('-l, --deploy-local', 'Deploy cluster to local docker daemon')
+  .option('-c, --connect', 'Connect to cluster')
+  .option('-f, --forward', 'Forward all ports to local machine')
+  .option('-p, --passphrase <passphrase>', 'Passphrase for private key')
+  .option('-g, --generate', 'Generate new SSH key')
+  .option('-i, --identity <path>', 'Path to SSH key', '~/.ssh/nodevisor_id_ed25519')
   .action(async (file, options) => {
     try {
+      // Validate that forward option is only used with connect option
+      if (options.forward && !options.connect) {
+        throw new Error('Error: The --forward option can only be used with --connect option');
+      }
+
       let filePath = path.resolve(file);
       const hasDirectorySeparator = file.includes(path.sep);
 
@@ -88,6 +99,22 @@ program
 
       if (options.setup) {
         await result.setup();
+      }
+
+      if (options.connect) {
+        await result.connect({
+          forward: options.forward || false,
+        });
+      }
+
+      if (options.generate) {
+        const { identity } = options;
+        if (!identity) {
+          throw new Error('Error: --identity is required when --generate is used');
+        }
+
+        const passphrase = options.passphrase ? options.passphrase : undefined;
+        await generateKey(identity, passphrase);
       }
 
       process.exit(0);

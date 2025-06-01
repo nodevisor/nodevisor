@@ -1,18 +1,16 @@
 import Cluster from '../DockerCluster';
 import ClusterNode from '../DockerNode';
-import { User } from '@nodevisor/core';
+import { ClusterUser } from '@nodevisor/cluster';
 import Traefik from './Traefik';
 import Web from './Web';
 import { ClusterType } from '@nodevisor/cluster';
 
 describe('Web', () => {
   it('should create a empty web proxy cluster with extra hosts', async () => {
-    const setupUser = new User({
+    const setupUser = new ClusterUser({
       host: '127.0.0.1',
       username: 'root',
       password: 'root-password',
-      privateKeyPath: '~/.ssh/id_rsa',
-      passphrase: 'my-passphrase',
     });
 
     const runnerUser = setupUser.clone({ username: 'runner' });
@@ -90,10 +88,6 @@ describe('Web', () => {
             'traefik.http.routers.web-https.tls.certresolver': 'certresolver',
             'traefik.http.routers.web-https.service': 'web',
           },
-          extra_hosts: {
-            'api.example.com': 'traefik',
-            'web.example.com': 'traefik',
-          },
           depends_on: {
             api: {
               condition: 'service_started',
@@ -139,9 +133,6 @@ describe('Web', () => {
             'traefik.http.routers.api-https.tls.certresolver': 'certresolver',
             'traefik.http.routers.api-https.service': 'api',
           },
-          extra_hosts: {
-            'api.example.com': 'traefik',
-          },
           depends_on: {
             traefik: {
               condition: 'service_started',
@@ -152,6 +143,7 @@ describe('Web', () => {
           networks: {
             test_traefik_network: {
               priority: 0,
+              aliases: ['web.example.com', 'api.example.com'],
             },
           },
           restart: 'unless-stopped',
@@ -189,12 +181,14 @@ describe('Web', () => {
           ],
           ports: [
             {
+              host_ip: '0.0.0.0',
               target: 80,
               published: 80,
               protocol: 'tcp',
               mode: 'host',
             },
             {
+              host_ip: '0.0.0.0',
               target: 443,
               published: 443,
               protocol: 'tcp',
@@ -234,6 +228,8 @@ describe('Web', () => {
       },
       name: 'test',
     };
+
+    // console.log(JSON.stringify(config, null, 2));
 
     expect(config).toEqual(result);
     // await cluster.setup();

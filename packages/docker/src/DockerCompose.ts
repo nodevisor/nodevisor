@@ -42,7 +42,7 @@ export default class DockerCompose extends Module {
       forceRecreate?: boolean;
     } = {},
   ) {
-    const { detach, forceRecreate, ...composeOptions } = options;
+    const { detach = true, forceRecreate, ...composeOptions } = options;
 
     return this.composeCommand('up', composeOptions)
       .argument({

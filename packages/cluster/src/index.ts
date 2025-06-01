@@ -18,3 +18,6 @@ export * from './ClusterService';
 
 export { default as ClusterServiceBase } from './ClusterServiceBase';
 export * from './ClusterServiceBase';
+
+export { default as ClusterUser } from './ClusterUser';
+export * from './ClusterUser';

@@ -2,6 +2,7 @@ import EventEmitter from 'node:events';
 import { LRUCache } from 'lru-cache';
 import CommandBuilder, { type CommandBuilderOptions } from '../commands/CommandBuilder';
 import CommandOutput from '../commands/CommandOutput';
+import { ClientChannel, ShellOptions } from 'ssh2';
 
 export type PutOptions = {
   flags?: 'w' | 'a';
@@ -86,4 +87,8 @@ export default abstract class Connection extends EventEmitter {
   ): Promise<void>;
 
   abstract getContent(remotePath: string, options?: GetOptions): Promise<Buffer>;
+
+  async requestShell(_options?: ShellOptions): Promise<ClientChannel> {
+    throw new Error('Not implemented');
+  }
 }

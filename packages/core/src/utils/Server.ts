@@ -157,6 +157,35 @@ MQd/p9Q2fR/Rt2afAAAAInNlZWRlbkBabGF0a29zLU1hY0Jvb2stUHJvLTIubG9jYWw=
           });
         });
 
+        session.on('pty', (accept, reject, info) => {
+          accept();
+        });
+
+        session.on('shell', (accept, reject) => {
+          const stream = accept();
+
+          stream.on('data', async (data: Buffer) => {
+            try {
+              const command = data.toString().trim();
+              if (command) {
+                const response = await shell.exec(command);
+                stream.write(response.stdout);
+                if (response.stderr) {
+                  stream.write(response.stderr);
+                }
+              }
+            } catch (error) {
+              stream.write(`Error: ${(error as Error).message}\n`);
+            } finally {
+              //
+            }
+          });
+
+          stream.on('close', () => {
+            stream.end();
+          });
+        });
+
         session.on('sftp', (accept, reject) => {
           const sftpStream = accept();
 

@@ -189,4 +189,44 @@ describe('SSHConnection', () => {
 
     expect(stdout4).toBe('\n hello  1  \n \n\n');
   });
+
+  /*
+  it('should be able to request shell', async () => {
+    const sshConnection = await connection.connect();
+    const shell = await sshConnection.requestShell();
+
+    // Set up output collection
+    let output = '';
+    shell.on('data', (data: Buffer) => {
+      output += data.toString();
+    });
+
+    // Write command
+    await shell.write('echo "Hello, world!"\n');
+
+    // Wait for command to complete by checking for prompt
+    await new Promise<void>((resolve) => {
+      const checkOutput = () => {
+        // Command is complete when we see a prompt (typically ends with $ or #)
+        if (output.match(/[#$]\s*$/)) {
+          resolve();
+        } else {
+          setTimeout(checkOutput, 100);
+        }
+      };
+      checkOutput();
+    });
+
+    // Extract just the command output (remove the command and prompt)
+    const commandOutput = output
+      .replace(/^.*\n/, '') // Remove the command line
+      .replace(/[#$]\s*$/, '') // Remove the prompt
+      .trim();
+
+    expect(commandOutput).toBe('Hello, world!');
+
+    // Clean up
+    shell.end();
+  });
+  */
 });

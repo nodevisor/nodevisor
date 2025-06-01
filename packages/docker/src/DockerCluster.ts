@@ -1,13 +1,12 @@
 import YAML from 'yaml';
 import $ from '@nodevisor/core';
-import Cluster, { type ClusterConfig, ClusterType } from '@nodevisor/cluster';
+import Cluster, { type ClusterConfig, ClusterType, ClusterUser } from '@nodevisor/cluster';
 import DockerNode, { type DockerNodeConfig } from './DockerNode';
 import type DockerService from './DockerService';
 import type DockerComposeConfig from './@types/DockerComposeConfig';
 import type DockerComposeServiceConfig from './@types/DockerComposeServiceConfig';
 import type DockerNetworkTopLevel from './@types/DockerNetworkTopLevel';
 import type DockerVolumeTopLevel from './@types/DockerVolumeTopLevel';
-import { User } from '@nodevisor/core';
 import Registry from '@nodevisor/registry';
 import type DockerDependency from './@types/DockerDependency';
 import type DockerNetwork from './@types/DockerNetwork';
@@ -209,10 +208,12 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
           serviceDependency.cluster,
         );
 
+        /*
         if (service instanceof Web && serviceDependency.service instanceof Web) {
           // skip adding network connection for web services
           return;
         }
+          */
 
         if (!networks[dependencyNetworkName]) {
           networks[dependencyNetworkName] = this.getServiceComposeNetwork(
@@ -256,7 +257,7 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     await DockerNode.deployToConnection($, this.name, yaml, 'compose');
   }
 
-  async setupNode(node: DockerNode, admin: User, runner: User, manager: DockerNode) {
+  async setupNode(node: DockerNode, admin: ClusterUser, runner: ClusterUser, manager: DockerNode) {
     const isManager = node === manager;
 
     const options: { token?: string } = {};
@@ -290,5 +291,40 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     const compose = this.toCompose(options);
 
     return YAML.stringify(compose);
+  }
+
+  async connect(options?: Parameters<DockerNode['connect']>[1]) {
+    const [firstNode] = this.nodes;
+    if (!firstNode) {
+      throw new Error('No nodes available');
+    }
+
+    const [_admin, runner] = this.users;
+    if (!runner) {
+      throw new Error('No runner user available');
+    }
+
+    firstNode.connect(runner, options);
+    /*
+    const $con = firstNode.getConnection(runner);
+
+    const shell = await $con.nodevisor.connection.;
+/*
+    // Handle stdin/stdout/stderr
+    process.stdin.pipe(shell);
+    shell.pipe(process.stdout);
+    shell.stderr.pipe(process.stderr);
+
+    // Handle process termination
+    process.on('SIGINT', () => {
+      shell.end();
+      process.exit(0);
+    });
+
+    // Keep the process alive until shell is closed
+    await new Promise((resolve) => {
+      shell.on('close', resolve);
+    });
+    */
   }
 }

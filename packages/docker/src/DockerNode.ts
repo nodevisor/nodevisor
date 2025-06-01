@@ -1,13 +1,16 @@
 import FS from '@nodevisor/fs';
 import UFW from '@nodevisor/ufw';
-import { Nodevisor, NodevisorProxy, User, log as baseLog } from '@nodevisor/core';
+import $ from '@nodevisor/core';
+import { spawn } from 'node:child_process';
+import { NodevisorProxy, log as baseLog } from '@nodevisor/core';
 import { Protocol } from '@nodevisor/endpoint';
-import { ClusterNode, type ClusterNodeConfig } from '@nodevisor/cluster';
+import { ClusterNode, type ClusterNodeConfig, ClusterUser } from '@nodevisor/cluster';
 import DockerCompose from './DockerCompose';
 import Docker from './Docker';
 import DockerSwarm from './DockerSwarm';
 import type Registry from '@nodevisor/registry';
 import DockerStack from './DockerStack';
+import fs from 'node:fs/promises';
 
 const log = baseLog.extend('DockerNode');
 const logDeploy = log.extend('deploy');
@@ -42,6 +45,7 @@ export default class DockerNode extends ClusterNode {
         const dockerCompose = await $con(DockerCompose);
         const result = await dockerCompose.up({
           file: tempFile,
+          detach: true,
         });
 
         logDeploy('deploy result', result);
@@ -64,9 +68,13 @@ export default class DockerNode extends ClusterNode {
     }
   }
 
+  getConnection(user: ClusterUser) {
+    return this.$(user);
+  }
+
   async deploy(
     name: string,
-    runner: User,
+    runner: ClusterUser,
     manager: DockerNode,
     options: { yaml: string; type?: 'swarm' | 'compose' },
   ) {
@@ -83,7 +91,12 @@ export default class DockerNode extends ClusterNode {
     await DockerNode.deployToConnection($con, name, yaml, type);
   }
 
-  async setup(admin: User, runner: User, manager: DockerNode, options: { token?: string }) {
+  async setup(
+    admin: ClusterUser,
+    runner: ClusterUser,
+    manager: DockerNode,
+    options: { token?: string },
+  ) {
     if (!runner.username) {
       throw new Error('Runner user is required for docker node setup');
     }
@@ -142,13 +155,13 @@ export default class DockerNode extends ClusterNode {
     */
   }
 
-  async getWorkerToken(runner: User) {
+  async getWorkerToken(runner: ClusterUser) {
     const $con = this.$(runner);
 
     return $con(DockerSwarm).getWorkerToken();
   }
 
-  async authenticateRegistries(user: User, registries: Registry[], manager: ClusterNode) {
+  async authenticateRegistries(user: ClusterUser, registries: Registry[], manager: ClusterNode) {
     // only manager is doing authentication
     if (this !== manager) {
       return;
@@ -157,5 +170,49 @@ export default class DockerNode extends ClusterNode {
     const $con = this.$(user);
 
     await Promise.all(registries.map((registry) => registry.login($con)));
+  }
+
+  async connect(user: ClusterUser, options: { forward?: boolean } = {}) {
+    const { forward = false } = options;
+
+    const { host } = this;
+    const { username } = user;
+
+    const sshArgs = [
+      '-o IdentitiesOnly=yes',
+      /* '-o PasswordAuthentication=no', */ /*'-o BatchMode=yes',*/ `${username}@${host}`,
+    ];
+
+    const privateKey = await user.getPrivateKey();
+    let tempKeyFile: string | undefined;
+    if (privateKey) {
+      tempKeyFile = await $(FS).temp();
+
+      await $(FS).writeFile(tempKeyFile, privateKey, { mode: 0o600 }); // Set proper permissions
+
+      sshArgs.unshift('-i', tempKeyFile);
+    }
+
+    await new Promise(async (resolve, reject) => {
+      const ssh = spawn('ssh', sshArgs, {
+        stdio: 'inherit',
+        env: process.env,
+      });
+
+      if (tempKeyFile) {
+        console.log('Removing temp key file', tempKeyFile);
+        await $(FS).rm(tempKeyFile);
+      }
+
+      ssh.on('exit', (code) => {
+        console.log(`SSH exited with code ${code}`);
+
+        if (code !== 0) {
+          reject(new Error(`SSH exited with code ${code}`));
+        } else {
+          resolve(undefined);
+        }
+      });
+    });
   }
 }
