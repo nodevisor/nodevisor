@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/docker",
   "description": "Module provides ability to manage Docker containers",
-  "version": "0.0.72",
+  "version": "0.0.73",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -27,16 +27,16 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/builder": "^0.0.72",
-    "@nodevisor/cluster": "^0.0.72",
-    "@nodevisor/core": "^0.0.72",
-    "@nodevisor/endpoint": "^0.0.72",
-    "@nodevisor/fs": "^0.0.72",
-    "@nodevisor/groups": "^0.0.72",
-    "@nodevisor/packages": "^0.0.72",
-    "@nodevisor/registry": "^0.0.72",
-    "@nodevisor/services": "^0.0.72",
-    "@nodevisor/ufw": "^0.0.72",
+    "@nodevisor/builder": "^0.0.73",
+    "@nodevisor/cluster": "^0.0.73",
+    "@nodevisor/core": "^0.0.73",
+    "@nodevisor/endpoint": "^0.0.73",
+    "@nodevisor/fs": "^0.0.73",
+    "@nodevisor/groups": "^0.0.73",
+    "@nodevisor/packages": "^0.0.73",
+    "@nodevisor/registry": "^0.0.73",
+    "@nodevisor/services": "^0.0.73",
+    "@nodevisor/ufw": "^0.0.73",
     "lodash": "^4.17.21",
     "yaml": "^2.6.1"
   },
