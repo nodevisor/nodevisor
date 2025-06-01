@@ -1,5 +1,7 @@
 import { generateKeyPairSync } from 'node:crypto';
 import { existsSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import path from 'node:path';
 import sshpk from 'sshpk';
 
 export default async function generateKey(keyPath: string, passphrase?: string) {
@@ -7,8 +9,10 @@ export default async function generateKey(keyPath: string, passphrase?: string) 
     throw new Error('Passphrase cannot be empty string');
   }
 
-  if (existsSync(keyPath)) {
-    throw new Error(`Key already exists at ${keyPath}`);
+  const expandedPath = keyPath.startsWith('~') ? path.join(homedir(), keyPath.slice(2)) : keyPath;
+
+  if (existsSync(expandedPath)) {
+    throw new Error(`Key already exists at ${expandedPath}`);
   }
 
   const { privateKey: pkcs8Priv, publicKey: spkiPub } = generateKeyPairSync('ed25519', {
@@ -19,6 +23,6 @@ export default async function generateKey(keyPath: string, passphrase?: string) 
   const privKey = sshpk.parsePrivateKey(pkcs8Priv, 'pem').toString('openssh', { passphrase });
   const pubKey = sshpk.parseKey(spkiPub, 'pem').toString('ssh');
 
-  writeFileSync(keyPath, privKey, { mode: 0o600 });
-  writeFileSync(keyPath + '.pub', pubKey + '\n', { mode: 0o644 });
+  writeFileSync(expandedPath, privKey, { mode: 0o600 });
+  writeFileSync(expandedPath + '.pub', pubKey + '\n', { mode: 0o644 });
 }
