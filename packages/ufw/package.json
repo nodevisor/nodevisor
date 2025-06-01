@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/ufw",
   "description": "Module provides ability to manage ufw",
-  "version": "0.0.70",
+  "version": "0.0.71",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -24,9 +24,9 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/core": "^0.0.70",
-    "@nodevisor/endpoint": "^0.0.70",
-    "@nodevisor/packages": "^0.0.70"
+    "@nodevisor/core": "^0.0.71",
+    "@nodevisor/endpoint": "^0.0.71",
+    "@nodevisor/packages": "^0.0.71"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
