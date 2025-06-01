@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/ssh",
   "description": "Module provides ability to manage ssh",
-  "version": "0.0.67",
+  "version": "0.0.68",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -24,9 +24,9 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/core": "^0.0.67",
-    "@nodevisor/packages": "^0.0.67",
-    "@nodevisor/services": "^0.0.67"
+    "@nodevisor/core": "^0.0.68",
+    "@nodevisor/packages": "^0.0.68",
+    "@nodevisor/services": "^0.0.68"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
