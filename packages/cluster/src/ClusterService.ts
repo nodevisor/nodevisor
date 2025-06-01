@@ -177,7 +177,7 @@ export default abstract class ClusterService extends ClusterServiceBase {
   getCpus() {
     const { cpus } = this;
 
-    const { min = 0.5, max = 1 } = cpus ?? {};
+    const { min = 0.25, max = 1 } = cpus ?? {};
 
     return { min, max };
   }
