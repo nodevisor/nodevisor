@@ -180,7 +180,7 @@ export default class DockerService extends ClusterService {
       }
 
       if (this.hasPorts()) {
-        data.ports = toDockerPorts(this.getPorts());
+        data.ports = toDockerPorts(this.getPorts(), type);
       }
 
       const extraHosts = this.getExtraHosts(cluster);

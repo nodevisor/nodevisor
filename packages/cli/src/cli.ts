@@ -46,6 +46,7 @@ program
   .option('-p, --passphrase <passphrase>', 'Passphrase for private key')
   .option('-g, --generate-keys', 'Generate new SSH keys')
   .option('-i, --identity <path>', 'Path to SSH key', '~/.ssh/nodevisor_id_ed25519')
+  .option('-b, --skip-build', 'Skip build step')
   .action(async (file, options) => {
     try {
       // Validate that forward option is only used with connect option
@@ -104,11 +105,15 @@ program
       }
 
       if (options.deploy) {
-        await result.deploy();
+        await result.deploy({
+          skipBuild: options.skipBuild || false,
+        });
       }
 
       if (options.deployLocal) {
-        await result.deployLocal();
+        await result.deployLocal({
+          skipBuild: options.skipBuild || false,
+        });
       }
 
       if (options.setup) {

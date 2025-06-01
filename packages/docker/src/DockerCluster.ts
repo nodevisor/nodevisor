@@ -249,8 +249,8 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     });
   }
 
-  async deployLocal() {
-    await super.deployLocal();
+  async deployLocal(options: { skipBuild?: boolean } = {}) {
+    await super.deployLocal(options);
 
     const yaml = this.yaml({ type: ClusterType.DOCKER_COMPOSE });
 

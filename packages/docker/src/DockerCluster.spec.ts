@@ -386,14 +386,12 @@ describe('Cluster', () => {
           },
           ports: [
             {
-              host_ip: '0.0.0.0',
               target: 80,
               published: 80,
               protocol: 'tcp',
               mode: 'host',
             },
             {
-              host_ip: '127.0.0.1',
               mode: 'host',
               protocol: 'tcp',
               published: 8080,
@@ -808,14 +806,12 @@ describe('Cluster', () => {
           ],
           ports: [
             {
-              host_ip: '0.0.0.0',
               target: 80,
               published: 80,
               protocol: 'tcp',
               mode: 'host',
             },
             {
-              host_ip: '127.0.0.1',
               target: 8080,
               published: 8080,
               protocol: 'tcp',

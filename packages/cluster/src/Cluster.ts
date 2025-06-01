@@ -221,7 +221,12 @@ export default abstract class Cluster<
     );
   }
 
-  async deployLocal() {
+  async deployLocal(options: { skipBuild?: boolean } = {}) {
+    const { skipBuild = false } = options;
+    if (skipBuild) {
+      throw new Error('Skip build is not supported for local deployment');
+    }
+
     await this.build({ load: true, push: false });
   }
 
