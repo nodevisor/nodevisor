@@ -89,6 +89,20 @@ program
       const parsed = schema ? schema.parse(envVars) : envVars;
       const result = await fn(parsed);
 
+      if (options.generateKeys) {
+        const { identity } = options;
+        if (!identity) {
+          throw new Error('Error: --identity is required when --generate is used');
+        }
+
+        if (fs.existsSync(identity)) {
+          console.log(`Identity file ${identity} already exists. Skipping generation.`);
+        } else {
+          const passphrase = options.passphrase ? options.passphrase : undefined;
+          await generateKey(identity, passphrase);
+        }
+      }
+
       if (options.deploy) {
         await result.deploy();
       }
@@ -105,20 +119,6 @@ program
         await result.connect({
           forward: options.forward || false,
         });
-      }
-
-      if (options.generateKEys) {
-        const { identity } = options;
-        if (!identity) {
-          throw new Error('Error: --identity is required when --generate is used');
-        }
-
-        if (fs.existsSync(identity)) {
-          console.log(`Identity file ${identity} already exists. Skipping generation.`);
-        } else {
-          const passphrase = options.passphrase ? options.passphrase : undefined;
-          await generateKey(identity, passphrase);
-        }
       }
 
       process.exit(0);
