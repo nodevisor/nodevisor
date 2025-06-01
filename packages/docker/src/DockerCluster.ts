@@ -304,7 +304,7 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
       throw new Error('No runner user available');
     }
 
-    firstNode.connect(runner, options);
+    await firstNode.connect(runner, options);
     /*
     const $con = firstNode.getConnection(runner);
 

@@ -181,7 +181,9 @@ export default class DockerNode extends ClusterNode {
 
     const sshArgs = [
       '-o IdentitiesOnly=yes',
-      /* '-o PasswordAuthentication=no', */ /*'-o BatchMode=yes',*/ `${username}@${host}`,
+      '-o PasswordAuthentication=no',
+      '-o BatchMode=yes',
+      `${username}@${host}`,
     ];
 
     const privateKey = await user.getPrivateKey();
