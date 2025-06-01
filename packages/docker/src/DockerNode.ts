@@ -202,10 +202,13 @@ export default class DockerNode extends ClusterNode {
         env: process.env,
       });
 
-      if (tempKeyFile) {
-        console.log('Removing temp key file', tempKeyFile);
-        await $(FS).rm(tempKeyFile);
-      }
+      // Once SSH process has started, we can safely remove the key file
+      ssh.on('spawn', async () => {
+        if (tempKeyFile) {
+          console.log('SSH process started, removing temp key file', tempKeyFile);
+          await $(FS).rm(tempKeyFile);
+        }
+      });
 
       ssh.on('exit', (code) => {
         console.log(`SSH exited with code ${code}`);
