@@ -95,7 +95,7 @@ describe('Cluster', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },
@@ -213,7 +213,7 @@ describe('Cluster', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },
@@ -274,7 +274,7 @@ describe('Cluster', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },
@@ -325,7 +325,7 @@ describe('Cluster', () => {
 
     const proxy = new Traefik({
       dashboard: {
-        insecure: true,
+        password: false,
       },
     });
 
@@ -365,7 +365,7 @@ describe('Cluster', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },
@@ -374,6 +374,11 @@ describe('Cluster', () => {
             },
           },
           image: 'traefik:3.1.7',
+          labels: {
+            'traefik.http.routers.traefik.entrypoints': 'websecure',
+            'traefik.http.routers.traefik.tls': 'true',
+            'traefik.http.routers.traefik.tls.certresolver': 'certresolver',
+          },
           command:
             '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --api.dashboard=true --api.insecure=true',
           restart: 'unless-stopped',
@@ -390,12 +395,6 @@ describe('Cluster', () => {
               published: 80,
               protocol: 'tcp',
               mode: 'host',
-            },
-            {
-              mode: 'host',
-              protocol: 'tcp',
-              published: 8080,
-              target: 8080,
             },
           ],
           networks: { test_traefik_network: { aliases: ['whoami.127.0.0.1.nip.io'] } },
@@ -420,7 +419,7 @@ describe('Cluster', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },
@@ -441,7 +440,7 @@ describe('Cluster', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },
@@ -503,11 +502,7 @@ describe('Cluster', () => {
 
     const runnerUser = setupUser.clone({ username: 'runner' });
 
-    const proxy = new Traefik({
-      dashboard: {
-        insecure: true,
-      },
-    });
+    const proxy = new Traefik({});
 
     const redis = new Redis();
 
@@ -546,7 +541,7 @@ describe('Cluster', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },
@@ -557,7 +552,7 @@ describe('Cluster', () => {
 
           image: 'traefik:3.1.7',
           command:
-            '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --api.dashboard=true --api.insecure=true',
+            '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080',
           restart: 'unless-stopped',
           healthcheck: {
             interval: '10s',
@@ -573,13 +568,6 @@ describe('Cluster', () => {
               published: 80,
               protocol: 'tcp',
               mode: 'host',
-            },
-            {
-              host_ip: '127.0.0.1',
-              mode: 'host',
-              protocol: 'tcp',
-              published: 8080,
-              target: 8080,
             },
           ],
           networks: { test_traefik_network: { priority: 0, aliases: ['whoami.127.0.0.1.nip.io'] } },
@@ -609,7 +597,7 @@ describe('Cluster', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },
@@ -634,7 +622,7 @@ describe('Cluster', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },
@@ -700,11 +688,7 @@ describe('Cluster', () => {
 
     const redis = new Redis();
 
-    const proxy = new Traefik({
-      dashboard: {
-        insecure: true,
-      },
-    });
+    const proxy = new Traefik({});
 
     const mainCluster = new Cluster({
       name: 'nodevisor',
@@ -740,7 +724,7 @@ describe('Cluster', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },
@@ -785,7 +769,7 @@ describe('Cluster', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },
@@ -795,7 +779,7 @@ describe('Cluster', () => {
             },
           },
           command:
-            '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=nodevisor_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --api.dashboard=true --api.insecure=true',
+            '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=nodevisor_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080',
           volumes: [
             {
               type: 'bind',
@@ -808,12 +792,6 @@ describe('Cluster', () => {
             {
               target: 80,
               published: 80,
-              protocol: 'tcp',
-              mode: 'host',
-            },
-            {
-              target: 8080,
-              published: 8080,
               protocol: 'tcp',
               mode: 'host',
             },
@@ -859,7 +837,7 @@ describe('Cluster', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },
@@ -889,7 +867,7 @@ describe('Cluster', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },

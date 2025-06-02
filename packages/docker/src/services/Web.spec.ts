@@ -68,7 +68,7 @@ describe('Web', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },
@@ -113,7 +113,7 @@ describe('Web', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },
@@ -155,7 +155,7 @@ describe('Web', () => {
                 memory: '512mb',
               },
               reservations: {
-                cpus: '0.5',
+                cpus: '0.25',
                 memory: '128mb',
               },
             },

@@ -17,6 +17,7 @@ export default abstract class WebProxy extends DockerService {
   getDeploy() {
     const deploy = super.getDeploy();
 
+    // place web proxy on manager node
     set(deploy, 'placement.constraints', ['node.role == manager']);
 
     return deploy;

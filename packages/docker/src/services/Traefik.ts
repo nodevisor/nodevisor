@@ -10,16 +10,18 @@ type SSLConfig = {
   redirect?: boolean;
 };
 
-type DashboardConfig =
-  | {
-      insecure: true;
-      port?: 8080; // there is no ability to change this port
-    }
+type DashboardConfig = {
+  port?: 8080; // there is no ability to change this port
+  host?: string;
+} & (
   | {
       password: string;
       username?: string;
-      host?: string;
-    };
+    }
+  | {
+      password: false; // false means no auth, explicitely set password to false to disable auth
+    }
+);
 
 type TraefikConfig = PartialFor<WebProxyConfig, 'name'> & {
   ssl?: SSLConfig;
@@ -121,7 +123,7 @@ export default class Traefik extends WebProxy {
     }
 
     if (dashboard) {
-      const insecure = 'insecure' in dashboard ? dashboard.insecure : false;
+      const insecure = !dashboard.password;
 
       cb.argument({
         '--api.dashboard': true,
@@ -166,25 +168,30 @@ export default class Traefik extends WebProxy {
     // labels['traefik.docker.network'] = this.getNetworkName();
 
     if (dashboard) {
-      if (!('insecure' in dashboard)) {
-        const { username = 'admin', password, host } = dashboard;
+      const { host, password } = dashboard;
+
+      labels = {
+        ...labels,
+
+        // use https for dashboard
+        [`${routersPrefix}.entrypoints`]: 'websecure',
+        [`${routersPrefix}.tls`]: true,
+        [`${routersPrefix}.tls.certresolver`]: 'certresolver',
+      };
+
+      if (password !== false) {
+        const { username = 'admin' } = dashboard;
 
         labels = {
           ...labels,
-
-          // Secure Traefik dashboard router
-          [`${routersPrefix}.entrypoints`]: 'websecure',
-          [`${routersPrefix}.tls`]: true,
-          [`${routersPrefix}.tls.certresolver`]: 'certresolver',
-
-          // Basic auth
+          // basic auth for dashboard
           'traefik.http.middlewares.traefik-auth.basicauth.users': `${username}:${password}`,
           [`${routersPrefix}.middlewares`]: 'traefik-auth',
         };
+      }
 
-        if (host) {
-          labels[`${routersPrefix}.rule`] = `Host(\`${host}\`)`;
-        }
+      if (host) {
+        labels[`${routersPrefix}.rule`] = `Host(\`${host}\`)`;
       }
     }
 
@@ -213,8 +220,15 @@ export default class Traefik extends WebProxy {
     return labels;
   }
 
+  /*
+  MODE: host
+  •	Preserve real client IP. Traefik needs to see the source IP for logging, rate limits, IP whitelists, etc. The Swarm ingress mesh SNATs connections, so you lose that information if you published via ingress.
+	•	ACME/Let’s Encrypt HTTP-01/TLS-ALPN challenges. Traefik must handle port 80/443 directly on the node. If you put ingress in front, the challenge may bounce to a Traefik instance that doesn’t have the correct cert, or Traefik might see the request as coming from the local routing mesh VIP, confusing ACME.
+	•	Lower latency and fewer network hops. Host binding means traffic goes straight from NIC → Traefik → backend. Ingress mode would do “NIC → routing‐mesh IPVS → overlay → Traefik → backend,” adding extra hops.
+  */
+
   getPorts() {
-    const { ssl, dashboard } = this;
+    const { ssl } = this;
     const ports = super.getPorts();
 
     // Add default ports
@@ -222,7 +236,7 @@ export default class Traefik extends WebProxy {
       target: 80,
       published: 80,
       protocol: Protocol.TCP,
-      mode: 'host',
+      mode: 'host', // preserve real client ip
       ip: '0.0.0.0',
     });
 
@@ -233,23 +247,12 @@ export default class Traefik extends WebProxy {
         target: port,
         published: port,
         protocol: Protocol.TCP,
-        mode: 'host',
+        mode: 'host', // preserve real client ip
         ip: '0.0.0.0',
       });
     }
 
-    if (dashboard) {
-      if ('insecure' in dashboard) {
-        const { port = 8080 } = dashboard;
-        ports.push({
-          target: port,
-          published: port,
-          protocol: Protocol.TCP,
-          mode: 'host',
-          ip: '127.0.0.1',
-        });
-      }
-    }
+    // dashboard is accessible only with VPN or another secure network
 
     return ports;
   }
