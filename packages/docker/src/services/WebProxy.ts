@@ -1,5 +1,6 @@
 import { type ClusterBase, type Labels } from '@nodevisor/cluster';
 import DockerService, { type DockerServiceConfig } from '../DockerService';
+import type DockerComposeServiceConfig from '../@types/DockerComposeServiceConfig';
 import type Web from './Web';
 import Constraints from '../constants/Constraints';
 
@@ -9,13 +10,9 @@ export default abstract class WebProxy extends DockerService {
   abstract getWebLabels(proxyCluster: ClusterBase, web: Web): Labels;
 
   constructor(config: DockerServiceConfig) {
-    const deploy = config.deploy ?? {};
-    const {
-      mode = 'global',
-      placement,
-      ...restDeploy
-    } = deploy as DockerComposeServiceConfig['deploy'];
-    const { constraints = [], ...restPlacement } = placement;
+    const deploy: DockerComposeServiceConfig['deploy'] = config.deploy ?? {};
+    const { mode = 'global', placement, ...restDeploy } = deploy;
+    const { constraints = [], ...restPlacement } = placement ?? {};
 
     // todo add runOnManager field into config instead of strings
     if (!constraints.includes(Constraints.NODE_ROLE_MANAGER)) {
