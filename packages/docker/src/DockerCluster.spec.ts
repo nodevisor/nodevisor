@@ -88,6 +88,7 @@ describe('Cluster', () => {
             },
           ],
           deploy: {
+            mode: 'global',
             replicas: 1,
             resources: {
               limits: {
@@ -206,6 +207,7 @@ describe('Cluster', () => {
             },
           ],
           deploy: {
+            mode: 'global',
             replicas: 1,
             resources: {
               limits: {
@@ -358,6 +360,7 @@ describe('Cluster', () => {
             },
           ],
           deploy: {
+            mode: 'global',
             replicas: 1,
             resources: {
               limits: {
@@ -534,6 +537,7 @@ describe('Cluster', () => {
             },
           ],
           deploy: {
+            mode: 'global',
             replicas: 1,
             resources: {
               limits: {
@@ -763,6 +767,7 @@ describe('Cluster', () => {
           },
           image: 'traefik:3.1.7',
           deploy: {
+            mode: 'global',
             resources: {
               limits: {
                 cpus: '1',

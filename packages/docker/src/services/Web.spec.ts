@@ -149,6 +149,7 @@ describe('Web', () => {
           restart: 'unless-stopped',
           image: 'traefik:3.1.7',
           deploy: {
+            mode: 'global',
             resources: {
               limits: {
                 cpus: '1',
