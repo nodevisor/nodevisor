@@ -138,13 +138,17 @@ export default class DockerService extends ClusterService {
       ...this.config.deploy,
     };
 
+    const isGlobal = deploy.mode === 'global';
+
     set(deploy, 'resources.limits.cpus', cpus.max.toString());
     set(deploy, 'resources.reservations.cpus', cpus.min.toString());
 
     set(deploy, 'resources.limits.memory', memory.max);
     set(deploy, 'resources.reservations.memory', memory.min);
 
-    set(deploy, 'replicas', replicas.min);
+    if (!isGlobal) {
+      set(deploy, 'replicas', replicas.min);
+    }
 
     return deploy;
   }
