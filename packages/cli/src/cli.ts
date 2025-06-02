@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import untildify from 'untildify';
 import * as tsNode from 'ts-node';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -97,10 +96,8 @@ program
           throw new Error('Error: --identity is required when --generate is used');
         }
 
-        const identityPath = path.resolve(untildify(identity));
-
-        if (fs.existsSync(identityPath)) {
-          console.log(`Identity file ${identityPath} already exists. Skipping generation.`);
+        if (fs.existsSync(identity)) {
+          console.log(`Identity file ${identity} already exists. Skipping generation.`);
         } else {
           const passphrase = options.passphrase ? options.passphrase : undefined;
           await generateKey(identity, passphrase);

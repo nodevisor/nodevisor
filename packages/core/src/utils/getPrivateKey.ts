@@ -1,12 +1,12 @@
 import fs from 'node:fs/promises';
 import { type SSHConnectionConfig } from '../connections/SSHConnection';
-import untildify from 'untildify';
+import expandHomeDir from './expandHomeDir';
 
 export default async function getPrivateKey(config: SSHConnectionConfig) {
   if ('privateKeyPath' in config && config.privateKeyPath) {
     const { privateKeyPath, ...rest } = config;
 
-    const privateKey = await fs.readFile(untildify(privateKeyPath), 'utf8');
+    const privateKey = await fs.readFile(expandHomeDir(privateKeyPath), 'utf8');
 
     return privateKey;
   }

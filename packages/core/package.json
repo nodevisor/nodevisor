@@ -34,8 +34,7 @@
     "ssh2": "^1.16.0",
     "ssh2-sftp-client": "^11.0.0",
     "sshpk": "^1.18.0",
-    "tmp": "^0.2.3",
-    "untildify": "^5.0.0"
+    "tmp": "^0.2.3"
   },
   "devDependencies": {
     "@types/debug": "^4.1.12",
