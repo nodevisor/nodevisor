@@ -20,6 +20,9 @@ export default abstract class WebProxy extends DockerService {
     // place web proxy on manager node
     set(deploy, 'placement.constraints', ['node.role == manager']);
 
+    // run on all nodes (limited by placement constraints), if multiple managers are present all of them will run the proxy
+    set(deploy, 'mode', 'global');
+
     return deploy;
   }
 }

@@ -5,6 +5,7 @@ import PortDockerService from './PortDockerService';
 
 type SocatConfig = PartialFor<DockerServiceConfig, 'name'> & {
   version?: string;
+  ip: string;
 };
 
 export default class Socat extends DockerService {
@@ -14,6 +15,7 @@ export default class Socat extends DockerService {
       version = '1.8.0.3',
       name = 'socat',
       image = `alpine/socat:${version}`,
+      ip,
       dependencies = [],
       ...rest
     } = config;
@@ -32,7 +34,13 @@ export default class Socat extends DockerService {
       restart,
       dependencies,
       command: Socat.prepareCommand(dependencies),
-      ports: Socat.getPorts(dependencies),
+      ports: Socat.getPorts(dependencies, ip),
+      deploy: {
+        mode: 'global', // run on all nodes
+        placement: {
+          constraints: ['node.role == manager'],
+        },
+      },
       ...rest,
     });
   }
@@ -46,15 +54,16 @@ export default class Socat extends DockerService {
       .join('; ');
   }
 
-  static getPorts(services: PortDockerService[]) {
+  static getPorts(services: PortDockerService[], ip: string) {
     return services.map((service) => {
       const { port } = service;
       return {
         target: port,
         published: port,
-        ip: '127.0.0.1',
+        ip,
+        mode: 'host',
         protocol: Protocol.TCP,
-      };
+      } as const;
     });
   }
 }

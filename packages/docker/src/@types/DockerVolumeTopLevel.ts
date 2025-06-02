@@ -5,6 +5,7 @@ type DockerVolumeTopLevel = {
   name?: string;
   labels?: Record<string, string>;
   external?: boolean;
+  driver_opts?: Record<string, string>;
 };
 
 export default DockerVolumeTopLevel;

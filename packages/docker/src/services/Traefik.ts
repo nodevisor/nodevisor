@@ -90,6 +90,16 @@ export default class Traefik extends WebProxy {
       });
     }
 
+    // todo for multi master cluster - share one volume for certs - for top level volume
+    /*
+    
+    driver: 'local' 
+    driver_opts:
+      type: "nfs"
+      o: "addr=10.0.0.10,rw"
+      device: ":/export/traefik_acme"
+      */
+
     return volumes;
   }
 
