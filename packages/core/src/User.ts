@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import { type Config as NodeSSHConfig } from 'node-ssh';
-import expandHomeDir from './utils/expandHomeDir';
+import untildify from 'untildify';
 import { cloneDeep } from 'lodash';
 import canReadFile from './utils/canReadFile';
 
@@ -73,7 +73,7 @@ export default class User {
     if ('privateKeyPath' in config && config.privateKeyPath) {
       const { privateKeyPath } = config;
 
-      const privateKeyPathExpanded = expandHomeDir(privateKeyPath);
+      const privateKeyPathExpanded = untildify(privateKeyPath);
       if (!(await canReadFile(privateKeyPathExpanded))) {
         throw new Error(`Cannot read private key file: ${privateKeyPath}`);
       }
@@ -94,13 +94,13 @@ export default class User {
     if ('publicKeyPath' in config && config.publicKeyPath) {
       const { publicKeyPath } = config;
 
-      return await fs.readFile(expandHomeDir(publicKeyPath), 'utf8');
+      return await fs.readFile(untildify(publicKeyPath), 'utf8');
     }
 
     if ('privateKeyPath' in config && config.privateKeyPath) {
       const { privateKeyPath } = config;
 
-      return await fs.readFile(expandHomeDir(`${privateKeyPath}.pub`), 'utf8');
+      return await fs.readFile(untildify(`${privateKeyPath}.pub`), 'utf8');
     }
 
     return undefined;

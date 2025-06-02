@@ -196,6 +196,20 @@ export default class DockerNode extends ClusterNode {
       sshArgs.unshift('-i', tempKeyFile);
     }
 
+    let cleanupCalled = false;
+
+    function cleanup() {
+      if (cleanupCalled) {
+        return;
+      }
+
+      cleanupCalled = true;
+
+      if (tempKeyFile) {
+        $(FS).rm(tempKeyFile);
+      }
+    }
+
     await new Promise(async (resolve, reject) => {
       const ssh = spawn('ssh', sshArgs, {
         stdio: 'inherit',
@@ -203,14 +217,12 @@ export default class DockerNode extends ClusterNode {
       });
 
       // Once SSH process has started, we can safely remove the key file
-      ssh.on('spawn', async () => {
-        if (tempKeyFile) {
-          console.log('SSH process started, removing temp key file', tempKeyFile);
-          await $(FS).rm(tempKeyFile);
-        }
+      ssh.on('messsage', async () => {
+        cleanup();
       });
 
       ssh.on('exit', (code) => {
+        cleanup();
         console.log(`SSH exited with code ${code}`);
 
         if (code !== 0) {
