@@ -160,7 +160,6 @@ describe('Web', () => {
                 memory: '128mb',
               },
             },
-            replicas: 1,
             placement: {
               constraints: ['node.role == manager'],
             },

@@ -89,7 +89,6 @@ describe('Cluster', () => {
           ],
           deploy: {
             mode: 'global',
-            replicas: 1,
             resources: {
               limits: {
                 cpus: '1',
@@ -208,7 +207,6 @@ describe('Cluster', () => {
           ],
           deploy: {
             mode: 'global',
-            replicas: 1,
             resources: {
               limits: {
                 cpus: '1',
@@ -361,7 +359,6 @@ describe('Cluster', () => {
           ],
           deploy: {
             mode: 'global',
-            replicas: 1,
             resources: {
               limits: {
                 cpus: '1',
@@ -538,7 +535,6 @@ describe('Cluster', () => {
           ],
           deploy: {
             mode: 'global',
-            replicas: 1,
             resources: {
               limits: {
                 cpus: '1',
@@ -778,7 +774,6 @@ describe('Cluster', () => {
                 memory: '128mb',
               },
             },
-            replicas: 1,
             placement: {
               constraints: ['node.role == manager'],
             },
