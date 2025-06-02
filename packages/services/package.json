@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/services",
   "description": "Module provides ability to manage services",
-  "version": "0.0.77",
+  "version": "0.0.78",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -24,7 +24,7 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/core": "^0.0.77"
+    "@nodevisor/core": "^0.0.78"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
