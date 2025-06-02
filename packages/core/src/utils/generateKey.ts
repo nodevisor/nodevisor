@@ -1,17 +1,16 @@
 import { generateKeyPairSync } from 'node:crypto';
 import { existsSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
-import path from 'node:path';
 import sshpk from 'sshpk';
+import expandHomeDir from './expandHomeDir';
 
-export default async function generateKey(keyPath: string, passphrase?: string) {
+export default async function generateKey(keyPath: string, passphrase?: string, overwrite = false) {
   if (passphrase?.trim() === '') {
     throw new Error('Passphrase cannot be empty string');
   }
 
-  const expandedPath = keyPath.startsWith('~') ? path.join(homedir(), keyPath.slice(2)) : keyPath;
+  const expandedPath = expandHomeDir(keyPath);
 
-  if (existsSync(expandedPath)) {
+  if (!overwrite && existsSync(expandedPath)) {
     throw new Error(`Key already exists at ${expandedPath}`);
   }
 

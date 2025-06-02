@@ -5,7 +5,7 @@ import * as tsNode from 'ts-node';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as dotenv from 'dotenv';
-import { generateKey } from '@nodevisor/core';
+import { generateKey, expandHomeDir } from '@nodevisor/core';
 
 const program = new Command();
 
@@ -96,11 +96,13 @@ program
           throw new Error('Error: --identity is required when --generate is used');
         }
 
-        if (fs.existsSync(identity)) {
-          console.log(`Identity file ${identity} already exists. Skipping generation.`);
+        const identityPath = expandHomeDir(identity);
+
+        if (fs.existsSync(identityPath)) {
+          console.log(`Identity file ${identityPath} already exists. Skipping generation.`);
         } else {
           const passphrase = options.passphrase ? options.passphrase : undefined;
-          await generateKey(identity, passphrase);
+          await generateKey(identityPath, passphrase);
         }
       }
 
