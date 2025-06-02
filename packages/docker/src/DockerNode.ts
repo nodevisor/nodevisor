@@ -216,14 +216,13 @@ export default class DockerNode extends ClusterNode {
         env: process.env,
       });
 
-      // Once SSH process has started, we can safely remove the key file
-      ssh.on('messsage', async () => {
+      // cleanup when ssh process is started
+      ssh.on('data', function () {
         cleanup();
       });
 
       ssh.on('exit', (code) => {
         cleanup();
-        console.log(`SSH exited with code ${code}`);
 
         if (code !== 0) {
           reject(new Error(`SSH exited with code ${code}`));
