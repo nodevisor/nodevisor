@@ -49,8 +49,8 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
   }
 
   getDependency(service: WebProxy): WebProxyDependency;
-  getDependency(service: DockerService): DockerDependency;
-  getDependency(service: DockerService | WebProxy) {
+  getDependency(service: DockerService | string): DockerDependency;
+  getDependency(service: DockerService | string | WebProxy) {
     return super.getDependency(service);
   }
 
