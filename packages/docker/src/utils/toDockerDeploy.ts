@@ -75,8 +75,10 @@ export default function toDockerDeploy(service: DockerService, type: ClusterType
   // do not set replicas for global mode because it will not run on all workers
   if (mode !== Mode.GLOBAL) {
     const replicas = service.getReplicas();
-    if (replicas.min) {
-      deploy.replicas = replicas.min;
+    if (replicas.initial) {
+      deploy.replicas = replicas.initial;
     }
   }
+
+  return deploy;
 }

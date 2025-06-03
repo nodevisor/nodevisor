@@ -53,6 +53,8 @@ export default class DockerService extends ClusterService {
       registry,
       dependencies = [],
       healthcheck = {},
+      mode,
+      placement,
       ...rest
     } = config;
 
@@ -69,6 +71,8 @@ export default class DockerService extends ClusterService {
       registry,
       context,
       dependencies,
+      mode,
+      placement,
     });
 
     this.config = rest;

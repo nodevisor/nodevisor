@@ -41,8 +41,9 @@ export type ClusterServiceConfig = ClusterServiceBaseConfig & {
   };
   // replicas for auto-scaling based on CPU and memory usage
   replicas?: {
-    min?: number; // default 1
-    max?: number; // default 1
+    min?: number; // default 0
+    max?: number; // default Infinity
+    initial?: number; // initial number of replicas to run
   };
   ports?: PortObject[];
   command?: string;
@@ -75,6 +76,7 @@ export default abstract class ClusterService extends ClusterServiceBase {
   private replicas: {
     min?: number; // default 1
     max?: number; // default 1
+    initial?: number; // initial number of replicas to run
   };
   private ports: PortObject[];
   private command = new CommandBuilder(new ShellConnection()).setShellQuote();
@@ -226,9 +228,21 @@ export default abstract class ClusterService extends ClusterServiceBase {
   getReplicas() {
     const { replicas } = this;
 
-    const { min = 1, max = 1 } = replicas ?? {};
+    const { min = 0, max = Infinity, initial } = replicas ?? {};
+    if (min > max) {
+      throw new Error('min cannot be greater than max');
+    }
 
-    return { min, max };
+    const definedInitial = initial ?? 1;
+    if (min > definedInitial) {
+      throw new Error('initial cannot be less than min');
+    }
+
+    if (definedInitial > max) {
+      throw new Error('initial cannot be greater than max');
+    }
+
+    return { min, max, initial };
   }
 
   getLabels() {
@@ -288,6 +302,10 @@ export default abstract class ClusterService extends ClusterServiceBase {
   }
 
   setReplicas(replicas: ClusterServiceConfig['replicas'] = {}) {
+    if ('initial' in replicas) {
+      this.replicas.initial = replicas.initial;
+    }
+
     if ('min' in replicas) {
       this.replicas.min = replicas.min;
     }

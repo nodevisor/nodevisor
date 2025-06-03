@@ -50,6 +50,7 @@ describe('Web', () => {
     const result = {
       services: {
         web: {
+          restart: 'always',
           networks: {
             test_web_network: {
               priority: 0,
@@ -72,7 +73,6 @@ describe('Web', () => {
                 memory: '128mb',
               },
             },
-            replicas: 1,
           },
           labels: {
             'traefik.enable': 'true',
@@ -98,6 +98,7 @@ describe('Web', () => {
           },
         },
         api: {
+          restart: 'always',
           networks: {
             test_api_network: {
               priority: 0,
@@ -117,7 +118,6 @@ describe('Web', () => {
                 memory: '128mb',
               },
             },
-            replicas: 1,
           },
           labels: {
             'traefik.enable': 'true',
@@ -146,10 +146,10 @@ describe('Web', () => {
               aliases: ['web.example.com', 'api.example.com'],
             },
           },
-          restart: 'unless-stopped',
+          restart: 'always',
           image: 'traefik:3.1.7',
           deploy: {
-            mode: 'global',
+            // mode: 'global',
             resources: {
               limits: {
                 cpus: '1',
@@ -160,9 +160,10 @@ describe('Web', () => {
                 memory: '128mb',
               },
             },
+            /*
             placement: {
               constraints: ['node.role == manager'],
-            },
+            },*/
           },
           command:
             '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',

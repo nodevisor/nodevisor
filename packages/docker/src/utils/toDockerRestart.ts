@@ -15,9 +15,9 @@ export default function toDockerRestart(service: DockerService, type: ClusterTyp
   const condition = typeof restart === 'string' ? restart : restart?.condition;
   const maxAttempts = typeof restart === 'string' ? undefined : restart?.maxAttempts;
 
+  // unless-stopped is not supported for swarm mode - todo allow for compose ?
+
   switch (condition) {
-    case 'any':
-      return 'always';
     case 'on-failure':
       if (maxAttempts) {
         return `on-failure:${maxAttempts}`;

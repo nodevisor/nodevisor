@@ -88,7 +88,7 @@ describe('Cluster', () => {
             },
           ],
           deploy: {
-            mode: 'global',
+            // mode: 'global',
             resources: {
               limits: {
                 cpus: '1',
@@ -99,14 +99,16 @@ describe('Cluster', () => {
                 memory: '128mb',
               },
             },
+            /*
             placement: {
               constraints: ['node.role == manager'],
             },
+            */
           },
           image: 'traefik:3.1.7',
           command:
             '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',
-          restart: 'unless-stopped',
+          restart: 'always',
           healthcheck: {
             interval: '10s',
             retries: 3,
@@ -206,7 +208,7 @@ describe('Cluster', () => {
             },
           ],
           deploy: {
-            mode: 'global',
+            // mode: 'global',
             resources: {
               limits: {
                 cpus: '1',
@@ -217,14 +219,16 @@ describe('Cluster', () => {
                 memory: '128mb',
               },
             },
+            /*
             placement: {
               constraints: ['node.role == manager'],
             },
+            */
           },
           image: 'traefik:3.1.7',
           command:
             '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --entrypoints.websecure.address=:443 --certificatesresolvers.certresolver.acme.tlschallenge=true --certificatesresolvers.certresolver.acme.email=info@test.nodevisor.com --certificatesresolvers.certresolver.acme.storage=/letsencrypt/acme.json',
-          restart: 'unless-stopped',
+          restart: 'always',
           healthcheck: {
             interval: '10s',
             retries: 3,
@@ -267,7 +271,6 @@ describe('Cluster', () => {
             'traefik.http.routers.whoami-https.service': 'whoami',
           },
           deploy: {
-            replicas: 1,
             resources: {
               limits: {
                 cpus: '1',
@@ -279,6 +282,7 @@ describe('Cluster', () => {
               },
             },
           },
+          restart: 'always',
           depends_on: {
             traefik: { condition: 'service_started' },
           },
@@ -412,7 +416,6 @@ describe('Cluster', () => {
           },
           depends_on: ['redis', 'traefik'],
           deploy: {
-            replicas: 1,
             resources: {
               limits: {
                 cpus: '1',
@@ -433,7 +436,6 @@ describe('Cluster', () => {
         redis: {
           command: 'redis-server',
           deploy: {
-            replicas: 1,
             resources: {
               limits: {
                 cpus: '1',
@@ -534,7 +536,7 @@ describe('Cluster', () => {
             },
           ],
           deploy: {
-            mode: 'global',
+            // mode: 'global',
             resources: {
               limits: {
                 cpus: '1',
@@ -545,15 +547,17 @@ describe('Cluster', () => {
                 memory: '128mb',
               },
             },
+            /*
             placement: {
               constraints: ['node.role == manager'],
             },
+            */
           },
 
           image: 'traefik:3.1.7',
           command:
             '--providers.docker=true --providers.swarm=false --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080',
-          restart: 'unless-stopped',
+          restart: 'always',
           healthcheck: {
             interval: '10s',
             retries: 3,
@@ -589,8 +593,8 @@ describe('Cluster', () => {
             },
             traefik: { condition: 'service_started' },
           },
+          restart: 'always',
           deploy: {
-            replicas: 1,
             resources: {
               limits: {
                 cpus: '1',
@@ -615,7 +619,6 @@ describe('Cluster', () => {
         redis: {
           command: 'redis-server',
           deploy: {
-            replicas: 1,
             resources: {
               limits: {
                 cpus: '1',
@@ -640,7 +643,7 @@ describe('Cluster', () => {
             test: 'redis-cli ping | grep PONG',
             timeout: '2s',
           },
-          restart: 'unless-stopped',
+          restart: 'always',
           volumes: [
             {
               source: 'test_redis_data_volume',
@@ -717,7 +720,6 @@ describe('Cluster', () => {
         redis: {
           command: 'redis-server',
           deploy: {
-            replicas: 1,
             resources: {
               limits: {
                 cpus: '1',
@@ -841,7 +843,6 @@ describe('Cluster', () => {
                 memory: '128mb',
               },
             },
-            replicas: 1,
           },
           labels: {
             'traefik.enable': 'true',
@@ -871,7 +872,6 @@ describe('Cluster', () => {
                 memory: '128mb',
               },
             },
-            replicas: 1,
           },
           healthcheck: {
             interval: '10s',
