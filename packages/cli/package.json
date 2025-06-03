@@ -2,12 +2,12 @@
   "name": "@nodevisor/cli",
   "description": "Module provides CLI for Nodevisor",
   "version": "0.0.80",
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
+  "main": "dist/cjs/src/index.js",
+  "module": "dist/esm/src/index.js",
   "bin": {
-    "nv": "./dist/cjs/cli.js",
-    "nodevisor": "./dist/cjs/cli.js",
-    "nodevisor-cli": "./dist/cjs/cli.js"
+    "nv": "./dist/cjs/src/cli.js",
+    "nodevisor": "./dist/cjs/src/cli.js",
+    "nodevisor-cli": "./dist/cjs/src/cli.js"
   },
   "publishConfig": {
     "access": "public",
