@@ -11,6 +11,7 @@ import DockerSwarm from './DockerSwarm';
 import type Registry from '@nodevisor/registry';
 import DockerStack from './DockerStack';
 import fs from 'node:fs/promises';
+import DockerService from './DockerService';
 
 const log = baseLog.extend('DockerNode');
 const logDeploy = log.extend('deploy');
@@ -90,6 +91,32 @@ export default class DockerNode extends ClusterNode {
     const $con = this.$(runner);
 
     await DockerNode.deployToConnection($con, name, yaml, type);
+  }
+
+  async run(
+    service: DockerService,
+    name: string,
+    runner: ClusterUser,
+    manager: DockerNode,
+    options: {},
+  ) {
+    const isManager = this.isEqual(manager);
+    if (!isManager) {
+      return;
+    }
+
+    const profiles = service.getProfiles();
+
+    const $con = this.$(runner);
+    const dockerCompose = await $con(DockerCompose);
+    const result = await dockerCompose.run(service.name, {
+      rm: true,
+      pull: 'always',
+      detach: true,
+      profile: profiles,
+    });
+
+    logDeploy('deploy result', result);
   }
 
   async setup(

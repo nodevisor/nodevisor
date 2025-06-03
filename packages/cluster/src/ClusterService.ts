@@ -15,15 +15,20 @@ import uniqDependencies from './utils/uniqDependencies';
 import ClusterContext from './ClusterContext';
 import type Volume from './@types/Volume';
 import type ClusterType from './constants/ClusterType';
+import type Restart from './@types/Restart';
+import type Placement from './@types/Placement';
+import Mode from './constants/Mode';
 
 export type ClusterServiceConfig = ClusterServiceBaseConfig & {
   image?: string; // Format: 'name:tag' (e.g. 'myapp:1.0.0')
   context?: string;
   registry?: Registry;
   builder?: Builder;
-
+  mode?: Mode;
+  placement?: Placement;
   dependencies?: Array<ClusterService | PartialFor<Dependency, 'cluster'>>;
   labels?: Labels;
+  profiles?: string[];
   environment?: Environment;
   cpus?: {
     min?: string | number; // default 1, e.g., '0.5' (50% of a CPU)
@@ -41,6 +46,7 @@ export type ClusterServiceConfig = ClusterServiceBaseConfig & {
   };
   ports?: PortObject[];
   command?: string;
+  restart?: Restart;
 };
 
 export default abstract class ClusterService extends ClusterServiceBase {
@@ -48,10 +54,14 @@ export default abstract class ClusterService extends ClusterServiceBase {
   readonly context?: string;
   readonly registry?: Registry;
   readonly builder?: Builder;
+  private mode: Mode;
+  private placement?: Placement;
 
   private dependencies: PartialFor<Dependency, 'cluster'>[] = [];
   private labels: Labels;
+  private profiles: string[];
   private environment: Environment;
+  private restart?: Restart;
   private cpus: {
     min?: string | number; // default 1, e.g., '0.5' (50% of a CPU)
     max?: string | number; // default 1
@@ -77,12 +87,16 @@ export default abstract class ClusterService extends ClusterServiceBase {
       builder,
       labels = {},
       environment = {},
+      profiles = [],
       cpus = {},
       memory = {},
       replicas = {},
       ports = [],
       dependencies = [],
+      restart,
       command,
+      mode = Mode.REPLICATED,
+      placement,
       ...baseConfig
     } = config;
 
@@ -92,12 +106,16 @@ export default abstract class ClusterService extends ClusterServiceBase {
     this.context = context;
     this.registry = registry;
     this.builder = builder;
+    this.mode = mode;
+    this.placement = placement;
     this.labels = labels;
+    this.profiles = profiles;
     this.environment = environment;
     this.cpus = cpus;
     this.memory = memory;
     this.replicas = replicas;
     this.ports = ports;
+    this.restart = restart;
 
     if (command) {
       this.command.append`${raw(command)}`;
@@ -164,6 +182,18 @@ export default abstract class ClusterService extends ClusterServiceBase {
     return uniqDependencies(dependencies);
   }
 
+  getMode() {
+    return this.mode;
+  }
+
+  getPlacement() {
+    return this.placement;
+  }
+
+  getRestart() {
+    return this.restart;
+  }
+
   getPorts() {
     return this.ports.map((port) => ({ ...port }));
   }
@@ -205,6 +235,15 @@ export default abstract class ClusterService extends ClusterServiceBase {
     return {
       ...this.labels,
     };
+  }
+
+  getProfiles() {
+    return this.profiles;
+  }
+
+  hasProfiles() {
+    const profiles = this.getProfiles();
+    return !!profiles.length;
   }
 
   hasLabels() {
@@ -362,7 +401,11 @@ export default abstract class ClusterService extends ClusterServiceBase {
       image: this.image,
       environment: this.getEnvironments(),
       labels: this.getLabels(),
+      profiles: this.getProfiles(),
       ports: this.getPorts(),
+      restart: this.getRestart(),
+      mode: this.getMode(),
+      placement: this.getPlacement(),
       cpus: {
         ...this.cpus,
       },

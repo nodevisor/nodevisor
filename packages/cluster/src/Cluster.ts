@@ -97,12 +97,13 @@ export default abstract class Cluster<
     return uniqDependencies(dependencies);
   }
 
-  getDependency(service: TClusterService) {
+  getDependency(service: TClusterService | string) {
+    const serviceName = typeof service === 'string' ? service : service.name;
     const dependencies = this.getDependencies(false, true);
 
-    const dependency = dependencies.find((dependency) => dependency.service === service);
+    const dependency = dependencies.find((dependency) => dependency.service.name === serviceName);
     if (!dependency) {
-      throw new Error(`Dependency ${service.name} not found in cluster ${this.name}`);
+      throw new Error(`Dependency ${serviceName} not found in cluster ${this.name}`);
     }
 
     return dependency;
@@ -133,11 +134,30 @@ export default abstract class Cluster<
   }
 
   async build(
-    options: { registry?: Registry; context?: string; push?: boolean; load?: boolean } = {},
+    options: {
+      services?: ClusterService[];
+      registry?: Registry;
+      context?: string;
+      push?: boolean;
+      load?: boolean;
+    } = {},
   ) {
-    const { registry = this.registry, context = this.context, ...restOptions } = options;
+    const {
+      services = [],
+      registry = this.registry,
+      context = this.context,
+      ...restOptions
+    } = options;
 
-    const dependencies = this.getDependencies(false, true);
+    const serviceNames = services.map((service) => service.name);
+
+    const dependencies = this.getDependencies(false, true).filter((dep) => {
+      if (!services.length) {
+        return true;
+      }
+
+      return serviceNames.includes(dep.service.name);
+    });
 
     /*
     ~/.docker/config.json
@@ -184,13 +204,17 @@ export default abstract class Cluster<
     await node.deploy(this.name, runner, manager, options);
   }
 
-  async deploy<TDeployOptions extends { skipBuild?: boolean; registry?: Registry }>(
-    options: TDeployOptions,
-  ) {
-    const { skipBuild = false, registry = this.registry, ...restOptions } = options;
+  async deploy<
+    TDeployOptions extends {
+      skipBuild?: boolean;
+      services?: ClusterService[];
+      registry?: Registry;
+    },
+  >(options: TDeployOptions) {
+    const { skipBuild = false, registry = this.registry, services, ...restOptions } = options;
 
     if (!skipBuild) {
-      await this.build({ registry, push: true, load: false });
+      await this.build({ registry, push: true, load: false, services });
     }
 
     const { nodes, users } = this;
@@ -265,6 +289,49 @@ export default abstract class Cluster<
     await this.setupNode(manager, admin, runnerUser, manager);
 
     await Promise.all(workers.map((worker) => this.setupNode(worker, admin, runnerUser, manager)));
+  }
+
+  async runNode<TOptions extends {}>(
+    service: ClusterService,
+    node: TClusterNode,
+    runner: ClusterUser,
+    manager: TClusterNode,
+    options?: TOptions,
+  ) {
+    await node.run(service, this.name, runner, manager, options);
+  }
+
+  async run(service: ClusterService, options: { skipBuild?: boolean; registry?: Registry }) {
+    const { skipBuild = false, registry = this.registry } = options;
+
+    if (!skipBuild) {
+      await this.build({ registry, push: true, load: false, services: [service] });
+    }
+
+    const { nodes, users } = this;
+
+    const [admin, runner] = users;
+    if (!admin) {
+      throw new Error('Admin user is required for cluster setup');
+    }
+
+    const runnerUser = runner ?? this.toRunner(admin);
+
+    const [manager, ...workers] = nodes;
+    if (!manager) {
+      throw new Error('Manager node is required for cluster setup');
+    }
+
+    // authentificate registries
+    const registries = this.getRegistries(registry);
+    await Promise.all(
+      nodes.map((node) => node.authenticateRegistries(runnerUser, registries, manager)),
+    );
+
+    // primary node must be setup first, because other nodes will use it as a source of truth
+    await this.runNode(service, manager, runnerUser, manager);
+
+    await Promise.all(workers.map((worker) => this.runNode(service, worker, runnerUser, manager)));
   }
 
   toObject() {

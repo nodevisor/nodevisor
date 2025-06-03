@@ -4,6 +4,7 @@
   "exclude": ["src/**/*.spec.ts"],
   "compilerOptions": {
     "module": "ESNext",
-    "outDir": "dist/esm"
+    "outDir": "dist/esm",
+    "resolveJsonModule": true
   }
 }

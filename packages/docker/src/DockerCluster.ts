@@ -182,13 +182,26 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     return volumes;
   }
 
-  getComposeServices(type: ClusterType = ClusterType.DOCKER_SWARM) {
+  getComposeServices(type: ClusterType = ClusterType.DOCKER_SWARM, profiles: string[] = []) {
     const services: Record<string, DockerComposeServiceConfig> = {};
 
     const dependencies = this.getDependencies(false, true);
 
     dependencies.forEach((dependency) => {
       const { service, cluster } = dependency;
+
+      const serviceProfiles = service.getProfiles();
+      if (
+        profiles.length &&
+        serviceProfiles.length &&
+        !serviceProfiles.some((profile) => profiles.includes(profile))
+      ) {
+        // if profiles are provided, skip services without profiles
+        return;
+      } else if (!profiles.length && serviceProfiles.length) {
+        // if no profiles are provided, skip services with profiles
+        return;
+      }
 
       const { networks = {}, ...serviceCompose } = service.toCompose(cluster, type);
 
@@ -239,13 +252,14 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
       skipBuild?: boolean;
       registry?: Registry;
       type?: ClusterType;
+      profiles?: string[];
     } = {},
   ) {
-    const { type, ...restOptions } = options;
+    const { type, profiles, ...restOptions } = options;
 
     await super.deploy({
       ...restOptions,
-      yaml: this.yaml({ type }),
+      yaml: this.yaml({ type, profiles }),
     });
   }
 
@@ -268,13 +282,13 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     await node.setup(admin, runner, manager, options);
   }
 
-  toCompose(options: { type?: ClusterType } = {}): DockerComposeConfig {
-    const { type = this.type } = options;
+  toCompose(options: { type?: ClusterType; profiles?: string[] } = {}): DockerComposeConfig {
+    const { type = this.type, profiles } = options;
     const { name /* version */ } = this;
 
     const compose: DockerComposeConfig = {
       // version: version.toString(),
-      services: this.getComposeServices(type),
+      services: this.getComposeServices(type, profiles),
       volumes: this.getComposeVolumes(),
       networks: this.getComposeNetworks(type),
     };
@@ -287,7 +301,7 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     return compose;
   }
 
-  yaml(options: { type?: ClusterType } = {}) {
+  yaml(options: { type?: ClusterType; profiles?: string[] } = {}) {
     const compose = this.toCompose(options);
 
     return YAML.stringify(compose);
@@ -305,26 +319,5 @@ export default class DockerCluster extends Cluster<DockerService, DockerNode> {
     }
 
     await firstNode.connect(runner, options);
-    /*
-    const $con = firstNode.getConnection(runner);
-
-    const shell = await $con.nodevisor.connection.;
-/*
-    // Handle stdin/stdout/stderr
-    process.stdin.pipe(shell);
-    shell.pipe(process.stdout);
-    shell.stderr.pipe(process.stderr);
-
-    // Handle process termination
-    process.on('SIGINT', () => {
-      shell.end();
-      process.exit(0);
-    });
-
-    // Keep the process alive until shell is closed
-    await new Promise((resolve) => {
-      shell.on('close', resolve);
-    });
-    */
   }
 }

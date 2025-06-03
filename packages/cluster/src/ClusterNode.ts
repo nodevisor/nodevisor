@@ -7,6 +7,7 @@ import UFW from '@nodevisor/ufw';
 import Users from '@nodevisor/users';
 import Auth from '@nodevisor/auth';
 import $, { User } from '@nodevisor/core';
+import type ClusterService from './ClusterService';
 
 export type ClusterNodeConfig = {
   host: string;
@@ -27,6 +28,14 @@ export default abstract class ClusterNode {
   }
 
   abstract deploy(name: string, runner: User, manager: ClusterNode, options?: {}): Promise<void>;
+
+  abstract run(
+    service: ClusterService,
+    name: string,
+    runner: User,
+    manager: ClusterNode,
+    options?: {},
+  ): Promise<void>;
 
   // prepare node for deployment and secure it
   async setup(admin: User, runner: User, _manager: ClusterNode, _options?: {}) {

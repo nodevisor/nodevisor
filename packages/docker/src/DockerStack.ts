@@ -85,4 +85,24 @@ export default class DockerStack extends Module {
       .argument(stackName, null)
       .text();
   }
+
+  async ps(
+    stackName: string,
+    options: { format?: 'table' | 'json' | string; noTrunc?: boolean } = {},
+  ) {
+    const { format = 'json', noTrunc = true } = options;
+
+    const cb = this.command('ps')
+      .argument({
+        '--format': format,
+        '--no-trunc': noTrunc,
+      })
+      .argument(stackName, null);
+
+    if (format === 'json') {
+      return cb.json();
+    }
+
+    return cb.text();
+  }
 }

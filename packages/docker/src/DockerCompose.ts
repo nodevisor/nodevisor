@@ -55,4 +55,26 @@ export default class DockerCompose extends Module {
       })
       .text();
   }
+
+  // https://docs.docker.com/reference/cli/docker/compose/run/
+  async run(
+    service: string,
+    options: {
+      rm?: boolean;
+      pull?: 'always' | 'missing' | 'never';
+      detach?: boolean;
+      profile?: string[];
+    },
+  ) {
+    const { rm = true, pull = 'always', detach = true, profile } = options;
+
+    const cb = this.composeCommand('run')
+      .argument({
+        '--rm': rm,
+        '--pull': pull,
+        '--profile': profile,
+      })
+      .argument(service, null)
+      .text();
+  }
 }

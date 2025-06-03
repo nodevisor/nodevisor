@@ -8,6 +8,16 @@ class TestClusterNode extends ClusterNode {
   deploy(name: string, runner: User, manager: ClusterNode, options?: {}): Promise<void> {
     return Promise.resolve();
   }
+
+  run(
+    service: ClusterService,
+    name: string,
+    runner: User,
+    manager: ClusterNode,
+    options?: {},
+  ): Promise<void> {
+    return Promise.resolve();
+  }
 }
 
 // Mock implementations

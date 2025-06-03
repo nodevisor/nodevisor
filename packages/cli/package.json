@@ -22,7 +22,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "prettier": "prettier --write src/**/*.ts test/**/*.ts",
-    "build": "npm run clean && npm run build:esm && npm run build:cjs && npm run chmod:cli",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs",
     "build:esm": "tsc -p tsconfig.json",
     "build:cjs": "tsc -p tsconfig-cjs.json",
     "test": "jest --passWithNoTests",

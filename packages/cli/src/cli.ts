@@ -3,9 +3,9 @@
 import { Command } from 'commander';
 import * as tsNode from 'ts-node';
 import * as fs from 'node:fs';
-import * as path from 'node:path';
-import * as dotenv from 'dotenv';
 import { generateKey, expandHomeDir } from '@nodevisor/core';
+import { version } from '../package.json';
+import getCluster from './utils/getCluster';
 
 const program = new Command();
 
@@ -19,77 +19,21 @@ tsNode.register({
   },
 });
 
-function loadEnvFile(envPath: string): Record<string, string> {
-  if (fs.existsSync(envPath)) {
-    const result = dotenv.config({ path: envPath });
-    if (result.error) {
-      throw new Error(`Error loading .env file from ${envPath}: ${result.error}`);
-    }
-
-    return result.parsed || {};
-  } else {
-    return {};
-  }
-}
-
 // CLI configuration
 program
-  .version('0.1.0')
+  .name('nodevisor-cli')
   .description('Nodevisor CLI to automate server setup')
-  .argument('<file>', 'TypeScript file to execute')
-  .option('-e, --env <path>', 'Path to .env file')
-  .option('-d, --deploy', 'Deploy cluster')
-  .option('-s, --setup', 'Setup cluster')
-  .option('-l, --deploy-local', 'Deploy cluster to local docker daemon')
-  .option('-c, --connect', 'Connect to cluster')
-  .option('-f, --forward', 'Forward all ports to local machine')
-  .option('-p, --passphrase <passphrase>', 'Passphrase for private key')
+  .version(version);
+
+program
+  .command('setup')
+  .description('Setup and secure your servers and install depedencies')
+  .argument('<file>', 'Your cluster definition')
   .option('-g, --generate-keys', 'Generate new SSH keys')
   .option('-i, --identity <path>', 'Path to SSH key', '~/.ssh/nodevisor_id_ed25519')
-  .option('-b, --skip-build', 'Skip build step')
+  .option('-p, --passphrase <passphrase>', 'Passphrase for private key')
   .action(async (file, options) => {
     try {
-      // Validate that forward option is only used with connect option
-      if (options.forward && !options.connect) {
-        throw new Error('Error: The --forward option can only be used with --connect option');
-      }
-
-      let filePath = path.resolve(file);
-      const hasDirectorySeparator = file.includes(path.sep);
-
-      // try to use file from ./.nodevisor/ directory
-      if (!path.isAbsolute(file) && !hasDirectorySeparator) {
-        const nodevisorDir = path.resolve('.nodevisor');
-        const nodevisorFilePath = path.join(nodevisorDir, file);
-
-        // Check if .nodevisor directory exists and file is inside it
-        if (fs.existsSync(nodevisorDir) && fs.existsSync(nodevisorFilePath)) {
-          filePath = nodevisorFilePath; // Use the file from .nodevisor directory
-        }
-      }
-
-      if (!fs.existsSync(filePath)) {
-        throw new Error(`Error: File ${filePath} not found.`);
-      }
-
-      // load env variables
-      let envVars: Record<string, string> = {};
-      if (options.env) {
-        // Load from the specified --env path
-        envVars = loadEnvFile(path.resolve(options.env));
-      } else {
-        // Automatically load .env from the same directory as the TypeScript file
-        const envPath = path.join(path.dirname(filePath), '.env');
-        envVars = loadEnvFile(envPath);
-      }
-
-      // run typescript code
-      const module = require(filePath);
-      const { default: fn, schema } = module;
-
-      const parsed = schema ? schema.parse(envVars) : envVars;
-      const result = await fn(parsed);
-
       if (options.generateKeys) {
         const { identity } = options;
         if (!identity) {
@@ -106,27 +50,81 @@ program
         }
       }
 
-      if (options.deploy) {
-        await result.deploy({
-          skipBuild: options.skipBuild || false,
+      const cluster = await getCluster(file);
+      await cluster.setup();
+      process.exit(0);
+    } catch (error: unknown) {
+      console.error(`Error while executing ${file}:`, (error as Error).message);
+      console.error((error as Error).stack);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('deploy')
+  .description('Deploy cluster')
+  .argument('<file>', 'Your cluster definition')
+  .option('--no-build', 'Skip build step')
+  .option('-l, --local', 'Deploy cluster to local docker daemon')
+  .option('-s, --service <service...>', 'Services to deploy')
+  .action(async (file, options) => {
+    try {
+      const cluster = await getCluster(file);
+
+      if (options.local) {
+        await cluster.deployLocal({
+          services: options.service,
+          skipBuild: !options.build,
+        });
+      } else {
+        await cluster.deploy({
+          services: options.service,
+          skipBuild: !options.build,
         });
       }
 
-      if (options.deployLocal) {
-        await result.deployLocal({
-          skipBuild: options.skipBuild || false,
-        });
-      }
+      process.exit(0);
+    } catch (error: unknown) {
+      console.error(`Error while executing ${file}:`, (error as Error).message);
+      console.error((error as Error).stack);
+      process.exit(1);
+    }
+  });
 
-      if (options.setup) {
-        await result.setup();
-      }
+program
+  .command('connect')
+  .description('Connect to master node and forward ports to local machine')
+  .argument('<file>', 'Your cluster definition')
+  .option('-f, --forward', 'Forward all ports to local machine')
+  .action(async (file, options) => {
+    try {
+      const cluster = await getCluster(file);
 
-      if (options.connect) {
-        await result.connect({
-          forward: options.forward || false,
-        });
-      }
+      await cluster.connect({
+        forward: options.forward || false,
+      });
+      process.exit(0);
+    } catch (error: unknown) {
+      console.error(`Error while executing ${file}:`, (error as Error).message);
+      console.error((error as Error).stack);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('run')
+  .description('Run service')
+  .argument('<file>', 'Your cluster definition')
+  .option('-s, --service <service...>', 'Services to run')
+  .option('--no-build', 'Skip build step')
+  .action(async (file, options) => {
+    try {
+      const cluster = await getCluster(file);
+
+      await cluster.run({
+        services: options.service,
+        skipBuild: !options.build,
+      });
 
       process.exit(0);
     } catch (error: unknown) {

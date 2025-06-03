@@ -7,6 +7,8 @@ type NodeConfig = Omit<DockerServiceConfig, 'builder'> & {
   appDir?: string;
   tags?: string[];
   artifacts?: Artifact[];
+  buildCommand?: string;
+  startCommand?: string;
 };
 
 export default class Express extends DockerService {
@@ -15,10 +17,14 @@ export default class Express extends DockerService {
       appDir,
       tags,
       artifacts,
+      buildCommand,
+      startCommand,
       builder = new NodeBuilder({
         tags,
         appDir,
         artifacts,
+        buildCommand,
+        startCommand,
       }),
       ...rest
     } = config;

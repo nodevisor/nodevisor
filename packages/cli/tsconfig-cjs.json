@@ -4,6 +4,7 @@
   "exclude": ["src/**/*.spec.ts"],
   "compilerOptions": {
     "module": "CommonJS",
-    "outDir": "dist/cjs"
+    "outDir": "dist/cjs",
+    "resolveJsonModule": true
   }
 }

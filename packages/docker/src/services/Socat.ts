@@ -1,8 +1,7 @@
-import { type PartialFor } from '@nodevisor/cluster';
+import { Mode, PlacementType, type PartialFor } from '@nodevisor/cluster';
 import DockerService, { type DockerServiceConfig } from '../DockerService';
 import { Protocol } from '@nodevisor/endpoint';
 import PortDockerService from './PortDockerService';
-import Constraints from '../constants/Constraints';
 
 type SocatConfig = PartialFor<DockerServiceConfig, 'name'> & {
   version?: string;
@@ -30,18 +29,14 @@ export default class Socat extends DockerService {
     }
 
     super({
+      mode: Mode.GLOBAL,
+      placement: PlacementType.MANAGER,
       name,
       image,
       restart,
       dependencies,
       command: Socat.prepareCommand(dependencies),
       ports: Socat.getPorts(dependencies, ip),
-      deploy: {
-        mode: 'global', // run on all nodes
-        placement: {
-          constraints: [Constraints.NODE_ROLE_MANAGER],
-        },
-      },
       ...rest,
     });
   }

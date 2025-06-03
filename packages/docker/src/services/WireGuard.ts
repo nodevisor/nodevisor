@@ -1,8 +1,7 @@
-import { type PartialFor } from '@nodevisor/cluster';
+import { Mode, PlacementType } from '@nodevisor/cluster';
 import DockerService, { type DockerServiceConfig } from '../DockerService';
 import { Protocol } from '@nodevisor/endpoint';
 import type PortDockerService from './PortDockerService';
-import Constraints from '../constants/Constraints';
 
 type WireGuardConfig = Omit<DockerServiceConfig, 'dependencies'> & {
   version?: string;
@@ -37,6 +36,8 @@ export default class WireGuard extends DockerService {
     } = config;
 
     super({
+      mode: Mode.GLOBAL,
+      placement: PlacementType.MANAGER,
       name,
       image,
       restart,
@@ -51,12 +52,6 @@ export default class WireGuard extends DockerService {
           protocol: Protocol.UDP,
         },
       ],
-      deploy: {
-        mode: 'global',
-        placement: {
-          constraints: [Constraints.NODE_ROLE_MANAGER],
-        },
-      },
       ...rest,
     });
 

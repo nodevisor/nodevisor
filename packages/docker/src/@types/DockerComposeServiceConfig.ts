@@ -17,10 +17,12 @@ type DockerComposeServiceConfig = {
   volumes?: DockerVolume[];
   networks?: Record<string, DockerNetwork>;
   ports?: Port[];
+  // restart is only for compose
   restart?: 'no' | 'always' | 'unless-stopped' | 'on-failure' | `on-failure:${number}`;
   depends_on?: Record<string, Omit<DockerDependsOn, 'service'>> | string[]; // swarm has list only
   healthcheck?: DockerHealthcheckConfig;
   extra_hosts?: Record<string, string>;
+  // deploy is only for swarm
   deploy?: {
     mode?: 'global' | 'replicated';
     replicas?: number;

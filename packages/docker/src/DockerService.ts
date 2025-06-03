@@ -1,4 +1,3 @@
-import { set } from 'lodash';
 import {
   ClusterService,
   type ClusterServiceConfig,
@@ -16,6 +15,8 @@ import type ServiceVolume from './@types/ServiceVolume';
 import toDockerVolumes from './utils/toDockerVolumes';
 import type DockerHealthcheckConfig from './@types/DockerHealthcheckConfig';
 import DockerHealthcheck from './DockerHealthcheck';
+import toDockerRestart from './utils/toDockerRestart';
+import toDockerDeploy from './utils/toDockerDeploy';
 
 type PartialDockerComposeServiceConfig = Omit<
   DockerComposeServiceConfig,
@@ -129,30 +130,6 @@ export default class DockerService extends ClusterService {
     return {};
   }
 
-  getDeploy(): Exclude<DockerComposeServiceConfig['deploy'], undefined> {
-    const cpus = this.getCpus();
-    const memory = this.getMemory();
-    const replicas = this.getReplicas();
-
-    const deploy: DockerComposeServiceConfig['deploy'] = {
-      ...this.config.deploy,
-    };
-
-    const isGlobal = deploy.mode === 'global';
-
-    set(deploy, 'resources.limits.cpus', cpus.max.toString());
-    set(deploy, 'resources.reservations.cpus', cpus.min.toString());
-
-    set(deploy, 'resources.limits.memory', memory.max);
-    set(deploy, 'resources.reservations.memory', memory.min);
-
-    if (!isGlobal) {
-      set(deploy, 'replicas', replicas.min);
-    }
-
-    return deploy;
-  }
-
   toCompose(cluster: ClusterBase, type: ClusterType): DockerComposeServiceConfig {
     const { image } = this;
 
@@ -160,8 +137,13 @@ export default class DockerService extends ClusterService {
       const data: DockerComposeServiceConfig = {
         ...this.config,
         image,
-        deploy: this.getDeploy(),
+        deploy: toDockerDeploy(this, type),
       };
+
+      // only compose supports restart
+      if (type === ClusterType.DOCKER_COMPOSE) {
+        data.restart = toDockerRestart(this, type);
+      }
 
       if (this.hasCommand()) {
         data.command = this.getCommand().toString();
