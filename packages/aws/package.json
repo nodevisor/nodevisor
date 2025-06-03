@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/aws",
   "description": "Module provides ability to manage AWS resources",
-  "version": "0.0.80",
+  "version": "0.0.81",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -24,11 +24,11 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/core": "^0.0.80",
-    "@nodevisor/fs": "^0.0.80",
-    "@nodevisor/os": "^0.0.80",
-    "@nodevisor/packages": "^0.0.80",
-    "@nodevisor/registry": "^0.0.80"
+    "@nodevisor/core": "^0.0.81",
+    "@nodevisor/fs": "^0.0.81",
+    "@nodevisor/os": "^0.0.81",
+    "@nodevisor/packages": "^0.0.81",
+    "@nodevisor/registry": "^0.0.81"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
