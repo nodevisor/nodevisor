@@ -42,7 +42,6 @@ export default class Traefik extends WebProxy {
       name = 'traefik',
       version = '3.1.7',
       image = `traefik:${version}`,
-      restart = 'unless-stopped',
       dashboard,
       dockerUnixSocket = '/var/run/docker.sock',
       ...rest
@@ -51,7 +50,6 @@ export default class Traefik extends WebProxy {
     super({
       name,
       image,
-      restart,
       ...rest,
     });
 

@@ -11,7 +11,7 @@ type NodeConfig = Omit<DockerServiceConfig, 'builder'> & {
   startCommand?: string;
 };
 
-export default class Express extends DockerService {
+export default class Node extends DockerService {
   constructor(config: NodeConfig) {
     const {
       appDir,

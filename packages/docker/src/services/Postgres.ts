@@ -24,7 +24,6 @@ export default class Postgres extends PortDockerService {
       username,
       database,
       volume,
-      restart = 'unless-stopped',
       version = '17.5',
       name = 'postgres',
       image = `postgres:${version}`,
@@ -35,7 +34,6 @@ export default class Postgres extends PortDockerService {
       port,
       name,
       image,
-      restart,
       ...rest,
     });
 

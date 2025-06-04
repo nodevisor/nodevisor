@@ -23,7 +23,6 @@ export default class WireGuard extends DockerService {
 
   constructor(config: WireGuardConfig) {
     const {
-      restart = 'unless-stopped',
       version = '1.0.20210914',
       name = 'wireguard',
       image = `linuxserver/wireguard:${version}`,
@@ -40,7 +39,6 @@ export default class WireGuard extends DockerService {
       placement: PlacementType.MANAGER,
       name,
       image,
-      restart,
       // send only services for correct network access
       dependencies: dependencies.map((dep) => dep.service),
       ports: [

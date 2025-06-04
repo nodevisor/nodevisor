@@ -11,7 +11,6 @@ type SocatConfig = PartialFor<DockerServiceConfig, 'name'> & {
 export default class Socat extends DockerService {
   constructor(config: SocatConfig) {
     const {
-      restart = 'unless-stopped',
       version = '1.8.0.3',
       name = 'socat',
       image = `alpine/socat:${version}`,
@@ -33,7 +32,6 @@ export default class Socat extends DockerService {
       placement: PlacementType.MANAGER,
       name,
       image,
-      restart,
       dependencies,
       command: Socat.prepareCommand(dependencies),
       ports: Socat.getPorts(dependencies, ip),

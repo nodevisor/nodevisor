@@ -385,7 +385,6 @@ describe('Cluster', () => {
           },
           command:
             '--providers.docker=true --providers.swarm=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --providers.docker.network=test_traefik_network --ping=true --ping.entryPoint=traefik --entrypoints.traefik.address=:8080 --api.dashboard=true --api.insecure=true',
-          restart: 'unless-stopped',
           healthcheck: {
             interval: '10s',
             retries: 3,
@@ -458,7 +457,6 @@ describe('Cluster', () => {
             test: 'redis-cli ping | grep PONG',
             timeout: '2s',
           },
-          restart: 'unless-stopped',
           volumes: [
             {
               source: 'test_redis_data_volume',
@@ -742,7 +740,6 @@ describe('Cluster', () => {
             test: 'redis-cli ping | grep PONG',
             timeout: '2s',
           },
-          restart: 'unless-stopped',
           volumes: [
             {
               source: 'nodevisor_redis_data_volume',
@@ -755,7 +752,6 @@ describe('Cluster', () => {
           networks: {
             nodevisor_traefik_network: {},
           },
-          restart: 'unless-stopped',
           healthcheck: {
             interval: '10s',
             retries: 3,
@@ -859,7 +855,6 @@ describe('Cluster', () => {
           networks: {
             app_redis_network: {},
           },
-          restart: 'unless-stopped',
           image: 'redis:8.0.2',
           deploy: {
             resources: {

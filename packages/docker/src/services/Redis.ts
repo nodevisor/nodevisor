@@ -38,7 +38,6 @@ export default class Redis extends PortDockerService {
       maxmemory,
       maxmemoryPolicy,
       volume,
-      restart = 'unless-stopped',
       name = 'redis',
       version = '8.0.2',
       image = `redis:${version}`,
@@ -49,7 +48,6 @@ export default class Redis extends PortDockerService {
       port,
       name,
       image,
-      restart,
       ...rest,
     });
 

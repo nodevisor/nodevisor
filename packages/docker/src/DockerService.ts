@@ -20,7 +20,7 @@ import toDockerDeploy from './utils/toDockerDeploy';
 
 type PartialDockerComposeServiceConfig = Omit<
   DockerComposeServiceConfig,
-  'image' | 'labels' | 'ports' | 'environment' | 'deploy' | 'networks' | 'volumes'
+  'image' | 'labels' | 'ports' | 'environment' | 'deploy' | 'networks' | 'volumes' | 'restart'
 > & {
   deploy?: Omit<DockerComposeServiceConfig['deploy'], 'resources' | 'replicas'>;
   volumes?: ServiceVolume[];
@@ -55,6 +55,7 @@ export default class DockerService extends ClusterService {
       healthcheck = {},
       mode,
       placement,
+      restart,
       ...rest
     } = config;
 
@@ -73,6 +74,7 @@ export default class DockerService extends ClusterService {
       dependencies,
       mode,
       placement,
+      restart,
     });
 
     this.config = rest;
