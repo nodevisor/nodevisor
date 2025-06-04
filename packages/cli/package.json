@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/cli",
   "description": "Module provides CLI for Nodevisor",
-  "version": "0.0.81",
+  "version": "0.0.82",
   "main": "dist/cjs/src/index.js",
   "module": "dist/esm/src/index.js",
   "bin": {
@@ -30,7 +30,7 @@
     "chmod:cli": "chmod +x dist/cjs/cli.js"
   },
   "dependencies": {
-    "@nodevisor/core": "^0.0.81",
+    "@nodevisor/core": "^0.0.82",
     "commander": "^14.0.0",
     "dotenv": "^16.4.5",
     "ts-node": "^10.9.2",
