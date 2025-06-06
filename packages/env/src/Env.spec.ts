@@ -34,8 +34,8 @@ describe('Env Module', () => {
     expect(printEnvFromSystem).toBeUndefined();
 
     await env.unset('TEST_VAR');
-    const unsetedValue = await env.get('TEST_VAR');
-    expect(unsetedValue).toBeUndefined();
+    const unsetValue = await env.get('TEST_VAR');
+    expect(unsetValue).toBeUndefined();
 
     const printEnvFromSystem2 = await env.connection.cmd({}).getEnv('TEST_VAR', true); //(await env.$`printf "%s" $TEST_VAR`.text()) || undefined;
     expect(printEnvFromSystem2).toBeUndefined();
