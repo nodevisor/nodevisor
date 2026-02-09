@@ -1,11 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import $ from '@nodevisor/core';
+import $ from '@nodevisor/shell';
 import Docker from '../Docker';
 import type TargetPlatform from '../@types/TargetPlatform';
 import Builder, { type BuilderConfig } from '@nodevisor/builder';
 import Registry from '@nodevisor/registry';
-import { log as baseLog } from '@nodevisor/core';
+import { log as baseLog } from '@nodevisor/shell';
 
 const log = baseLog.extend('DockerBuilder');
 

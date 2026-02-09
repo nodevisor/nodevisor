@@ -1,0 +1,99 @@
+---
+title: Examples
+description: Complete deployment recipes using Nodevisor packages.
+---
+
+## Included Recipes
+
+- [Server Bootstrap](/docs/examples/server-bootstrap) — Harden a fresh VPS with users, SSH keys, and firewall
+- [Docker Cluster](/docs/examples/docker-cluster) — Deploy a production stack with Traefik, Postgres, and your app
+
+---
+
+## Multi-Server Setup
+
+Initialize multiple servers concurrently:
+
+```ts title="multi-server.ts"
+import $, { Packages, Users, AuthorizedKeys, SSH, UFW, endpoints } from 'nodevisor';
+
+const SSH_PUBLIC_KEY = process.env.SSH_PUBLIC_KEY!;
+const hosts = ['10.0.0.1', '10.0.0.2', '10.0.0.3'];
+
+async function initialize(host: string) {
+  const $server = $.connect({ host, username: 'root' });
+
+  await $server(Packages).updateAndUpgrade();
+
+  await $server(UFW).install();
+  await $server(UFW).allow([endpoints.ssh, endpoints.web, endpoints.webSecure]);
+  await $server(UFW).start();
+
+  await $server(Users).add('runner');
+
+  const $runner = $server.as('runner');
+  await $runner(AuthorizedKeys).write(SSH_PUBLIC_KEY);
+
+  await $server(SSH).disablePasswordAuthentication();
+}
+
+// Run all servers in parallel
+await Promise.all(hosts.map(initialize));
+```
+
+---
+
+## Custom Module
+
+Create reusable infrastructure modules by extending `Module`:
+
+```ts title="custom-module.ts"
+import $, { Module } from 'nodevisor';
+
+class Nginx extends Module {
+  async install() {
+    await this.$`apt-get install -y nginx`.quiet();
+  }
+
+  async setRoot(path: string) {
+    const config = `server { root ${path}; }`;
+    await this.$`echo ${config} > /etc/nginx/sites-available/default`;
+  }
+
+  async restart() {
+    await this.$`systemctl restart nginx`;
+  }
+}
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+const nginx = $server(Nginx);
+
+await nginx.install();
+await nginx.setRoot('/var/www/html');
+await nginx.restart();
+```
+
+---
+
+## Shell Scripting
+
+Use Nodevisor as a safer alternative to bash scripts:
+
+```ts title="backup.ts"
+import $ from 'nodevisor';
+
+const DB_NAME = 'myapp';
+const BACKUP_DIR = '/backups';
+const date = await $`date +%Y%m%d`.text();
+
+// Create backup
+await $`mkdir -p ${BACKUP_DIR}`;
+await $`pg_dump ${DB_NAME} > ${BACKUP_DIR}/${DB_NAME}-${date}.sql`;
+
+// Remove backups older than 7 days
+await $`find ${BACKUP_DIR} -name "*.sql" -mtime +7 -delete`;
+
+// Verify
+const backups = await $`ls -1 ${BACKUP_DIR}`.lines();
+console.log(`Current backups: ${backups.length}`);
+```

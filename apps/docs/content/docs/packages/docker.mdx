@@ -1,0 +1,444 @@
+---
+title: '@nodevisor/docker'
+description: Docker management, Compose/Swarm orchestration, pre-built services, and image building.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+## Install
+
+```bash
+npm install @nodevisor/docker
+```
+
+The Docker package provides everything needed for container-based deployments:
+
+- **Docker** — Install, manage images, build with buildx
+- **DockerSwarm** — Initialize and manage Swarm clusters
+- **DockerCompose** — Run docker compose commands
+- **DockerStack** — Deploy Swarm stacks
+- **DockerCluster** — High-level cluster orchestration
+- **Pre-built services** — Traefik, Postgres, Redis, Node.js, Next.js, and more
+
+---
+
+## Docker Module
+
+Manage the Docker daemon, images, and builds.
+
+### Quick Start
+
+```ts
+import $ from '@nodevisor/shell';
+import { Docker } from '@nodevisor/docker';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+const docker = $server(Docker);
+
+// Install Docker
+await docker.install();
+await docker.start();
+
+// Check version
+const version = await docker.getVersion();
+console.log(version);
+```
+
+### Installation & Service
+
+| Method | Description |
+|--------|-------------|
+| `install()` | Install Docker via the official install script |
+| `uninstall()` | Remove Docker |
+| `isInstalled()` | Check if Docker is installed |
+| `getVersion()` | Get Docker version string |
+| `start()` | Start the Docker daemon |
+| `stop()` | Stop the Docker daemon |
+| `restart()` | Restart Docker |
+| `isRunning()` | Check if Docker is running |
+
+### User Management
+
+#### `allowUser(username, skipRestart?)`
+
+Add a user to the `docker` group so they can run Docker commands without sudo.
+
+```ts
+await $server(Docker).allowUser('runner');
+// Adds 'runner' to docker group and restarts Docker
+```
+
+### Images
+
+```ts
+const docker = $server(Docker);
+
+// List images
+const images = await docker.images();
+
+// Pull an image
+await docker.pull('nginx:latest');
+
+// Tag an image
+await docker.tag('myapp:latest', 'registry.example.com/myapp:v1');
+
+// Push to registry
+await docker.push('registry.example.com/myapp:v1');
+```
+
+### Building with Buildx
+
+#### `buildx(dockerfilePath, options?)`
+
+Build Docker images with multi-platform support.
+
+```ts
+await $server(Docker).buildx('./Dockerfile', {
+  tags: ['myapp:latest', 'myapp:v1.0'],
+  context: './apps/api',
+  platform: 'linux/amd64',  // or ['linux/amd64', 'linux/arm64']
+  args: { NODE_ENV: 'production' },
+  push: true,
+  load: false,
+  target: 'production',
+  labels: { version: '1.0' },
+});
+```
+
+### Registry
+
+```ts
+// Login to a registry
+await docker.login({ server: 'ghcr.io', username: 'user', password: 'token' });
+
+// Logout
+await docker.logout('ghcr.io');
+```
+
+---
+
+## Docker Swarm
+
+Manage Docker Swarm mode.
+
+```ts
+import { DockerSwarm } from '@nodevisor/docker';
+
+const swarm = $server(DockerSwarm);
+
+// Initialize Swarm on this node
+await swarm.init();
+
+// Check if Swarm is active
+const active = await swarm.isActive();
+
+// Get join tokens
+const workerToken = await swarm.getWorkerToken();
+const managerToken = await swarm.getManagerToken();
+
+// Join a Swarm
+await swarm.join(workerToken, '10.0.0.1', 2377);
+
+// Promote/demote nodes
+await swarm.promote('worker-1');
+await swarm.demote('worker-1');
+
+// Leave the Swarm
+await swarm.leave();
+```
+
+---
+
+## Docker Compose
+
+Run docker compose commands.
+
+```ts
+import { DockerCompose } from '@nodevisor/docker';
+
+const compose = $server(DockerCompose);
+
+// Start services
+await compose.up({
+  detach: true,
+  wait: true,
+  forceRecreate: false,
+});
+
+// Run a one-off service
+await compose.run('migration', {
+  rm: true,
+  profile: ['production'],
+});
+```
+
+---
+
+## Docker Stack
+
+Deploy Swarm stacks.
+
+```ts
+import { DockerStack } from '@nodevisor/docker';
+
+const stack = $server(DockerStack);
+
+// Deploy a stack
+await stack.deploy('myapp', {
+  composeFile: 'docker-compose.yml',
+  withRegistryAuth: true,
+  prune: true,
+});
+
+// List stacks
+const stacks = await stack.ls();
+
+// List stack services
+const services = await stack.services('myapp');
+
+// Remove a stack
+await stack.rm('myapp');
+```
+
+---
+
+## DockerCluster
+
+High-level orchestration combining nodes, services, builds, and deployment.
+
+### Define a Cluster
+
+```ts
+import { DockerCluster, DockerNode, Traefik, Postgres, Redis, NodeWeb, DockerRegistry } from '@nodevisor/docker';
+import { ClusterUser } from '@nodevisor/cluster';
+
+const cluster = new DockerCluster({
+  name: 'production',
+  nodes: [
+    new DockerNode({ host: '10.0.0.1' }),
+    new DockerNode({ host: '10.0.0.2' }),
+  ],
+  users: [
+    new ClusterUser({
+      username: 'root',
+      privateKeyPath: '~/.ssh/id_ed25519',
+    }),
+  ],
+  registry: new DockerRegistry({
+    server: 'ghcr.io',
+    username: 'myorg',
+    password: process.env.REGISTRY_TOKEN!,
+  }),
+});
+```
+
+### Add Services
+
+```ts
+// Reverse proxy
+cluster.addDependency(new Traefik({
+  ssl: { email: 'ops@example.com', redirect: true },
+}));
+
+// Database
+cluster.addDependency(new Postgres({
+  database: 'app',
+  username: 'app',
+  password: process.env.DB_PASSWORD!,
+}));
+
+// Cache
+cluster.addDependency(new Redis({
+  password: process.env.REDIS_PASSWORD!,
+  maxmemory: '256mb',
+  maxmemoryPolicy: 'allkeys-lru',
+}));
+
+// Application
+cluster.addDependency(new NodeWeb({
+  name: 'api',
+  appDir: './apps/api',
+  domains: ['api.example.com'],
+  port: 3000,
+}));
+```
+
+### Deploy
+
+```ts
+// Setup all nodes (install Docker, firewall, users, join Swarm)
+await cluster.setup();
+
+// Build, push, and deploy all services
+await cluster.deploy();
+
+// Or deploy locally with Docker Compose
+await cluster.deployLocal();
+```
+
+### Inspect Configuration
+
+```ts
+// Get the generated YAML
+console.log(cluster.yaml());
+
+// Get as JavaScript object
+const compose = cluster.toCompose();
+```
+
+---
+
+## Pre-Built Services
+
+### Traefik (Reverse Proxy)
+
+```ts
+new Traefik({
+  ssl: {
+    email: 'admin@example.com',
+    port: 443,
+    redirect: true,          // Redirect HTTP to HTTPS
+  },
+  dashboard: {
+    host: 'traefik.example.com',
+    username: 'admin',
+    password: '$apr1$...',   // htpasswd hash
+    port: 8080,
+  },
+})
+```
+
+Default image: `traefik:3.1.7`. Includes healthcheck: `traefik healthcheck --ping`.
+
+### Postgres
+
+```ts
+new Postgres({
+  database: 'myapp',
+  username: 'myapp',
+  password: 'secret',
+})
+```
+
+Default image: `postgres:17.5`, port 5432. Includes healthcheck: `pg_isready`.
+
+### Redis
+
+```ts
+new Redis({
+  password: 'secret',
+  appendonly: true,
+  maxmemory: '256mb',
+  maxmemoryPolicy: 'allkeys-lru',
+})
+```
+
+Default image: `redis:8.0.2`, port 6379. Includes healthcheck: `redis-cli ping | grep PONG`.
+
+### NodeWeb / Nextjs
+
+Web applications with automatic Traefik integration:
+
+```ts
+new NodeWeb({
+  name: 'api',
+  appDir: './apps/api',
+  tags: ['latest'],
+  domains: ['api.example.com'],
+  port: 3000,
+  environment: { NODE_ENV: 'production' },
+})
+```
+
+Automatically adds Traefik as a dependency for routing.
+
+### WireGuard (VPN)
+
+```ts
+new WireGuard({
+  name: 'vpn',
+  port: 51820,
+  serverPrivateKeyPath: './keys/server.key',
+  clientPrivateKeyPath: './keys/client.key',
+})
+```
+
+### Whoami (Test Service)
+
+```ts
+new Whoami({
+  name: 'whoami',
+  domains: ['test.example.com'],
+})
+```
+
+Simple test service using `traefik/whoami`.
+
+---
+
+## Docker Builders
+
+### NodeBuilder
+
+Builds Node.js applications with a multi-stage Dockerfile:
+
+```ts
+import { NodeBuilder } from '@nodevisor/docker';
+
+const builder = new NodeBuilder({
+  context: './apps/api',
+  tags: ['latest'],
+  arch: 'amd64',
+});
+```
+
+### DockerBuilder
+
+Generic Dockerfile builder:
+
+```ts
+import { DockerBuilder } from '@nodevisor/docker';
+
+const builder = new DockerBuilder({
+  dockerfilePath: './Dockerfile',
+  context: '.',
+  tags: ['latest'],
+});
+```
+
+---
+
+## Registries
+
+### DockerRegistry
+
+Standard Docker registry (Docker Hub, GitHub Container Registry, etc.):
+
+```ts
+import { DockerRegistry } from '@nodevisor/docker';
+
+const registry = new DockerRegistry({
+  server: 'ghcr.io',
+  username: 'myorg',
+  password: process.env.GITHUB_TOKEN!,
+});
+```
+
+### DockerRegistryLocal
+
+For local development without a remote registry:
+
+```ts
+import { DockerRegistryLocal } from '@nodevisor/docker';
+
+const registry = new DockerRegistryLocal({});
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/cluster`](/docs/packages/cluster) — Abstract cluster primitives
+- [`@nodevisor/builder`](/docs/packages/builder) — Abstract builder interface
+- [`@nodevisor/registry`](/docs/packages/registry) — Abstract registry interface
+- [`@nodevisor/aws`](/docs/packages/aws) — AWS ECR registry integration

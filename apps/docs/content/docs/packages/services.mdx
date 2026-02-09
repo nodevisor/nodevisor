@@ -1,0 +1,93 @@
+---
+title: '@nodevisor/services'
+description: Manage systemd services — start, stop, restart, and check status.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/services
+```
+
+Provides a simple interface to manage systemd services on Linux systems.
+
+---
+
+## Quick Start
+
+```ts
+import $ from '@nodevisor/shell';
+import Services from '@nodevisor/services';
+
+const svc = $(Services);
+
+// Restart a service
+await svc.restart('nginx');
+
+// Check if a service is running
+if (await svc.isRunning('docker')) {
+  console.log('Docker is running');
+}
+
+// Get service status
+const status = await svc.status('sshd');
+console.log(status);
+```
+
+---
+
+## API
+
+### `start(name)`
+
+Start a systemd service.
+
+```ts
+await $(Services).start('nginx');
+// Runs: systemctl start nginx
+```
+
+### `stop(name)`
+
+Stop a systemd service.
+
+```ts
+await $(Services).stop('nginx');
+// Runs: systemctl stop nginx
+```
+
+### `restart(name)`
+
+Restart a systemd service.
+
+```ts
+await $(Services).restart('nginx');
+// Runs: systemctl restart nginx
+```
+
+### `isRunning(name)`
+
+Check if a service is currently active. Returns `boolean`.
+
+```ts
+const running = await $(Services).isRunning('docker');
+// Runs: systemctl is-active docker
+```
+
+### `status(name)`
+
+Get the full status output for a service.
+
+```ts
+const status = await $(Services).status('sshd');
+console.log(status);
+// Runs: systemctl status sshd
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/ssh`](/docs/packages/ssh) — Uses Services internally to manage sshd
+- [`@nodevisor/docker`](/docs/packages/docker) — Uses Services internally to manage dockerd
+- [`@nodevisor/ufw`](/docs/packages/ufw) — Firewall service management

@@ -2,7 +2,7 @@ import NodeBuilder from '../builders/NodeBuilder';
 import type Artifact from '../@types/Artifact';
 import DockerService, { type DockerServiceConfig } from '../DockerService';
 
-type NodeConfig = Omit<DockerServiceConfig, 'builder'> & {
+export type NodeConfig = Omit<DockerServiceConfig, 'builder'> & {
   builder?: NodeBuilder;
   appDir?: string;
   tags?: string[];

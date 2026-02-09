@@ -1,0 +1,126 @@
+---
+title: '@nodevisor/users'
+description: Create, remove, and check system users on Linux, macOS, and Windows.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/users
+```
+
+Manage system users with a cross-platform API. Handles user creation, removal, and existence checks.
+
+---
+
+## Quick Start
+
+```ts
+import $ from '@nodevisor/shell';
+import Users from '@nodevisor/users';
+
+const users = $(Users);
+
+// Check current user
+const me = await users.whoami();
+console.log(me); // "root"
+
+// Create a new user
+if (!(await users.exists('runner'))) {
+  await users.add('runner');
+}
+
+// Remove a user
+await users.remove('olduser');
+```
+
+Remote usage:
+
+```ts
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+
+await $server(Users).add('runner');
+
+// Switch to the new user context
+const $runner = $server.as('runner');
+const whoami = await $runner`whoami`.text(); // "runner"
+```
+
+---
+
+## API
+
+### `whoami()`
+
+Get the username of the current user.
+
+```ts
+const user = await $(Users).whoami();
+console.log(user); // "root"
+```
+
+### `exists(username)`
+
+Check if a user exists on the system. Returns `boolean`.
+
+```ts
+if (await $(Users).exists('runner')) {
+  console.log('User already exists');
+}
+```
+
+### `add(username)`
+
+Create a new system user.
+
+```ts
+await $(Users).add('runner');
+// Linux: useradd runner
+```
+
+### `remove(username)`
+
+Remove a system user.
+
+```ts
+await $(Users).remove('olduser');
+// Linux: userdel olduser
+```
+
+---
+
+## Common Patterns
+
+### Create user with SSH key access
+
+```ts
+import $, { Users, AuthorizedKeys } from 'nodevisor';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+
+// Create the user
+await $server(Users).add('runner');
+
+// Switch context and add SSH key
+const $runner = $server.as('runner');
+await $runner(AuthorizedKeys).write(process.env.SSH_PUBLIC_KEY!);
+```
+
+### Create user with password
+
+```ts
+import $, { Users, Auth } from 'nodevisor';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+
+await $server(Users).add('runner');
+await $server(Auth).setPassword('runner', 'secure-password');
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/auth`](/docs/packages/auth) — Set user passwords
+- [`@nodevisor/groups`](/docs/packages/groups) — Manage group membership
+- [`@nodevisor/authorized-keys`](/docs/packages/authorized-keys) — Manage SSH keys for users

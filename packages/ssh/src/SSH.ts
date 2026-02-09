@@ -1,4 +1,4 @@
-import { Service } from '@nodevisor/core';
+import { Service } from '@nodevisor/shell';
 import Services from '@nodevisor/services';
 import Packages from '@nodevisor/packages';
 

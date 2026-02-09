@@ -1,0 +1,504 @@
+---
+title: '@nodevisor/shell'
+description: The foundation of Nodevisor — shell execution, SSH connections, command building, and the module system.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+## Install
+
+```bash
+npm install @nodevisor/shell
+```
+
+`@nodevisor/shell` is the core package. Every other Nodevisor package depends on it. It provides:
+
+- **Shell proxy** (`$`) — Execute commands locally or remotely via template literals
+- **Command builder** — Fluent API for constructing, executing, and parsing shell commands
+- **Connections** — Local shell and SSH connection implementations
+- **Module system** — Base class for building typed infrastructure modules
+- **User context** — Switch execution user without creating new connections
+
+---
+
+## Shell Proxy (`$`)
+
+The default export is a shell proxy that executes commands using tagged template literals:
+
+```ts
+import $ from '@nodevisor/shell';
+
+// Execute a command
+const result = await $`echo "Hello, World!"`;
+console.log(result.stdout); // "Hello, World!\n"
+
+// Get output as text
+const hostname = await $`hostname`.text();
+
+// Get output as JSON
+const info = await $`cat package.json`.json();
+
+// Get output as lines
+const files = await $`ls -1`.lines();
+```
+
+### Variable Escaping
+
+All interpolated variables are **automatically escaped**, preventing shell injection:
+
+```ts
+const name = 'my-dir; rm -rf /';
+await $`mkdir ${name}`; // Safe — creates directory "my-dir; rm -rf /"
+```
+
+To insert raw (unescaped) values, use the `raw()` helper:
+
+```ts
+import $, { raw } from '@nodevisor/shell';
+
+const flag = raw('--verbose');
+await $`ls ${flag}`; // ls --verbose (not quoted)
+```
+
+---
+
+## Remote Execution
+
+Connect to a remote server via SSH with `$.connect()`:
+
+```ts
+import $ from '@nodevisor/shell';
+
+const $remote = $.connect({
+  host: '10.0.0.10',
+  username: 'root',
+});
+
+const kernel = await $remote`uname -s`.text(); // "Linux"
+```
+
+### Connection Options
+
+```ts
+$.connect({
+  // Required
+  host: '10.0.0.10',
+  username: 'root',
+
+  // Authentication (pick one)
+  password: 'your-password',
+  privateKeyPath: '~/.ssh/id_ed25519',
+  privateKey: '-----BEGIN OPENSSH PRIVATE KEY-----...',
+
+  // Optional
+  port: 22,
+  passphrase: 'key-passphrase',
+  forceIPv4: false,
+  forceIPv6: false,
+  readyTimeout: 20000,
+});
+```
+
+### Close Connection
+
+```ts
+const $remote = $.connect({ host: '10.0.0.10', username: 'root' });
+await $remote`whoami`.text();
+await $remote.shell.close(); // Close SSH connection
+```
+
+---
+
+## User Context Switching
+
+Switch the execution user without creating a new SSH connection:
+
+```ts
+import $ from '@nodevisor/shell';
+
+const $root = $.connect({ host: '10.0.0.10', username: 'root' });
+
+// Commands run as root
+await $root`whoami`.text(); // "root"
+
+// Switch to another user (uses runuser/su internally)
+const $runner = $root.as('runner');
+await $runner`whoami`.text(); // "runner"
+
+// Specify the method
+const $user = $root.as({ user: 'runner', method: 'su' });
+```
+
+---
+
+## Command Builder
+
+Every template literal call returns a `CommandBuilder` that supports chaining:
+
+### Output Formats
+
+```ts
+// Get output as trimmed string
+const text = await $`hostname`.text();
+
+// Get raw buffer
+const buf = await $`cat binary-file`.buffer();
+
+// Parse as JSON
+const data = await $`cat config.json`.json<{ port: number }>();
+
+// Get as array of lines
+const lines = await $`cat /etc/hosts`.lines();
+
+// Get as boolean (true if exit code 0)
+const exists = await $`test -f /tmp/file`.noThrow().boolean();
+
+// Get as Blob
+const blob = await $`cat image.png`.blob('image/png');
+```
+
+### Output Transforms
+
+Chain transforms before selecting an output format:
+
+```ts
+// Trim whitespace
+const name = await $`hostname`.trim().text();
+
+// Trim only trailing whitespace
+const val = await $`echo "  hello  "`.trimEnd().text();
+
+// Convert to lowercase
+const os = await $`uname -s`.trim().toLowerCase().text();
+
+// Sanitize (remove ANSI escape codes)
+const clean = await $`some-command`.sanitize().text();
+```
+
+### Error Handling
+
+By default, non-zero exit codes throw a `CommandOutputError`:
+
+```ts
+try {
+  await $`exit 1`;
+} catch (err) {
+  console.log(err.code);   // 1
+  console.log(err.stderr);  // error message
+  console.log(err.stdout);  // stdout content
+}
+```
+
+Disable throwing with `.noThrow()`:
+
+```ts
+const result = await $`exit 1`.noThrow();
+console.log(result.code); // 1 (no error thrown)
+```
+
+### Timeouts and Abort
+
+```ts
+// Timeout after 5 seconds
+await $`sleep 100`.timeout(5000);
+
+// Abort with AbortController
+const controller = new AbortController();
+setTimeout(() => controller.abort(), 5000);
+await $`sleep 100`.signal(controller.signal);
+```
+
+### Quiet Mode
+
+Suppress stdout output:
+
+```ts
+await $`apt-get update`.quiet();
+```
+
+### Stdin
+
+Pass input to a command:
+
+```ts
+await $`cat`.stdin('hello world');
+```
+
+### Arguments
+
+Build commands with programmatic arguments:
+
+```ts
+const cmd = $`docker run`
+  .argument('--name', 'mycontainer')
+  .argument('--port', '8080:80')
+  .argument('-d', null) // Flag without value
+  .argument({ env: 'NODE_ENV=production', volume: '/data:/data' });
+```
+
+### Chaining Commands
+
+```ts
+// AND (&&) — second runs only if first succeeds
+await $`mkdir /tmp/test`.and`cd /tmp/test`;
+
+// OR (||) — second runs only if first fails
+await $`test -f /tmp/file`.or`touch /tmp/file`;
+```
+
+### Environment Variables
+
+```ts
+// Set env for a single command
+const cmd = $`echo $MY_VAR`;
+cmd.setEnv('MY_VAR', 'hello');
+await cmd.text(); // "hello"
+
+// Load env file
+const cmd2 = $`printenv`;
+cmd2.addEnvFile('.env');
+```
+
+### Platform Detection
+
+```ts
+const platform = await $``.platform(); // 'linux' | 'darwin' | 'win32' | ...
+const kernel = await $``.kernelName(); // 'Linux' | 'Darwin' | ...
+const isBash = await $``.isBashCompatible(); // true/false
+```
+
+---
+
+## Connections
+
+### ShellConnection (Local)
+
+Executes commands locally using Node.js `child_process`:
+
+```ts
+import { Shell, ShellConnection } from '@nodevisor/shell';
+
+const connection = new ShellConnection();
+const shell = new Shell(connection);
+const result = await shell.$`whoami`.text();
+```
+
+### SSHConnection (Remote)
+
+Executes commands over SSH using `ssh2`:
+
+```ts
+import { Shell, SSHConnection } from '@nodevisor/shell';
+
+const connection = new SSHConnection({
+  host: '10.0.0.10',
+  username: 'root',
+  privateKeyPath: '~/.ssh/id_ed25519',
+});
+
+const shell = new Shell(connection);
+const result = await shell.$`whoami`.text();
+await shell.close();
+```
+
+### File Transfer
+
+Both connections support file transfer:
+
+```ts
+// Upload a local file to remote
+await connection.put('/local/file.txt', '/remote/file.txt');
+
+// Upload content directly
+await connection.putContent('hello world', '/remote/file.txt');
+
+// Download a remote file
+await connection.get('/remote/file.txt', '/local/file.txt');
+
+// Read remote file content
+const content = await connection.getContent('/remote/file.txt');
+```
+
+---
+
+## Module System
+
+All Nodevisor packages extend the `Module` base class. Use it to create your own reusable modules:
+
+```ts
+import $, { Module } from '@nodevisor/shell';
+
+class Hostname extends Module {
+  async get() {
+    return this.$`hostname`.trim().text();
+  }
+
+  async set(name: string) {
+    await this.$`hostnamectl set-hostname ${name}`;
+  }
+}
+
+// Use locally
+const hostname = await $(Hostname).get();
+
+// Use remotely
+const $remote = $.connect({ host: '10.0.0.10', username: 'root' });
+await $remote(Hostname).set('web-server-01');
+```
+
+### Module with Configuration
+
+```ts
+interface MyConfig {
+  prefix: string;
+}
+
+class MyModule extends Module<MyConfig> {
+  async greet(name: string) {
+    const prefix = this.config.prefix;
+    return this.$`echo ${prefix} ${name}`.text();
+  }
+}
+
+const mod = $(MyModule, { prefix: 'Hello' });
+await mod.greet('World'); // "Hello World"
+```
+
+### Platform-Aware Modules
+
+```ts
+import { Module, Platform } from '@nodevisor/shell';
+
+class Reboot extends Module {
+  async now() {
+    const platform = await this.platform();
+
+    if (platform === Platform.WINDOWS) {
+      await this.$`shutdown /r /t 0`;
+    } else {
+      await this.$`reboot`;
+    }
+  }
+}
+```
+
+---
+
+## Package & Service Base Classes
+
+For modules that represent installable software:
+
+```ts
+import { Package } from '@nodevisor/shell';
+
+class MyTool extends Package {
+  async installPackage() {
+    await this.$`curl -fsSL https://example.com/install.sh | bash`;
+  }
+
+  async uninstallPackage() {
+    await this.$`rm /usr/local/bin/mytool`;
+  }
+
+  async isInstalled() {
+    return this.$`which mytool`.noThrow().boolean();
+  }
+
+  async getVersion() {
+    return this.$`mytool --version`.trim().text();
+  }
+}
+
+// Package provides install/uninstall with dependency handling
+await $(MyTool).install();
+```
+
+For services that can be started/stopped:
+
+```ts
+import { Service } from '@nodevisor/shell';
+
+class MyService extends Service {
+  // Inherit from Package: installPackage, uninstallPackage, isInstalled, getVersion
+  // Plus implement:
+
+  async start() {
+    await this.$`systemctl start myservice`;
+  }
+
+  async stop() {
+    await this.$`systemctl stop myservice`;
+  }
+
+  async isRunning() {
+    return this.$`systemctl is-active myservice`.noThrow().boolean();
+  }
+
+  // restart() is provided automatically (stop + start)
+}
+```
+
+---
+
+## CommandOutput
+
+The result of executing a command:
+
+```ts
+const output = await $`echo hello`;
+
+output.stdout;   // "hello\n"
+output.stderr;   // ""
+output.code;     // 0
+output.duration; // execution time in ms
+
+// Convert to different formats
+output.text();      // "hello\n"
+output.toString();  // "hello\n"
+output.json();      // parse as JSON
+output.lines();     // ["hello"]
+output.boolean();   // true (exit code 0)
+output.buffer();    // Buffer
+output.blob();      // Blob
+
+// Transform
+output.trim().text();        // "hello"
+output.sanitize().text();    // strip ANSI codes
+output.toLowerCase().text(); // "hello\n"
+```
+
+---
+
+## Enums & Types
+
+### Platform
+
+```ts
+enum Platform {
+  WINDOWS = 'win32',
+  LINUX = 'linux',
+  DARWIN = 'darwin',
+  FREEBSD = 'freebsd',
+  OPENBSD = 'openbsd',
+  SUNOS = 'sunos',
+  AIX = 'aix',
+}
+```
+
+### Shell Constants
+
+```ts
+enum Shell {
+  BASH = 'bash',
+  PWSH = 'pwsh',
+}
+```
+
+---
+
+## Related Packages
+
+- [`nodevisor`](/docs/packages/nodevisor) — Umbrella package that re-exports shell and all modules
+- [`@nodevisor/os`](/docs/packages/os) — OS detection and system commands
+- [`@nodevisor/fs`](/docs/packages/fs) — File system operations
+- [`@nodevisor/packages`](/docs/packages/packages) — Package manager abstraction

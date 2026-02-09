@@ -1,0 +1,71 @@
+---
+title: '@nodevisor/pwsh'
+description: Execute PowerShell commands for Windows-compatible automation.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/pwsh
+```
+
+Wraps PowerShell (`pwsh`) command execution with proper quoting. Used internally by other packages for Windows support.
+
+---
+
+## Quick Start
+
+```ts
+import $ from '@nodevisor/shell';
+import PWSH from '@nodevisor/pwsh';
+
+const pwsh = $(PWSH);
+
+// Run a PowerShell command
+const version = await pwsh.command`$PSVersionTable.PSVersion.ToString()`.text();
+console.log(version); // "7.4.1"
+
+// Get system info
+const hostname = await pwsh.command`hostname`.text();
+```
+
+---
+
+## API
+
+### `command(strings, ...values)`
+
+Execute a PowerShell command via `pwsh -Command`. Automatically handles PowerShell-specific quoting.
+
+```ts
+const pwsh = $(PWSH);
+
+// Template literal syntax
+const result = await pwsh.command`Get-Process | Select-Object -First 5`.text();
+
+// With variables (escaped for PowerShell)
+const name = 'notepad';
+const proc = await pwsh.command`Get-Process -Name ${name}`.text();
+```
+
+Returns a `CommandBuilder`, so you can chain output transforms:
+
+```ts
+const count = await pwsh.command`(Get-Process).Count`.trim().text();
+```
+
+---
+
+## When It's Used
+
+You typically don't use PWSH directly. It's used internally by:
+
+- [`@nodevisor/os`](/docs/packages/os) — Windows-specific system commands (reboot, hostname, etc.)
+- [`@nodevisor/fs`](/docs/packages/fs) — Windows file operations
+
+---
+
+## Related Packages
+
+- [`@nodevisor/os`](/docs/packages/os) — Uses PWSH for Windows operations
+- [`@nodevisor/shell`](/docs/packages/shell) — PowerShell quote handling

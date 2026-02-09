@@ -12,14 +12,14 @@
     "deploy": "nodevisor cluster.ts --deploy"
   },
   "dependencies": {
-    "express": "^4.21.2",
-    "nodevisor": "^0.0.37",
-    "zod": "^3.23.8"
+    "express": "^5.2.1",
+    "nodevisor": "^0.0.82",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@nodevisor/cli": "^0.0.37",
-    "@types/express": "^5.0.0",
+    "@nodevisor/cli": "workspace:*",
+    "@types/express": "^5.0.6",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.9.3"
   }
 }

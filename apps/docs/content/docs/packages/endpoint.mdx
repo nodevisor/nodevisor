@@ -1,0 +1,122 @@
+---
+title: '@nodevisor/endpoint'
+description: Network endpoint definitions — protocol enum and pre-built port presets for firewall and service configuration.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/endpoint
+```
+
+Provides the `Endpoint` type, `Protocol` enum, and a set of common endpoint presets. Used by firewall modules like [`@nodevisor/ufw`](/docs/packages/ufw) and cluster node configuration to define which ports and protocols to allow.
+
+---
+
+## Protocol
+
+The network protocol for an endpoint.
+
+```ts
+import { Protocol } from '@nodevisor/endpoint';
+
+Protocol.TCP  // 'tcp'
+Protocol.UDP  // 'udp'
+```
+
+---
+
+## Endpoint Type
+
+An endpoint describes a named network port with its protocol:
+
+```ts
+type Endpoint = {
+  name?: string;
+  port: number;
+  protocol: Protocol;
+};
+```
+
+Create custom endpoints:
+
+```ts
+import { Protocol } from '@nodevisor/endpoint';
+
+const dns: Endpoint = {
+  name: 'dns',
+  port: 53,
+  protocol: Protocol.UDP,
+};
+
+const customApi: Endpoint = {
+  name: 'api',
+  port: 8080,
+  protocol: Protocol.TCP,
+};
+```
+
+---
+
+## Built-in Presets
+
+Import common endpoints from the `endpoints` namespace:
+
+```ts
+import { endpoints } from '@nodevisor/endpoint';
+```
+
+| Preset | Port | Protocol | Use case |
+|--------|------|----------|----------|
+| `endpoints.ssh` | 22 | TCP | SSH access |
+| `endpoints.web` | 80 | TCP | HTTP traffic |
+| `endpoints.webSecure` | 443 | TCP | HTTPS traffic |
+| `endpoints.dockerSwarmManagement` | 2377 | TCP | Docker Swarm cluster management |
+
+### Usage with UFW
+
+Endpoints are used directly with the firewall module:
+
+```ts
+import $ from '@nodevisor/shell';
+import UFW from '@nodevisor/ufw';
+import { endpoints } from '@nodevisor/endpoint';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+const ufw = $server(UFW);
+
+// Allow standard web traffic
+await ufw.allow(endpoints.web);
+await ufw.allow(endpoints.webSecure);
+await ufw.allow(endpoints.ssh);
+
+// Allow Docker Swarm management
+await ufw.allow(endpoints.dockerSwarmManagement);
+```
+
+### Usage with ClusterNode
+
+Endpoints define which ports a cluster node exposes:
+
+```ts
+import { DockerNode } from '@nodevisor/docker';
+import { endpoints } from '@nodevisor/endpoint';
+
+const node = new DockerNode({
+  host: '10.0.0.10',
+  endpoints: [
+    endpoints.ssh,
+    endpoints.web,
+    endpoints.webSecure,
+    endpoints.dockerSwarmManagement,
+  ],
+});
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/ufw`](/docs/packages/ufw) — Uses endpoints for firewall rules
+- [`@nodevisor/cluster`](/docs/packages/cluster) — Nodes declare endpoint lists
+- [`@nodevisor/docker`](/docs/packages/docker) — Docker Swarm uses the management endpoint

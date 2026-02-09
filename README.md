@@ -2,22 +2,20 @@
   <img alt="Nodevisor Logo" width="150px" src="https://github.com/nodevisor/logo/raw/main/nodevisor.png">
 </picture>
 
-# Nodevisor - Infrastructure as code
+# Nodevisor
 
-Easily manage servers and deploy applications, all under your control.
-Nodevisor **unifies** scripts across different platforms, helping you avoid common problems when managing servers and scaling apps.
+> TypeScript Infrastructure Automation Platform
 
-**_Note:_** We're just starting out, so things might change as we grow.
+Nodevisor is a modern infrastructure automation platform that lets you build, deploy, and manage your applications using the power of TypeScript. No YAML, no complex configuration files - just code.
 
-## Why choose Nodevisor?
+## Features
 
-- **Works everywhere:** Manage Linux, Mac, and Windows servers without having to learn different commands for each system.
-- **Familiar API**: Nodevisor’s API is similar to Node.js, making it easy for developers to start using.
-- **Automate your setup:** Set up and manage servers using code, simple YAML files, command line, or a web interface (coming soon).
-- **Easy app deployment:** Deploy and scale your apps from one server to thousands.
-- **Secure:** Keep passwords and other sensitive data safe during server tasks.
-- **One tool for everything:** Handle server setups, deployments, and automation tasks with one platform.
-- **Built-in integration:** Built-in Integration: Directly control Docker containers, Docker Swarm services, and manage AWS cloud resources with Nodevisor.
+- **TypeScript Native**: Write infrastructure as TypeScript code with full IDE support, autocomplete, and type safety
+- **Multi-Server Orchestration**: Deploy across multiple servers seamlessly with built-in Docker Swarm orchestration  
+- **Zero Configuration**: No YAML files or complex configurations. Define everything in TypeScript with sensible defaults
+- **Built-in Services**: Pre-configured services for databases, web servers, load balancers, and more
+- **SSH Management**: Automated SSH key management and secure server access out of the box
+- **Enterprise Ready**: Scale from prototype to production with enterprise features and support
 
 ## How you can use Nodevisor
 
@@ -363,17 +361,18 @@ Nodevisor is tested on:
 - macOS: macOS 12+
 - Windows: Windows 10+ (PowerShell required)
 
+## Pricing
+
+- **Free**: Up to 3 apps
+- **Pro**: $20/app/month - Unlimited apps with priority support
+- **Enterprise**: Custom pricing with SSO, compliance features, and 24/7 support
+
+See [pricing details](https://nodevisor.io/pricing) for more information.
+
 ## License
 
-Nodevisor has a special license. In some cases, you may need to get a company license.
-
-You can use Nodevisor for free if:
-
-- You are using it for personal use.
-- You are a non-profit organization.
-- You are trying out Nodevisor to see if it works for you, without commercial use.
-
-For more details, read our [LICENSE page](https://github.com/nodevisor/nodevisor/blob/main/LICENSE.md).
+Nodevisor uses a single O'Saasy license across all packages and applications.
+See the full terms in `LICENSE`.
 
 ## Need help?
 

@@ -1,4 +1,4 @@
-import { type NodevisorProxy } from '@nodevisor/core';
+import { type NodevisorProxy } from '@nodevisor/shell';
 import Registry, { type RegistryConfig } from '@nodevisor/registry';
 import AWS from './AWS';
 

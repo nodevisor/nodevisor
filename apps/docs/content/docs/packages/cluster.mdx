@@ -1,0 +1,195 @@
+---
+title: '@nodevisor/cluster'
+description: Abstract cluster primitives for multi-node orchestration — nodes, services, users, and deployment.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/cluster
+```
+
+Provides the base classes for cluster orchestration. In practice, you'll use [`@nodevisor/docker`](/docs/packages/docker) which extends these with Docker-specific implementations.
+
+---
+
+## Overview
+
+The cluster package defines four core abstractions:
+
+- **ClusterService** — A deployable service with configuration (ports, resources, environment, etc.)
+- **ClusterNode** — A server/host in the cluster
+- **Cluster** — A collection of nodes and services
+- **ClusterUser** — SSH credentials for accessing nodes
+
+---
+
+## ClusterService
+
+Define services with their full configuration:
+
+```ts
+import { ClusterService, Mode } from '@nodevisor/cluster';
+
+class ApiService extends ClusterService {
+  constructor() {
+    super({
+      name: 'api',
+      image: 'ghcr.io/myorg/api:latest',
+      mode: Mode.REPLICATED,
+      replicas: { initial: 2, min: 1, max: 5 },
+      cpus: { min: '0.25', max: '1.0' },
+      memory: { min: '128m', max: '512m' },
+      ports: [{ published: 8080, target: 8080, protocol: 'tcp' }],
+      environment: {
+        NODE_ENV: 'production',
+        PORT: '8080',
+      },
+      labels: {
+        'app.version': '1.0',
+      },
+    });
+  }
+}
+```
+
+### Configuration
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `string` | Service name |
+| `image` | `string` | Docker image |
+| `context` | `string` | Build context path |
+| `mode` | `Mode` | `REPLICATED` or `GLOBAL` |
+| `replicas` | `{ min?, max?, initial? }` | Replica count settings |
+| `cpus` | `{ min?, max? }` | CPU resource limits |
+| `memory` | `{ min?, max? }` | Memory limits (e.g., `'512m'`) |
+| `ports` | `Port[]` | Port mappings |
+| `environment` | `Record<string, string>` | Environment variables |
+| `labels` | `Record<string, string>` | Service labels |
+| `command` | `string` | Override command |
+| `restart` | `Restart` | Restart policy |
+| `placement` | `Placement` | Placement constraints |
+| `profiles` | `string[]` | Compose profiles |
+| `capabilities` | `{ add?, drop? }` | Linux capabilities |
+| `sysctls` | `Record<string, string>` | Kernel parameters |
+
+### Key Methods
+
+```ts
+const service = new ApiService();
+
+// Dependencies
+service.addDependency(anotherService);
+service.getDependencies(cluster);
+
+// Configuration
+service.setEnvironment('KEY', 'value');
+service.getEnvironment('KEY');
+service.setLabel('key', 'value');
+service.addPort({ published: 80, target: 3000, protocol: 'tcp' });
+service.setCpus({ min: '0.25', max: '1.0' });
+service.setMemory({ min: '128m', max: '512m' });
+service.setReplicas({ initial: 2, min: 1, max: 5 });
+service.addCapability('NET_ADMIN');
+service.setSysctl('net.core.somaxconn', '1024');
+service.addCommandArgument('--flag', 'value');
+
+// Building
+await service.build({ registry, context: '.', push: true });
+
+// Serialization
+const config = service.toObject();
+```
+
+---
+
+## Cluster
+
+Orchestrate nodes and services together:
+
+```ts
+import { Cluster } from '@nodevisor/cluster';
+
+// Usually you'll use DockerCluster instead of Cluster directly
+// See @nodevisor/docker for the concrete implementation
+```
+
+### Key Methods
+
+| Method | Description |
+|--------|-------------|
+| `addDependency(service)` | Add a service to the cluster |
+| `getDependencies()` | Get all cluster services |
+| `getDependency(name)` | Get a service by name |
+| `setup()` | Setup all nodes (install packages, firewall, users, SSH) |
+| `build(options?)` | Build all service images |
+| `deploy(options?)` | Deploy all services to all nodes |
+| `deployLocal(options?)` | Deploy locally for development |
+| `run(service, options?)` | Run a one-off service (e.g., migrations) |
+
+---
+
+## ClusterNode
+
+Represents a server in the cluster:
+
+```ts
+import { ClusterNode } from '@nodevisor/cluster';
+
+// ClusterNode is abstract — use DockerNode from @nodevisor/docker
+```
+
+The `setup()` method on a node performs:
+1. Install system packages (`Packages.updateAndUpgrade()`)
+2. Configure firewall (UFW with SSH, HTTP, HTTPS)
+3. Add SSH authorized keys
+4. Create deploy user
+
+---
+
+## ClusterUser
+
+SSH credentials for connecting to cluster nodes:
+
+```ts
+import { ClusterUser } from '@nodevisor/cluster';
+
+const admin = new ClusterUser({
+  username: 'root',
+  privateKeyPath: '~/.ssh/id_ed25519',
+  publicKeyPath: '~/.ssh/id_ed25519.pub',
+});
+```
+
+Default key paths: `~/.ssh/nodevisor_id_ed25519` and `~/.ssh/nodevisor_id_ed25519.pub`.
+
+---
+
+## Enums
+
+### Mode
+
+```ts
+enum Mode {
+  GLOBAL = 'GLOBAL',       // One instance per node
+  REPLICATED = 'REPLICATED' // Specified number of replicas
+}
+```
+
+### ClusterType
+
+```ts
+enum ClusterType {
+  DOCKER_SWARM = 'DOCKER_SWARM',
+  DOCKER_COMPOSE = 'DOCKER_COMPOSE',
+}
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/docker`](/docs/packages/docker) — Concrete Docker implementation of cluster
+- [`@nodevisor/builder`](/docs/packages/builder) — Image building interface
+- [`@nodevisor/registry`](/docs/packages/registry) — Container registry interface

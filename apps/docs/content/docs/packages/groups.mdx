@@ -1,0 +1,121 @@
+---
+title: '@nodevisor/groups'
+description: Manage system groups and user membership.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/groups
+```
+
+Create and manage system groups, and control which users belong to which groups.
+
+---
+
+## Quick Start
+
+```ts
+import $ from '@nodevisor/shell';
+import Groups from '@nodevisor/groups';
+
+const groups = $(Groups);
+
+// Create a group
+await groups.add('docker');
+
+// Add a user to the group
+await groups.addUser('runner', 'docker');
+
+// Check membership
+const userGroups = await groups.userGroups('runner');
+console.log(userGroups); // ["runner", "docker"]
+```
+
+---
+
+## API
+
+### `exists(name)`
+
+Check if a group exists. Returns `boolean`.
+
+```ts
+if (await $(Groups).exists('docker')) {
+  console.log('Docker group exists');
+}
+```
+
+### `add(name)`
+
+Create a new system group.
+
+```ts
+await $(Groups).add('deploy');
+```
+
+### `remove(name)`
+
+Remove a system group.
+
+```ts
+await $(Groups).remove('oldgroup');
+```
+
+### `addUser(username, group)`
+
+Add a user to a group.
+
+```ts
+await $(Groups).addUser('runner', 'docker');
+// Linux: usermod -aG docker runner
+```
+
+### `removeUser(username, group)`
+
+Remove a user from a group.
+
+```ts
+await $(Groups).removeUser('runner', 'docker');
+```
+
+### `userGroups(username)`
+
+List all groups a user belongs to.
+
+```ts
+const groups = await $(Groups).userGroups('runner');
+console.log(groups); // ["runner", "sudo", "docker"]
+```
+
+### `hasUser(username, group)`
+
+Check if a user is a member of a group. Returns `boolean`.
+
+```ts
+if (await $(Groups).hasUser('runner', 'docker')) {
+  console.log('runner can use Docker');
+}
+```
+
+---
+
+## Common Patterns
+
+### Allow a user to run Docker commands
+
+```ts
+import $, { Groups } from 'nodevisor';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+await $server(Groups).addUser('runner', 'docker');
+```
+
+This is what `Docker.allowUser()` does internally.
+
+---
+
+## Related Packages
+
+- [`@nodevisor/users`](/docs/packages/users) — Create and manage users
+- [`@nodevisor/docker`](/docs/packages/docker) — `Docker.allowUser()` uses Groups internally

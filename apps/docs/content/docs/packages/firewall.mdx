@@ -1,0 +1,34 @@
+---
+title: '@nodevisor/firewall'
+description: High-level firewall abstraction (delegates to UFW).
+---
+
+## Install
+
+```bash
+npm install @nodevisor/firewall
+```
+
+## Status
+
+This package is a high-level abstraction layer for firewall management. Currently delegates to [`@nodevisor/ufw`](/docs/packages/ufw).
+
+For firewall functionality, use `@nodevisor/ufw` directly:
+
+```ts
+import $ from '@nodevisor/shell';
+import UFW from '@nodevisor/ufw';
+import { endpoints } from '@nodevisor/endpoint';
+
+const ufw = $(UFW);
+await ufw.install();
+await ufw.allow([endpoints.ssh, endpoints.web, endpoints.webSecure]);
+await ufw.start();
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/ufw`](/docs/packages/ufw) — UFW firewall management
+- [`@nodevisor/endpoint`](/docs/packages/endpoint) — Network endpoint definitions

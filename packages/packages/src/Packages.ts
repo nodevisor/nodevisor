@@ -1,4 +1,4 @@
-import { Module, Platform } from '@nodevisor/core';
+import { Module, Platform } from '@nodevisor/shell';
 import OS from '@nodevisor/os';
 import PackageManager from './constants/PackageManager';
 

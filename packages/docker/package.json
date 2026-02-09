@@ -2,6 +2,7 @@
   "name": "@nodevisor/docker",
   "description": "Module provides ability to manage Docker containers",
   "version": "0.0.82",
+  "license": "SEE LICENSE IN LICENSE",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "publishConfig": {
@@ -27,25 +28,26 @@
     "valid": "tsc --noEmit"
   },
   "dependencies": {
-    "@nodevisor/builder": "^0.0.82",
-    "@nodevisor/cluster": "^0.0.82",
-    "@nodevisor/core": "^0.0.82",
-    "@nodevisor/endpoint": "^0.0.82",
-    "@nodevisor/fs": "^0.0.82",
-    "@nodevisor/groups": "^0.0.82",
-    "@nodevisor/packages": "^0.0.82",
-    "@nodevisor/registry": "^0.0.82",
-    "@nodevisor/services": "^0.0.82",
-    "@nodevisor/ufw": "^0.0.82",
-    "lodash": "^4.17.21",
-    "yaml": "^2.6.1"
+    "@noble/curves": "^1.9.7",
+    "@nodevisor/builder": "workspace:*",
+    "@nodevisor/cluster": "workspace:*",
+    "@nodevisor/shell": "workspace:*",
+    "@nodevisor/endpoint": "workspace:*",
+    "@nodevisor/fs": "workspace:*",
+    "@nodevisor/groups": "workspace:*",
+    "@nodevisor/packages": "workspace:*",
+    "@nodevisor/registry": "workspace:*",
+    "@nodevisor/services": "workspace:*",
+    "@nodevisor/ufw": "workspace:*",
+    "lodash": "^4.17.23",
+    "yaml": "^2.8.2"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.14",
-    "@types/node": "^22.9.3",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.2.5",
-    "typescript": "5.7.2"
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.2.2",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "5.9.3"
   },
   "gitHead": "cf9df5ad6ceb25bfa7dfdc1c42f8b3fff149abb6"
 }

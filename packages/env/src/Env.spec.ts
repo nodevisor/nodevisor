@@ -1,5 +1,5 @@
 import path from 'path';
-import $, { Module } from '@nodevisor/core';
+import $, { Module } from '@nodevisor/shell';
 import Env from './Env';
 
 describe('Env Module', () => {

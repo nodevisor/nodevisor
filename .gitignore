@@ -6,3 +6,9 @@ lerna-debug.log
 .env
 my/
 docker-compose.yml
+apps/manager
+apps/docs-old2
+apps/docs-org
+apps/website
+.pnpm-store
+.claude

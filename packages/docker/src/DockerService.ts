@@ -8,7 +8,6 @@ import type DockerComposeServiceConfig from './@types/DockerComposeServiceConfig
 import toDockerStringObject from './utils/toDockerStringObject';
 import toDockerPorts from './utils/toDockerPorts';
 import toDockerDepends from './utils/toDockerDepends';
-import type DockerVolume from './@types/DockerVolume';
 import type DockerNetwork from './@types/DockerNetwork';
 import type DockerDependency from './@types/DockerDependency';
 import type ServiceVolume from './@types/ServiceVolume';
@@ -18,11 +17,7 @@ import DockerHealthcheck from './DockerHealthcheck';
 import toDockerRestart from './utils/toDockerRestart';
 import toDockerDeploy from './utils/toDockerDeploy';
 
-type PartialDockerComposeServiceConfig = Omit<
-  DockerComposeServiceConfig,
-  'image' | 'labels' | 'ports' | 'environment' | 'deploy' | 'networks' | 'volumes' | 'restart'
-> & {
-  deploy?: Omit<DockerComposeServiceConfig['deploy'], 'resources' | 'replicas'>;
+type PartialDockerComposeServiceConfig = {
   volumes?: ServiceVolume[];
   networks?: Record<string, DockerNetwork>;
   healthcheck?: DockerHealthcheckConfig;
@@ -31,53 +26,15 @@ type PartialDockerComposeServiceConfig = Omit<
 export type DockerServiceConfig = ClusterServiceConfig & PartialDockerComposeServiceConfig;
 
 export default class DockerService extends ClusterService {
-  private config: PartialDockerComposeServiceConfig;
   private volumes: ServiceVolume[];
   private networks: Record<string, DockerNetwork>;
   readonly healthcheck: DockerHealthcheck;
 
   constructor(config: DockerServiceConfig) {
-    const {
-      name,
-      image,
-      builder,
-      labels,
-      ports,
-      environment,
-      cpus,
-      memory,
-      replicas,
-      volumes = [],
-      networks = {},
-      context,
-      registry,
-      dependencies = [],
-      healthcheck = {},
-      mode,
-      placement,
-      restart,
-      ...rest
-    } = config;
+    const { volumes = [], networks = {}, healthcheck = {}, ...rest } = config;
 
-    super({
-      name,
-      image,
-      builder,
-      labels,
-      environment,
-      cpus,
-      memory,
-      replicas,
-      ports,
-      registry,
-      context,
-      dependencies,
-      mode,
-      placement,
-      restart,
-    });
+    super(rest);
 
-    this.config = rest;
     this.volumes = volumes;
     this.networks = networks;
     this.healthcheck = new DockerHealthcheck(healthcheck);
@@ -141,7 +98,6 @@ export default class DockerService extends ClusterService {
 
     return this.run(cluster, type, () => {
       const data: DockerComposeServiceConfig = {
-        ...this.config,
         image,
         deploy: toDockerDeploy(this, type),
       };
@@ -149,6 +105,19 @@ export default class DockerService extends ClusterService {
       // only compose supports restart
       if (type === ClusterType.DOCKER_COMPOSE) {
         data.restart = toDockerRestart(this, type);
+      }
+
+      const capabilities = this.getCapabilities();
+      if (capabilities.add?.length) {
+        data.cap_add = capabilities.add;
+      }
+
+      if (capabilities.drop?.length) {
+        data.cap_drop = capabilities.drop;
+      }
+
+      if (this.hasSysctls()) {
+        data.sysctls = toDockerStringObject(this.getSysctls());
       }
 
       if (this.hasCommand()) {

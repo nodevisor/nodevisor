@@ -1,0 +1,1 @@
+export { LicenseValidator, License } from './LicenseValidator';

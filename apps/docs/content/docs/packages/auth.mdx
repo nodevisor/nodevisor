@@ -1,0 +1,70 @@
+---
+title: '@nodevisor/auth'
+description: Set and manage user passwords on remote systems.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/auth
+```
+
+Provides authentication helpers for managing user passwords on Linux systems.
+
+---
+
+## Quick Start
+
+```ts
+import $ from '@nodevisor/shell';
+import Auth from '@nodevisor/auth';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+const auth = $server(Auth);
+
+// Set a user's password
+await auth.setPassword('runner', 'super-secret-password');
+```
+
+---
+
+## API
+
+### `setPassword(username, password)`
+
+Set or update a user's password. Uses `chpasswd` on Linux.
+
+```ts
+await $(Auth).setPassword('runner', 'new-password');
+```
+
+### `logout()`
+
+Logout the current user session.
+
+```ts
+await $(Auth).logout();
+```
+
+---
+
+## Common Patterns
+
+### Create a user with password
+
+```ts
+import $, { Users, Auth } from 'nodevisor';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+
+await $server(Users).add('runner');
+await $server(Auth).setPassword('runner', process.env.RUNNER_PASSWORD!);
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/users`](/docs/packages/users) — Create and manage users
+- [`@nodevisor/authorized-keys`](/docs/packages/authorized-keys) — SSH key-based authentication
+- [`@nodevisor/ssh`](/docs/packages/ssh) — SSH server configuration

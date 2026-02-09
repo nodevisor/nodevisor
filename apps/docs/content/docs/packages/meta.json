@@ -1,0 +1,33 @@
+{
+  "title": "Packages",
+  "pages": [
+    "index",
+    "---Execution---",
+    "shell",
+    "endpoint",
+    "---System---",
+    "os",
+    "fs",
+    "packages",
+    "services",
+    "env",
+    "pwsh",
+    "---Security---",
+    "users",
+    "groups",
+    "auth",
+    "authorized-keys",
+    "ssh",
+    "ufw",
+    "---Orchestration---",
+    "cluster",
+    "docker",
+    "aws",
+    "registry",
+    "builder",
+    "---Aggregator---",
+    "nodevisor",
+    "cli",
+    "schema"
+  ]
+}

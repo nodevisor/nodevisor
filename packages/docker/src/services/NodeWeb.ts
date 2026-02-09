@@ -2,7 +2,7 @@ import Web, { type WebConfig } from './Web';
 import NodeBuilder from '../builders/NodeBuilder';
 import type Artifact from '../@types/Artifact';
 
-type NodeWebConfig = Omit<WebConfig, 'builder'> & {
+export type NodeWebConfig = Omit<WebConfig, 'builder'> & {
   builder?: NodeBuilder;
   appDir?: string;
   tags?: string[];

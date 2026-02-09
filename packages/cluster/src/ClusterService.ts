@@ -1,5 +1,5 @@
 import { unset } from 'lodash';
-import { CommandBuilder, ShellConnection, raw } from '@nodevisor/core';
+import { CommandBuilder, ShellConnection, raw } from '@nodevisor/shell';
 import Builder from '@nodevisor/builder';
 import Registry from '@nodevisor/registry';
 import type Labels from './@types/Labels';
@@ -18,6 +18,8 @@ import type ClusterType from './constants/ClusterType';
 import type Restart from './@types/Restart';
 import type Placement from './@types/Placement';
 import Mode from './constants/Mode';
+import type Sysctls from './@types/Sysctls';
+import type Capabilities from './@types/Capabilities';
 
 export type ClusterServiceConfig = ClusterServiceBaseConfig & {
   image?: string; // Format: 'name:tag' (e.g. 'myapp:1.0.0')
@@ -28,6 +30,8 @@ export type ClusterServiceConfig = ClusterServiceBaseConfig & {
   placement?: Placement;
   dependencies?: Array<ClusterService | PartialFor<Dependency, 'cluster'>>;
   labels?: Labels;
+  sysctls?: Sysctls;
+  capabilities?: Capabilities;
   profiles?: string[];
   environment?: Environment;
   cpus?: {
@@ -60,6 +64,8 @@ export default abstract class ClusterService extends ClusterServiceBase {
 
   private dependencies: PartialFor<Dependency, 'cluster'>[] = [];
   private labels: Labels;
+  private sysctls: Sysctls;
+  private capabilities: Capabilities;
   private profiles: string[];
   private environment: Environment;
   private restart?: Restart;
@@ -88,6 +94,8 @@ export default abstract class ClusterService extends ClusterServiceBase {
       registry,
       builder,
       labels = {},
+      sysctls = {},
+      capabilities = {},
       environment = {},
       profiles = [],
       cpus = {},
@@ -111,6 +119,8 @@ export default abstract class ClusterService extends ClusterServiceBase {
     this.mode = mode;
     this.placement = placement;
     this.labels = labels;
+    this.sysctls = sysctls;
+    this.capabilities = capabilities;
     this.profiles = profiles;
     this.environment = environment;
     this.cpus = cpus;
@@ -249,6 +259,53 @@ export default abstract class ClusterService extends ClusterServiceBase {
     return {
       ...this.labels,
     };
+  }
+
+  getSysctls() {
+    return {
+      ...this.sysctls,
+    };
+  }
+
+  getCapabilities() {
+    const { add = [], drop = [] } = this.capabilities;
+
+    return {
+      add,
+      drop,
+    };
+  }
+
+  addCapability(value: string) {
+    const { add = [] } = this.capabilities;
+    this.capabilities.add = [...add, value];
+    return this;
+  }
+
+  dropCapability(value: string) {
+    const { drop = [] } = this.capabilities;
+    this.capabilities.drop = [...drop, value];
+    return this;
+  }
+
+  setSysctl(key: string, value: string | number | boolean | undefined) {
+    if (value === undefined) {
+      unset(this.sysctls, key);
+    } else {
+      this.sysctls[key] = value;
+    }
+
+    return this;
+  }
+
+  getSysctl(key: string) {
+    const sysctls = this.getSysctls();
+    return sysctls[key];
+  }
+
+  hasSysctls() {
+    const sysctls = this.getSysctls();
+    return !!Object.keys(sysctls).length;
   }
 
   getProfiles() {

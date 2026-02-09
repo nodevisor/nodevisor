@@ -1,0 +1,8 @@
+{
+  "title": "Examples",
+  "pages": [
+    "index",
+    "server-bootstrap",
+    "docker-cluster"
+  ]
+}

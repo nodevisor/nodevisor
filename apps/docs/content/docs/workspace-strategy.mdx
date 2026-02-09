@@ -1,0 +1,156 @@
+---
+title: Workspace Strategy
+description: How to structure your project when working with Nodevisor packages.
+---
+
+## Umbrella vs. Individual Packages
+
+Nodevisor is split into ~20 focused packages. You have two ways to consume them:
+
+### The `nodevisor` umbrella
+
+One dependency, one import source. Best for application-level scripts and deployment configs.
+
+```ts
+import $, { Docker, UFW, Users, SSH, DockerCluster, DockerNode } from 'nodevisor';
+```
+
+### Individual `@nodevisor/*` packages
+
+Install only what you need. Best for libraries, CI scripts, or when bundle size matters.
+
+```ts
+import $ from '@nodevisor/shell';
+import Docker from '@nodevisor/docker';
+import UFW from '@nodevisor/ufw';
+```
+
+**Rule of thumb:** Use `nodevisor` for deployment scripts and cluster definitions. Use individual packages when building reusable modules or when you only need one or two capabilities.
+
+---
+
+## Project Layout
+
+A typical Nodevisor project looks like this:
+
+```
+my-project/
+├── .nodevisor/
+│   ├── .env              # Secrets (DB passwords, registry tokens)
+│   ├── production.ts     # Production cluster definition
+│   └── staging.ts        # Staging cluster definition
+├── apps/
+│   ├── api/              # Your application code
+│   └── web/
+├── package.json
+└── tsconfig.json
+```
+
+The `.nodevisor/` directory is the conventional location for cluster definitions. The CLI automatically looks there when you pass a bare filename:
+
+```bash
+# These are equivalent:
+nv deploy production.ts
+nv deploy .nodevisor/production.ts
+```
+
+The CLI also auto-loads `.env` files from the same directory as the cluster file.
+
+---
+
+## Cluster Definition Patterns
+
+### Single environment
+
+For simple projects, one file per environment:
+
+```ts
+// .nodevisor/production.ts
+import { DockerCluster, DockerNode, NodeWeb, Postgres, Traefik } from 'nodevisor';
+
+const cluster = new DockerCluster({
+  name: 'production',
+  nodes: [new DockerNode({ host: '10.0.0.1' })],
+});
+
+cluster.addDependency(new Traefik({ ssl: { email: 'ops@example.com' } }));
+cluster.addDependency(new Postgres({ database: 'app', username: 'app', password: process.env.DB_PASSWORD! }));
+cluster.addDependency(new NodeWeb({ name: 'api', appDir: './apps/api', domains: ['api.example.com'], port: 3000 }));
+
+export default cluster;
+```
+
+### Shared services across environments
+
+Extract service definitions to keep cluster files DRY:
+
+```ts
+// .nodevisor/services.ts
+import { NodeWeb, Postgres, Traefik } from 'nodevisor';
+
+export const traefik = (email: string) => new Traefik({ ssl: { email } });
+
+export const postgres = (password: string) => new Postgres({
+  database: 'app',
+  username: 'app',
+  password,
+});
+
+export const api = (domains: string[]) => new NodeWeb({
+  name: 'api',
+  appDir: './apps/api',
+  domains,
+  port: 3000,
+});
+```
+
+```ts
+// .nodevisor/production.ts
+import { DockerCluster, DockerNode } from 'nodevisor';
+import { traefik, postgres, api } from './services';
+
+const cluster = new DockerCluster({
+  name: 'production',
+  nodes: [
+    new DockerNode({ host: '10.0.0.1' }),
+    new DockerNode({ host: '10.0.0.2' }),
+  ],
+});
+
+cluster.addDependency(traefik('ops@example.com'));
+cluster.addDependency(postgres(process.env.DB_PASSWORD!));
+cluster.addDependency(api(['api.example.com']));
+
+export default cluster;
+```
+
+---
+
+## Environment Variables
+
+Keep secrets in `.env` files next to your cluster definitions:
+
+```bash
+# .nodevisor/.env
+DB_PASSWORD=super-secret
+REDIS_PASSWORD=also-secret
+REGISTRY_TOKEN=ghp_xxxxx
+```
+
+The CLI loads this automatically. In your cluster file, just use `process.env`:
+
+```ts
+new Postgres({
+  password: process.env.DB_PASSWORD!,
+});
+```
+
+Add `.nodevisor/.env` to your `.gitignore`.
+
+---
+
+## Related
+
+- [Getting Started](/docs/getting-started) — Installation and first steps
+- [`@nodevisor/cli`](/docs/packages/cli) — CLI command reference
+- [Docker Cluster Example](/docs/examples/docker-cluster) — Full production deployment example

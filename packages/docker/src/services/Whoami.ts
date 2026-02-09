@@ -1,7 +1,7 @@
 import { PartialFor } from '@nodevisor/cluster';
 import Web, { type WebConfig } from './Web';
 
-type WhoamiConfig = PartialFor<WebConfig, 'name'> & {};
+export type WhoamiConfig = PartialFor<WebConfig, 'name'> & {};
 
 export default class Whoami extends Web {
   constructor(config: WhoamiConfig) {

@@ -1,4 +1,4 @@
-import { User } from '@nodevisor/core';
+import { User } from '@nodevisor/shell';
 import ClusterService from './ClusterService';
 import ClusterNode from './ClusterNode';
 import Cluster from './Cluster';

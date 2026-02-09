@@ -1,3 +1,6 @@
+export { default as Manager } from './Manager';
+export * from './Manager';
+
 export { default as Node } from './Node';
 export * from './Node';
 
@@ -25,5 +28,5 @@ export * from './Web';
 export { default as WebProxy } from './WebProxy';
 export * from './WebProxy';
 
-export { default as WireGuard } from './WireGuard';
-export * from './WireGuard';
+// export { default as WireGuard } from './WireGuard';
+// export * from './WireGuard';

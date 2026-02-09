@@ -1,4 +1,4 @@
-import { Package, raw } from '@nodevisor/core';
+import { Package, raw } from '@nodevisor/shell';
 import Packages, { PackageManager } from '@nodevisor/packages';
 import FS from '@nodevisor/fs';
 import OS from '@nodevisor/os';

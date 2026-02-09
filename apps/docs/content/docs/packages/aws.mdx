@@ -1,0 +1,189 @@
+---
+title: '@nodevisor/aws'
+description: AWS CLI management and Elastic Container Registry (ECR) integration.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/aws
+```
+
+Manages the AWS CLI and provides ECR (Elastic Container Registry) helpers for container image management.
+
+---
+
+## AWS CLI
+
+### Quick Start
+
+```ts
+import $ from '@nodevisor/shell';
+import AWS from '@nodevisor/aws';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+const aws = $server(AWS);
+
+// Install AWS CLI
+await aws.install();
+
+// Configure credentials
+await aws.setCredentials('AKIAIOSFODNN7EXAMPLE', 'wJalrXUtnFEMI/K7MDENG/secret');
+await aws.setDefaultRegion('eu-central-1');
+```
+
+### Installation
+
+| Method | Description |
+|--------|-------------|
+| `install()` | Install the AWS CLI |
+| `isInstalled()` | Check if AWS CLI is installed |
+| `getVersion()` | Get AWS CLI version |
+
+### Configuration
+
+#### `set(key, value, profile?)`
+
+Set an AWS CLI configuration value.
+
+```ts
+await aws.set('region', 'eu-central-1');
+await aws.set('output', 'json', 'production'); // with profile
+```
+
+#### `get(key, profile?)`
+
+Get an AWS CLI configuration value.
+
+```ts
+const region = await aws.get('region');
+```
+
+#### `setDefaultRegion(region)`
+
+Set the default AWS region.
+
+```ts
+await aws.setDefaultRegion('eu-central-1');
+```
+
+#### `getDefaultRegion()`
+
+Get the current default region.
+
+```ts
+const region = await aws.getDefaultRegion();
+```
+
+#### `setCredentials(accessKeyId, secretAccessKey)`
+
+Configure AWS access credentials.
+
+```ts
+await aws.setCredentials(
+  process.env.AWS_ACCESS_KEY_ID!,
+  process.env.AWS_SECRET_ACCESS_KEY!,
+);
+```
+
+#### `getAccessKeyId()`
+
+Get the configured access key ID.
+
+```ts
+const keyId = await aws.getAccessKeyId();
+```
+
+### ECR Helpers
+
+#### `getECRLoginPassword(options?)`
+
+Get the ECR login password for Docker authentication.
+
+```ts
+const password = await aws.getECRLoginPassword({ region: 'eu-central-1' });
+```
+
+#### `getECRDockerRegistryEndpoint(registryId, options?)`
+
+Get the ECR registry URL.
+
+```ts
+const endpoint = await aws.getECRDockerRegistryEndpoint('123456789012');
+// "123456789012.dkr.ecr.eu-central-1.amazonaws.com"
+```
+
+---
+
+## ECR (Elastic Container Registry)
+
+### Quick Start
+
+```ts
+import { ECR } from '@nodevisor/aws';
+
+const ecr = new ECR({
+  registryId: '123456789012',
+  region: 'eu-central-1',
+});
+
+// Get the registry URI for an image
+const uri = ecr.getURI('myapp');
+// "123456789012.dkr.ecr.eu-central-1.amazonaws.com/myapp"
+
+// Get login credentials
+const creds = await ecr.getLoginCredentials();
+console.log(creds.server); // ECR endpoint
+```
+
+### API
+
+#### `getURI(image, options?)`
+
+Get the full ECR URI for an image.
+
+```ts
+const uri = ecr.getURI('myapp');
+const uriWithRegion = ecr.getURI('myapp', { region: 'us-east-1' });
+```
+
+#### `getLoginCredentials(options?)`
+
+Get credentials for Docker login to ECR.
+
+```ts
+const { server, username, password } = await ecr.getLoginCredentials();
+```
+
+#### `login($con)`
+
+Login to ECR on a remote connection.
+
+```ts
+await ecr.login($server);
+```
+
+---
+
+## Using ECR with DockerCluster
+
+```ts
+import { DockerCluster, DockerNode } from '@nodevisor/docker';
+import { ECR } from '@nodevisor/aws';
+
+const cluster = new DockerCluster({
+  name: 'production',
+  nodes: [new DockerNode({ host: '10.0.0.10' })],
+  registry: new ECR({
+    registryId: '123456789012',
+    region: 'eu-central-1',
+  }),
+});
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/docker`](/docs/packages/docker) — Docker cluster deployment
+- [`@nodevisor/registry`](/docs/packages/registry) — Abstract registry interface (ECR extends this)

@@ -1,4 +1,4 @@
-import { Module } from '@nodevisor/core';
+import { Module } from '@nodevisor/shell';
 
 export default class Groups extends Module {
   readonly name = 'groups';

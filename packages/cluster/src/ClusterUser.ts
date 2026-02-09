@@ -1,4 +1,4 @@
-import { User, type UserConfig } from '@nodevisor/core';
+import { User, type UserConfig } from '@nodevisor/shell';
 
 export type ClusterUserConfig = UserConfig;
 

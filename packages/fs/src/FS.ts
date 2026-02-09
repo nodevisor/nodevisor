@@ -1,4 +1,4 @@
-import { Module, Platform, raw } from '@nodevisor/core';
+import { Module, Platform, raw } from '@nodevisor/shell';
 import PWSH from '@nodevisor/pwsh';
 import Users from '@nodevisor/users';
 

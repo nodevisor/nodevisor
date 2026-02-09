@@ -12,7 +12,7 @@ type MaxmemoryPolicy =
   | 'volatile-random'
   | 'volatile-ttl';
 
-type RedisConfig = PartialFor<PortDockerServiceConfig, 'name'> & {
+export type RedisConfig = PartialFor<PortDockerServiceConfig, 'name'> & {
   port?: number;
   password?: string;
   appendonly?: boolean;

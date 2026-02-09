@@ -1,4 +1,4 @@
-import { CommandBuilder, ShellConnection, raw } from '@nodevisor/core';
+import { CommandBuilder, ShellConnection, raw } from '@nodevisor/shell';
 import type DockerHealthcheckConfig from './@types/DockerHealthcheckConfig';
 import type Duration from './@types/Duration';
 

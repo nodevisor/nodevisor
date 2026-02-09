@@ -1,0 +1,140 @@
+---
+title: 'nodevisor'
+description: The umbrella package — one import for the entire Nodevisor platform.
+---
+
+## Install
+
+```bash
+npm install nodevisor
+```
+
+`nodevisor` is the all-in-one package. It re-exports every module, type, and utility from the Nodevisor ecosystem so you can use a single import for everything.
+
+---
+
+## Quick Start
+
+```ts
+import $, { OS, FS, Docker, DockerCluster, DockerNode, NodeWeb } from 'nodevisor';
+
+// Run shell commands
+const hostname = await $`hostname`.text();
+
+// Use modules
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+const arch = await $server(OS).arch();
+const files = await $server(FS).readFile('/etc/hostname');
+
+// Build clusters
+const cluster = new DockerCluster({
+  name: 'production',
+  nodes: [new DockerNode({ host: '10.0.0.10' })],
+});
+
+cluster.addDependency(new NodeWeb({
+  name: 'api',
+  appDir: './apps/api',
+  domains: ['api.example.com'],
+  port: 3000,
+}));
+
+await cluster.deploy();
+```
+
+---
+
+## What's Included
+
+Everything from these packages is available through `nodevisor`:
+
+### Default Export
+
+The shell proxy `$` from `@nodevisor/shell` — template literal command execution, `.connect()`, `.as()`, and the module system.
+
+```ts
+import $ from 'nodevisor';
+
+await $`echo hello`.text();
+```
+
+### System Modules
+
+| Export | Package | Description |
+|--------|---------|-------------|
+| `OS` | `@nodevisor/os` | Hostname, arch, uptime, reboot |
+| `FS` | `@nodevisor/fs` | File operations (read, write, chmod, etc.) |
+| `Env` | `@nodevisor/env` | Environment variables |
+| `Packages` | `@nodevisor/packages` | Package manager abstraction |
+| `Services` | `@nodevisor/services` | Systemd service control |
+| `PWSH` | `@nodevisor/pwsh` | PowerShell command builder |
+
+### Security Modules
+
+| Export | Package | Description |
+|--------|---------|-------------|
+| `Auth` | `@nodevisor/auth` | Password management |
+| `Users` | `@nodevisor/users` | User account management |
+| `Groups` | `@nodevisor/groups` | Group management |
+| `AuthorizedKeys` | `@nodevisor/authorized-keys` | SSH authorized keys |
+| `SSH` | `@nodevisor/ssh` | SSH server management |
+| `UFW` | `@nodevisor/ufw` | Firewall management |
+
+### Orchestration
+
+| Export | Package | Description |
+|--------|---------|-------------|
+| `Docker` | `@nodevisor/docker` | Docker engine, Swarm, Compose, Stack |
+| `Cluster` | `@nodevisor/cluster` | Abstract cluster primitives |
+| `Builder` | `@nodevisor/builder` | Image builder interface |
+| `Registry` | `@nodevisor/registry` | Container registry interface |
+| `AWS` | `@nodevisor/aws` | AWS CLI and ECR |
+
+### Pre-built Services
+
+All Docker services from `@nodevisor/docker`:
+
+```ts
+import {
+  Traefik, Postgres, Redis,
+  NodeWeb, Nextjs, WireGuard, Whoami,
+  DockerBuilder, NodeBuilder,
+  DockerRegistry, DockerRegistryLocal,
+  DockerCluster, DockerNode, DockerSwarm,
+} from 'nodevisor';
+```
+
+### Types and Utilities
+
+Endpoint presets, Protocol enum, Zod schemas, and all TypeScript types:
+
+```ts
+import { endpoints, Protocol, adminSchema, runnerSchema } from 'nodevisor';
+```
+
+---
+
+## When to Use This Package
+
+**Use `nodevisor`** when you want convenience — one dependency, one import source, everything available.
+
+```ts
+// One import, everything you need
+import $, { Docker, UFW, Users, SSH } from 'nodevisor';
+```
+
+**Use individual packages** when you want smaller bundles or only need specific functionality:
+
+```ts
+// Only install what you use
+import $ from '@nodevisor/shell';
+import Docker from '@nodevisor/docker';
+```
+
+---
+
+## Related
+
+- [`@nodevisor/shell`](/docs/packages/shell) — The core shell proxy and module system
+- [`@nodevisor/docker`](/docs/packages/docker) — Docker orchestration and pre-built services
+- [`@nodevisor/cli`](/docs/packages/cli) — Command-line interface for deployment workflows

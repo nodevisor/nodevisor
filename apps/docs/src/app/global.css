@@ -1,0 +1,334 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/style.css';
+
+:root {
+  --background: 32 33% 97%;
+  --foreground: 200 34% 11%;
+  --muted: 36 45% 92%;
+  --muted-foreground: 205 16% 37%;
+  --accent: 155 53% 45%;
+  --accent-foreground: 36 45% 97%;
+  --border: 35 28% 84%;
+  --code-bg: 36 30% 90%;
+}
+
+.dark {
+  --background: 200 38% 9%;
+  --foreground: 36 44% 94%;
+  --muted: 201 34% 15%;
+  --muted-foreground: 36 24% 70%;
+  --accent: 152 65% 55%;
+  --accent-foreground: 201 37% 10%;
+  --border: 201 26% 22%;
+  --code-bg: 201 38% 12%;
+}
+
+.nv-body {
+  min-height: 100vh;
+  font-family: 'Space Grotesk', 'Avenir Next', 'Segoe UI', sans-serif;
+  background: radial-gradient(circle at 15% 10%, rgba(0, 170, 122, 0.16) 0%, transparent 45%),
+    radial-gradient(circle at 85% 30%, rgba(255, 168, 83, 0.14) 0%, transparent 48%),
+    hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* ── Landing layout ── */
+
+.landing-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+  padding: 4rem 1rem 2rem;
+}
+
+.landing-grid {
+  position: fixed;
+  inset: 0;
+  opacity: 0.28;
+  background-image: linear-gradient(to right, rgba(17, 24, 39, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(17, 24, 39, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Shared card style ── */
+
+.landing-card {
+  position: relative;
+  max-width: 64rem;
+  width: 100%;
+  border: 1px solid hsl(var(--border));
+  border-radius: 1rem;
+  background: color-mix(in srgb, hsl(var(--background)) 88%, #ffffff 12%);
+  padding: clamp(1.5rem, 3.2vw, 2.5rem);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Hero ── */
+
+.landing-hero {
+  position: relative;
+  max-width: 64rem;
+  width: 100%;
+  border: 1px solid hsl(var(--border));
+  border-radius: 1rem;
+  background: color-mix(in srgb, hsl(var(--background)) 88%, #ffffff 12%);
+  padding: clamp(1.5rem, 3.2vw, 3rem);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.12);
+  z-index: 1;
+}
+
+.landing-kicker {
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.9rem;
+}
+
+.landing-hero h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.landing-description {
+  margin-top: 1rem;
+  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  max-width: 52ch;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.5;
+}
+
+/* ── Code blocks ── */
+
+.landing-code {
+  margin-top: 1.4rem;
+  padding: 1.2rem 1.4rem;
+  border-radius: 0.75rem;
+  background: hsl(var(--code-bg));
+  border: 1px solid hsl(var(--border));
+  overflow-x: auto;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  white-space: pre;
+  word-wrap: normal;
+}
+
+.landing-code code {
+  background: none !important;
+  padding: 0 !important;
+  font-size: inherit;
+  color: hsl(var(--foreground));
+  border: none !important;
+}
+
+/* sugar-high token colors (uses --sh-* CSS custom properties on inline styles) */
+.landing-code {
+  --sh-class: #b06c2d;
+  --sh-identifier: hsl(var(--foreground));
+  --sh-keyword: #8b5cf6;
+  --sh-string: #16803c;
+  --sh-property: #2e7bb6;
+  --sh-entity: #d97706;
+  --sh-jsxliterals: hsl(var(--foreground));
+  --sh-sign: hsl(var(--muted-foreground));
+  --sh-comment: hsl(var(--muted-foreground));
+}
+
+.dark .landing-code {
+  --sh-class: #e8a55a;
+  --sh-identifier: hsl(var(--foreground));
+  --sh-keyword: #c4b5fd;
+  --sh-string: #6ee7a0;
+  --sh-property: #7dc4e8;
+  --sh-entity: #fbbf24;
+  --sh-jsxliterals: hsl(var(--foreground));
+  --sh-sign: hsl(var(--muted-foreground));
+  --sh-comment: hsl(var(--muted-foreground));
+}
+
+/* ── Buttons ── */
+
+.landing-actions {
+  margin-top: 1.65rem;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.landing-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  padding: 0.72rem 1.2rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.landing-btn:hover {
+  opacity: 0.85;
+}
+
+.landing-btn-primary {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.landing-btn-secondary {
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  background: color-mix(in srgb, hsl(var(--background)) 85%, #ffffff 15%);
+}
+
+/* ── Install badge ── */
+
+.landing-install {
+  margin-top: 1.2rem;
+  display: inline-flex;
+}
+
+.landing-install code {
+  padding: 0.45rem 1rem;
+  border-radius: 0.5rem;
+  background: hsl(var(--code-bg));
+  border: 1px solid hsl(var(--border));
+  font-size: 0.85rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ── Features ── */
+
+.landing-features {
+  position: relative;
+  max-width: 64rem;
+  width: 100%;
+  display: grid;
+  gap: 1.5rem;
+  z-index: 1;
+}
+
+.landing-feature {
+  border: 1px solid hsl(var(--border));
+  border-radius: 1rem;
+  background: color-mix(in srgb, hsl(var(--background)) 88%, #ffffff 12%);
+  padding: clamp(1.5rem, 3.2vw, 2.5rem);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.landing-feature h2 {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.landing-feature p {
+  margin-top: 0.5rem;
+  color: hsl(var(--muted-foreground));
+  max-width: 60ch;
+  line-height: 1.5;
+}
+
+/* ── Comparison ── */
+
+.landing-comparison {
+  position: relative;
+  max-width: 64rem;
+  width: 100%;
+  border: 1px solid hsl(var(--border));
+  border-radius: 1rem;
+  background: color-mix(in srgb, hsl(var(--background)) 88%, #ffffff 12%);
+  padding: clamp(1.5rem, 3.2vw, 3rem);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  z-index: 1;
+}
+
+.landing-comparison h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin: 0;
+}
+
+.landing-comparison-description {
+  margin-top: 0.5rem;
+  color: hsl(var(--muted-foreground));
+  max-width: 60ch;
+  line-height: 1.5;
+}
+
+.landing-comparison-grid {
+  margin-top: 1.4rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .landing-comparison-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.landing-comparison-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.landing-comparison-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.4rem;
+}
+
+.landing-comparison-label-highlight {
+  color: hsl(var(--accent));
+}
+
+.landing-comparison-panel .landing-code {
+  margin-top: 0;
+  flex: 1;
+  font-size: 0.75rem;
+}
+
+/* ── Bottom CTA ── */
+
+.landing-bottom-cta {
+  position: relative;
+  max-width: 64rem;
+  width: 100%;
+  text-align: center;
+  padding: 2rem 1rem 3rem;
+  z-index: 1;
+}
+
+.landing-bottom-cta h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin: 0;
+}
+
+.landing-bottom-cta p {
+  margin-top: 0.5rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 1.1rem;
+}
+
+.landing-bottom-cta .landing-actions {
+  justify-content: center;
+}

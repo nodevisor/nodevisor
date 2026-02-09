@@ -1,6 +1,6 @@
 import which from 'which';
 import PWSH from './PWSH';
-import { Nodevisor } from '@nodevisor/core';
+import { Nodevisor } from '@nodevisor/shell';
 
 // detect if pwsh is available
 const hasPwsh = which.sync('pwsh', { nothrow: true });

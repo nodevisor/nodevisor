@@ -1,4 +1,4 @@
-import $, { NodevisorProxy } from '@nodevisor/core';
+import $, { NodevisorProxy } from '@nodevisor/shell';
 import Registry, { type RegistryConfig } from '@nodevisor/registry';
 import Docker from './Docker';
 

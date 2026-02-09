@@ -1,0 +1,88 @@
+---
+title: Server Bootstrap
+description: Harden a fresh VPS with users, SSH keys, firewall rules, and Docker.
+---
+
+## Overview
+
+This recipe takes a fresh VPS with root password access and configures it with:
+
+1. Updated system packages
+2. A non-root deploy user with SSH key access
+3. Firewall allowing only SSH, HTTP, and HTTPS
+4. Password authentication disabled
+5. Docker installed with Swarm mode ready
+
+## Full Script
+
+```ts title=".nodevisor/bootstrap.ts"
+import $, {
+  Packages, Users, Auth, AuthorizedKeys,
+  SSH, UFW, Docker, DockerSwarm, endpoints
+} from 'nodevisor';
+
+const HOST = process.env.HOST!;
+const ROOT_PASSWORD = process.env.ROOT_PASSWORD!;
+const RUNNER_PASSWORD = process.env.RUNNER_PASSWORD!;
+const SSH_PUBLIC_KEY = process.env.SSH_PUBLIC_KEY!;
+
+// Connect as root with password
+const $root = $.connect({
+  host: HOST,
+  username: 'root',
+  password: ROOT_PASSWORD,
+});
+
+// 1. Update all system packages
+await $root(Packages).updateAndUpgrade();
+
+// 2. Configure firewall before exposing services
+await $root(UFW).install();
+await $root(UFW).allow([
+  endpoints.ssh,       // port 22/tcp
+  endpoints.web,       // port 80/tcp
+  endpoints.webSecure, // port 443/tcp
+]);
+await $root(UFW).start();
+
+// 3. Add root's SSH key (so we can disable password auth)
+await $root(AuthorizedKeys).write(SSH_PUBLIC_KEY);
+
+// 4. Create the deploy user
+await $root(Users).add('runner');
+await $root(Auth).setPassword('runner', RUNNER_PASSWORD);
+
+// 5. Add SSH key for the deploy user
+const $runner = $root.as('runner');
+await $runner(AuthorizedKeys).write(SSH_PUBLIC_KEY);
+
+// 6. Harden SSH — disable password login
+await $root(SSH).disablePasswordAuthentication();
+
+// 7. Install Docker and configure Swarm
+await $root(Docker).install();
+await $root(Docker).allowUser('runner');
+await $root(DockerSwarm).start();
+
+console.log(`Server ${HOST} bootstrapped successfully.`);
+```
+
+## Run It
+
+```bash
+HOST=10.0.0.10 ROOT_PASSWORD=xxx RUNNER_PASSWORD=yyy \
+  SSH_PUBLIC_KEY="ssh-ed25519 AAAA..." \
+  npx tsx .nodevisor/bootstrap.ts
+```
+
+## What Each Step Does
+
+| Step | Package | What happens |
+|------|---------|-------------|
+| Update packages | `Packages` | Runs `apt-get update && apt-get upgrade` (or yum/brew equivalent) |
+| Install firewall | `UFW` | Installs ufw, allows SSH/HTTP/HTTPS, enables the firewall |
+| Add SSH key | `AuthorizedKeys` | Writes the public key to `~/.ssh/authorized_keys` |
+| Create user | `Users` + `Auth` | Creates the user with `useradd` and sets the password with `chpasswd` |
+| Disable passwords | `SSH` | Sets `PasswordAuthentication no` in sshd_config and restarts sshd |
+| Install Docker | `Docker` | Installs Docker via the official script, adds user to docker group |
+| Start Swarm | `DockerSwarm` | Runs `docker swarm init` |

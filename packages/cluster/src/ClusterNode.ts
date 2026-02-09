@@ -6,7 +6,7 @@ import SSH from '@nodevisor/ssh';
 import UFW from '@nodevisor/ufw';
 import Users from '@nodevisor/users';
 import Auth from '@nodevisor/auth';
-import $, { User } from '@nodevisor/core';
+import $, { User } from '@nodevisor/shell';
 import type ClusterService from './ClusterService';
 
 export type ClusterNodeConfig = {

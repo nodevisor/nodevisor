@@ -1,0 +1,55 @@
+{
+  "name": "@nodevisor/shell",
+  "description": "Cross-platform shell scripting with remote execution capabilities",
+  "version": "0.0.82",
+  "license": "SEE LICENSE IN LICENSE",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc -p tsconfig.json",
+    "build:cjs": "tsc -p tsconfig-cjs.json",
+    "build:watch": "npm run build:esm:watch & npm run build:cjs:watch",
+    "build:esm:watch": "tsc -p tsconfig.json --watch",
+    "build:cjs:watch": "tsc -p tsconfig-cjs.json --watch",
+    "test": "jest --passWithNoTests",
+    "test:file": "jest ./src/index.spec.ts --passWithNoTests --verbose",
+    "valid": "tsc --noEmit"
+  },
+  "dependencies": {
+    "debug": "^4.4.3",
+    "lodash": "^4.17.23",
+    "lru-cache": "^11.2.5",
+    "nanoid": "^5.1.6",
+    "node-ssh": "^13.2.1",
+    "ssh2": "^1.17.0",
+    "ssh2-sftp-client": "^12.0.1",
+    "sshpk": "^1.18.0",
+    "tmp": "^0.2.5"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.12",
+    "@types/jest": "^30.0.0",
+    "@types/lodash": "^4.17.23",
+    "@types/node": "^25.2.2",
+    "@types/ssh2": "^1.15.5",
+    "@types/ssh2-sftp-client": "^9.0.6",
+    "@types/sshpk": "^1.17.4",
+    "@types/tmp": "^0.2.6",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "5.9.3"
+  },
+  "gitHead": "cf9df5ad6ceb25bfa7dfdc1c42f8b3fff149abb6"
+}

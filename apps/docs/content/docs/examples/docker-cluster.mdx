@@ -1,0 +1,126 @@
+---
+title: Docker Cluster
+description: Deploy a production stack with Traefik, Postgres, and your Node.js app.
+---
+
+## Overview
+
+This recipe deploys a complete production stack using Docker Swarm:
+
+- **Traefik** as reverse proxy with automatic SSL via Let's Encrypt
+- **Postgres** as the database with persistent storage
+- **Your Node.js app** with automatic builds and rolling deployments
+
+## Cluster Definition
+
+```ts title=".nodevisor/cluster.ts"
+import {
+  DockerCluster, DockerNode, ClusterUser,
+  Traefik, Postgres, NodeWeb, DockerRegistry
+} from 'nodevisor';
+
+// Define the cluster
+const cluster = new DockerCluster({
+  name: 'production',
+  nodes: [
+    new DockerNode({ host: process.env.HOST! }),
+  ],
+  users: [
+    new ClusterUser({
+      username: 'root',
+      privateKeyPath: '~/.ssh/id_ed25519',
+    }),
+  ],
+  registry: new DockerRegistry({
+    server: 'ghcr.io',
+    username: process.env.REGISTRY_USER!,
+    password: process.env.REGISTRY_TOKEN!,
+  }),
+});
+
+// Reverse proxy with SSL
+cluster.addDependency(new Traefik({
+  ssl: {
+    email: 'ops@example.com',
+    redirect: true,
+  },
+  dashboard: {
+    host: 'traefik.example.com',
+    username: 'admin',
+    password: process.env.TRAEFIK_PASSWORD_HASH!,
+  },
+}));
+
+// Database
+cluster.addDependency(new Postgres({
+  database: 'myapp',
+  username: 'myapp',
+  password: process.env.POSTGRES_PASSWORD!,
+}));
+
+// Application
+cluster.addDependency(new NodeWeb({
+  name: 'api',
+  appDir: './apps/api',
+  tags: ['latest'],
+  domains: ['api.example.com'],
+  port: 3000,
+  environment: {
+    NODE_ENV: 'production',
+    DATABASE_URL: `postgresql://myapp:${process.env.POSTGRES_PASSWORD}@postgres:5432/myapp`,
+  },
+}));
+
+export default cluster;
+```
+
+## Deploy
+
+```ts title=".nodevisor/deploy.ts"
+import cluster from './cluster';
+
+// First time: setup servers (install Docker, firewall, users)
+await cluster.setup();
+
+// Build images, push to registry, deploy to all nodes
+await cluster.deploy();
+```
+
+Run with the CLI:
+
+```bash
+nodevisor-cli setup .nodevisor/cluster.ts
+nodevisor-cli deploy .nodevisor/cluster.ts
+```
+
+## Generate Docker Compose YAML
+
+You can inspect the generated configuration:
+
+```ts
+// Output the docker-compose.yml equivalent
+console.log(cluster.yaml());
+```
+
+## Local Development
+
+Deploy locally using Docker Compose instead of Swarm:
+
+```ts
+await cluster.deployLocal();
+```
+
+## Service Types
+
+| Service | Base Class | Default Image | Default Port |
+|---------|-----------|--------------|-------------|
+| `Traefik` | `WebProxy` | `traefik:3.1.7` | 80, 443, 8080 |
+| `Postgres` | `PortDockerService` | `postgres:17.5` | 5432 |
+| `Redis` | `PortDockerService` | `redis:8.0.2` | 6379 |
+| `NodeWeb` | `Web` | Built from source | 3000 |
+| `Nextjs` | `Web` | Built from source | 3000 |
+| `Whoami` | `Web` | `traefik/whoami` | 80 |
+| `WireGuard` | `DockerService` | `linuxserver/wireguard` | 51820 |
+| `Socat` | `DockerService` | `alpine/socat` | — |
+
+See the [Docker package reference](/docs/packages/docker) for full configuration options.

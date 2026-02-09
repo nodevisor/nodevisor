@@ -1,5 +1,5 @@
 import fs from 'fs/promises';
-import { Module } from '@nodevisor/core';
+import { Module } from '@nodevisor/shell';
 import Env from '@nodevisor/env';
 import FS from '@nodevisor/fs';
 import path from 'path';

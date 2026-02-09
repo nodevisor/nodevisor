@@ -1,8 +1,8 @@
 import FS from '@nodevisor/fs';
 import UFW from '@nodevisor/ufw';
-import $ from '@nodevisor/core';
+import $ from '@nodevisor/shell';
 import { spawn } from 'node:child_process';
-import { NodevisorProxy, log as baseLog } from '@nodevisor/core';
+import { NodevisorProxy, log as baseLog } from '@nodevisor/shell';
 import { Protocol } from '@nodevisor/endpoint';
 import { ClusterNode, type ClusterNodeConfig, ClusterUser } from '@nodevisor/cluster';
 import DockerCompose from './DockerCompose';

@@ -1,0 +1,104 @@
+---
+title: Introduction
+description: TypeScript-first infrastructure automation. No YAML. No config files. Just code.
+---
+
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Nodevisor
+
+TypeScript Infrastructure Automation Platform. No YAML, no Ansible — just code.
+
+```bash
+npm install nodevisor
+```
+
+```ts
+import $ from 'nodevisor';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+await $server`apt-get update`.quiet();
+```
+
+<Cards>
+  <Card title="Getting Started" href="/docs/getting-started" description="Install Nodevisor and run your first automation." />
+  <Card title="Architecture" href="/docs/architecture" description="Understand the layered package model." />
+  <Card title="Package Reference" href="/docs/packages" description="API docs for every package." />
+  <Card title="Examples" href="/docs/examples" description="Complete deployment recipes." />
+</Cards>
+
+---
+
+## Why Nodevisor?
+
+- **TypeScript Native** — Full IDE support, autocomplete, and type safety. Catch infrastructure errors before they reach production.
+- **SSH Built-In** — Connect to remote servers over SSH. Run the same code locally or remotely — zero API changes.
+- **Safe by Default** — Template literal variables are automatically escaped, preventing shell injection.
+- **Modular** — 20+ focused packages. Import only what you need, or use the `nodevisor` umbrella for everything.
+
+---
+
+## How It Works
+
+The `$` function is a shell proxy. Use template literals to run commands:
+
+```ts
+import $ from 'nodevisor';
+
+// Local
+const hostname = await $`hostname`.text();
+
+// Remote — same API, just add a connection
+const $remote = $.connect({ host: '10.0.0.10', username: 'root' });
+const remoteHostname = await $remote`hostname`.text();
+```
+
+**Modules** give you typed APIs for system management:
+
+```ts
+import $, { Packages, Users, UFW, Docker, endpoints } from 'nodevisor';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+
+await $server(Packages).install(['curl', 'git']);
+await $server(Users).add('runner');
+await $server(UFW).allow([endpoints.ssh, endpoints.web]);
+await $server(Docker).install();
+
+// Switch user context without a new connection
+const $runner = $server.as('runner');
+await $runner`whoami`.text(); // "runner"
+```
+
+---
+
+## Quick Reference
+
+```ts
+// Shell commands
+await $`ls -la`.text();
+await $`cat config.json`.json();
+await $`grep error /var/log/syslog`.lines();
+await $`test -f /tmp/file`.noThrow().boolean();
+
+// System management
+await $(Packages).install('curl');
+await $(Users).add('runner');
+await $(FS).writeFile('/tmp/config', data);
+await $(OS).hostname();
+
+// Security
+await $(UFW).allow(endpoints.ssh);
+await $(SSH).disablePasswordAuthentication();
+await $(AuthorizedKeys).write(publicKey);
+
+// Docker & deployment
+await $(Docker).install();
+await $(DockerSwarm).start();
+await cluster.deploy();
+```
+
+<Callout type="info">
+Nodevisor is in active development. APIs may change between minor versions until 1.0.
+</Callout>

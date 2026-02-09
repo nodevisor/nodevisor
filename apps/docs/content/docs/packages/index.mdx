@@ -1,0 +1,43 @@
+---
+title: Package Reference
+description: Full package-by-package API reference for Nodevisor.
+---
+
+This section documents packages one-by-one with exported API and usage examples.
+
+## Execution
+
+- [`@nodevisor/shell`](/docs/packages/shell) — Shell proxy, command builder, connections, module base class
+- [`@nodevisor/endpoint`](/docs/packages/endpoint) — Network endpoint definitions (ports, protocols)
+
+## System
+
+- [`@nodevisor/os`](/docs/packages/os) — Hostname, arch, uptime, command detection
+- [`@nodevisor/fs`](/docs/packages/fs) — File read/write, permissions, temp files
+- [`@nodevisor/packages`](/docs/packages/packages) — Package install/remove (apt, yum, brew, winget)
+- [`@nodevisor/services`](/docs/packages/services) — systemd service start/stop/restart
+- [`@nodevisor/env`](/docs/packages/env) — Environment variables, env files
+- [`@nodevisor/pwsh`](/docs/packages/pwsh) — PowerShell command execution
+
+## Security
+
+- [`@nodevisor/users`](/docs/packages/users) — Create/remove system users
+- [`@nodevisor/groups`](/docs/packages/groups) — Manage groups and membership
+- [`@nodevisor/auth`](/docs/packages/auth) — Set user passwords
+- [`@nodevisor/authorized-keys`](/docs/packages/authorized-keys) — Manage SSH authorized_keys
+- [`@nodevisor/ssh`](/docs/packages/ssh) — Install/configure OpenSSH server
+- [`@nodevisor/ufw`](/docs/packages/ufw) — UFW firewall management
+
+## Orchestration
+
+- [`@nodevisor/cluster`](/docs/packages/cluster) — Abstract cluster primitives (nodes, services, users)
+- [`@nodevisor/docker`](/docs/packages/docker) — Docker, Compose, Swarm, pre-built services
+- [`@nodevisor/aws`](/docs/packages/aws) — AWS CLI and ECR integration
+- [`@nodevisor/registry`](/docs/packages/registry) — Abstract container registry interface
+- [`@nodevisor/builder`](/docs/packages/builder) — Abstract image builder interface
+
+## Aggregator
+
+- [`nodevisor`](/docs/packages/nodevisor) — Umbrella package that re-exports everything
+- [`@nodevisor/cli`](/docs/packages/cli) — CLI for setup, deploy, connect, run
+- [`@nodevisor/schema`](/docs/packages/schema) — Shared Zod schemas for admin/runner configs

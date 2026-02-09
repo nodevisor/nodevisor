@@ -22,6 +22,11 @@ type DockerComposeServiceConfig = {
   depends_on?: Record<string, Omit<DockerDependsOn, 'service'>> | string[]; // swarm has list only
   healthcheck?: DockerHealthcheckConfig;
   extra_hosts?: Record<string, string>;
+
+  sysctls?: Record<string, string>;
+  cap_add?: string[];
+  cap_drop?: string[];
+
   // deploy is only for swarm
   deploy?: {
     mode?: 'global' | 'replicated';

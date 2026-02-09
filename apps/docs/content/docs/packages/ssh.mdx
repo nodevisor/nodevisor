@@ -1,0 +1,170 @@
+---
+title: '@nodevisor/ssh'
+description: Install, configure, and harden the OpenSSH server.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/ssh
+```
+
+Manages the OpenSSH server (sshd) — installation, service control, and security hardening. Extends the `Service` base class, so it includes full lifecycle management.
+
+---
+
+## Quick Start
+
+```ts
+import $ from '@nodevisor/shell';
+import SSH from '@nodevisor/ssh';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+const ssh = $server(SSH);
+
+// Install OpenSSH server
+await ssh.install();
+
+// Disable password authentication (key-only login)
+await ssh.disablePasswordAuthentication();
+
+// Restart to apply changes
+await ssh.restart();
+```
+
+---
+
+## API
+
+### Installation
+
+#### `install()` / `installPackage()`
+
+Install the OpenSSH server package (`openssh-server`).
+
+```ts
+await $(SSH).install();
+```
+
+#### `uninstall()` / `uninstallPackage()`
+
+Remove the OpenSSH server package.
+
+```ts
+await $(SSH).uninstall();
+```
+
+#### `isInstalled()`
+
+Check if OpenSSH server is installed. Returns `boolean`.
+
+```ts
+if (await $(SSH).isInstalled()) {
+  console.log('SSH server is installed');
+}
+```
+
+#### `getVersion()`
+
+Get the installed OpenSSH version.
+
+```ts
+const version = await $(SSH).getVersion();
+console.log(version); // "OpenSSH_8.9p1"
+```
+
+### Service Control
+
+#### `start()`
+
+Start the SSH service.
+
+```ts
+await $(SSH).start();
+```
+
+#### `stop()`
+
+Stop the SSH service.
+
+```ts
+await $(SSH).stop();
+```
+
+#### `restart()`
+
+Restart the SSH service. Required after configuration changes.
+
+```ts
+await $(SSH).restart();
+```
+
+#### `isRunning()`
+
+Check if the SSH service is active. Returns `boolean`.
+
+```ts
+if (await $(SSH).isRunning()) {
+  console.log('SSH is running');
+}
+```
+
+### Security Hardening
+
+#### `disablePasswordAuthentication(skipRestart?)`
+
+Disable password-based SSH login. Only key-based authentication will work. Restarts sshd automatically unless `skipRestart` is true.
+
+```ts
+// Disable and restart immediately
+await $(SSH).disablePasswordAuthentication();
+
+// Disable without restarting (useful when making multiple changes)
+await $(SSH).disablePasswordAuthentication(true);
+await $(SSH).restart(); // restart manually later
+```
+
+Sets `PasswordAuthentication no` in `/etc/ssh/sshd_config`.
+
+#### `enablePasswordAuthentication(skipRestart?)`
+
+Re-enable password-based SSH login.
+
+```ts
+await $(SSH).enablePasswordAuthentication();
+```
+
+#### `testPasswordAuthentication()`
+
+Check whether password authentication is currently enabled.
+
+```ts
+const enabled = await $(SSH).testPasswordAuthentication();
+console.log(enabled); // true or false
+```
+
+---
+
+## Common Patterns
+
+### Full SSH hardening setup
+
+```ts
+import $, { SSH, AuthorizedKeys } from 'nodevisor';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+
+// First, ensure SSH keys are in place
+await $server(AuthorizedKeys).writeFromFile('~/.ssh/id_ed25519.pub');
+
+// Then disable password authentication
+await $server(SSH).disablePasswordAuthentication();
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/authorized-keys`](/docs/packages/authorized-keys) — Manage SSH keys before disabling passwords
+- [`@nodevisor/services`](/docs/packages/services) — Used internally for service management
+- [`@nodevisor/packages`](/docs/packages/packages) — Used internally for package installation

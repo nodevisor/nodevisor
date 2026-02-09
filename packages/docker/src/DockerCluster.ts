@@ -1,5 +1,5 @@
 import YAML from 'yaml';
-import $ from '@nodevisor/core';
+import $ from '@nodevisor/shell';
 import Cluster, { type ClusterConfig, ClusterType, ClusterUser } from '@nodevisor/cluster';
 import DockerNode, { type DockerNodeConfig } from './DockerNode';
 import type DockerService from './DockerService';

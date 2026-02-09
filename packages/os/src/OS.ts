@@ -1,4 +1,4 @@
-import { Module, Platform } from '@nodevisor/core';
+import { Module, Platform } from '@nodevisor/shell';
 import Arch from './constants/Arch';
 import PWSH from '@nodevisor/pwsh';
 

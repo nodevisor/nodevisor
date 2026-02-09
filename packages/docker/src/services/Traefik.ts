@@ -23,7 +23,7 @@ type DashboardConfig = {
     }
 );
 
-type TraefikConfig = PartialFor<WebProxyConfig, 'name'> & {
+export type TraefikConfig = PartialFor<WebProxyConfig, 'name'> & {
   ssl?: SSLConfig;
   dashboard?: DashboardConfig;
   dockerUnixSocket?: string;

@@ -1,0 +1,155 @@
+---
+title: Getting Started
+description: Install Nodevisor and ship your first typed infrastructure workflow.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+## Installation
+
+```bash
+npm install nodevisor
+```
+
+This installs the umbrella package which re-exports all modules. You can also install individual packages:
+
+```bash
+npm install @nodevisor/shell @nodevisor/users @nodevisor/packages
+```
+
+---
+
+## Running Local Commands
+
+The `$` default export is a shell proxy that executes commands locally using template literals:
+
+```ts title="local.ts"
+import $ from 'nodevisor';
+
+// Execute a command and get the full output
+const result = await $`echo "Hello, World!"`;
+console.log(result.stdout); // "Hello, World!\n"
+
+// Get output as a trimmed string
+const hostname = await $`hostname`.text();
+console.log(hostname); // "my-machine"
+
+// Get output as lines
+const files = await $`ls -1 /tmp`.lines();
+console.log(files); // ["file1.txt", "file2.txt", ...]
+```
+
+Variables in template literals are **automatically escaped** to prevent shell injection:
+
+```ts
+const userInput = 'my-file; rm -rf /';
+await $`ls ${userInput}`; // Safe — treated as a single argument
+```
+
+---
+
+## Running Remote Commands
+
+Connect to a server via SSH with `$.connect()`:
+
+```ts title="remote.ts"
+import $ from 'nodevisor';
+
+const $server = $.connect({
+  host: '10.0.0.10',
+  username: 'root',
+  // Authentication options (pick one):
+  password: 'your-password',
+  // or: privateKeyPath: '~/.ssh/id_ed25519',
+  // or: privateKey: 'raw-key-content',
+});
+
+const os = await $server`uname -s`.text();
+console.log(os); // "Linux"
+```
+
+---
+
+## Using Modules
+
+Modules provide typed APIs for system management. Pass a module class to the shell proxy to create an instance:
+
+```ts title="modules.ts"
+import $, { Packages, Users, AuthorizedKeys } from 'nodevisor';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+
+// Install system packages (auto-detects apt/yum/brew/winget)
+await $server(Packages).install(['curl', 'git']);
+
+// Create a new user
+await $server(Users).add('runner');
+
+// Switch to the new user context
+const $runner = $server.as('runner');
+
+// Add an SSH key for the new user
+await $runner(AuthorizedKeys).write(process.env.SSH_PUBLIC_KEY!);
+```
+
+---
+
+## Using the CLI
+
+For deployment scripts, install the CLI:
+
+```bash
+npm install --save-dev @nodevisor/cli
+```
+
+Create a deployment script:
+
+```ts title=".nodevisor/deploy.ts"
+import $, { Packages, Users, AuthorizedKeys, SSH, UFW, endpoints } from 'nodevisor';
+import { z } from 'zod';
+
+export const schema = z.object({
+  host: z.string().min(1).default(process.env.HOST ?? ''),
+});
+
+export default async (config: z.infer<typeof schema>) => {
+  const { host } = schema.parse(config);
+  const $server = $.connect({ host, username: 'root' });
+
+  await $server(Packages).updateAndUpgrade();
+  await $server(Users).add('runner');
+  await $server(AuthorizedKeys).writeFromFile('~/.ssh/id_ed25519.pub');
+  await $server(SSH).disablePasswordAuthentication();
+  await $server(UFW).install();
+  await $server(UFW).allow([endpoints.ssh, endpoints.web, endpoints.webSecure]);
+  await $server(UFW).start();
+};
+```
+
+Run it:
+
+```bash
+nodevisor-cli deploy .nodevisor/deploy.ts
+```
+
+---
+
+## Supported Platforms
+
+Nodevisor is tested on:
+
+- **Linux**: Ubuntu 20+, Debian 11+, Fedora 39+, CentOS 7+
+- **macOS**: macOS 12+
+- **Windows**: Windows 10+ (PowerShell required)
+
+<Callout type="info">
+Cross-platform support is automatic — `@nodevisor/packages` detects the right package manager, `@nodevisor/os` adapts commands to the OS, and `@nodevisor/shell` handles quoting differences.
+</Callout>
+
+---
+
+## Next Steps
+
+- [Architecture](/docs/architecture) — Understand how packages compose
+- [Package Reference](/docs/packages) — API docs for every package
+- [Examples](/docs/examples) — Complete deployment recipes

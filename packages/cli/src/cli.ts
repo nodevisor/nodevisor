@@ -3,7 +3,7 @@
 import { Command } from 'commander';
 import * as tsNode from 'ts-node';
 import * as fs from 'node:fs';
-import { generateKey, expandHomeDir } from '@nodevisor/core';
+import { generateKey, expandHomeDir } from '@nodevisor/shell';
 import { version } from '../package.json';
 import getCluster from './utils/getCluster';
 
@@ -133,5 +133,6 @@ program
       process.exit(1);
     }
   });
+
 
 program.parse(process.argv);

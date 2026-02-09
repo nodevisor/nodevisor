@@ -1,4 +1,4 @@
-import { Service } from '@nodevisor/core';
+import { Service } from '@nodevisor/shell';
 import Packages, { PackageManager } from '@nodevisor/packages';
 import { Protocol, type Endpoint } from '@nodevisor/endpoint';
 

@@ -1,0 +1,104 @@
+---
+title: '@nodevisor/os'
+description: Cross-platform operating system detection and system commands.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/os
+```
+
+Provides cross-platform helpers for OS detection, system info, and common system operations. Automatically adapts to Linux, macOS, and Windows.
+
+---
+
+## Quick Start
+
+```ts
+import $ from '@nodevisor/shell';
+import OS from '@nodevisor/os';
+
+const os = $(OS);
+
+const hostname = await os.hostname();
+const arch = await os.arch();
+const uptime = await os.uptime();
+const hasDocker = await os.commandExists('docker');
+
+console.log({ hostname, arch, uptime, hasDocker });
+```
+
+Remote usage:
+
+```ts
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+const os = $server(OS);
+
+const hostname = await os.hostname(); // remote hostname
+```
+
+---
+
+## API
+
+### `hostname()`
+
+Returns the system hostname as a string.
+
+```ts
+const name = await $(OS).hostname(); // "web-server-01"
+```
+
+### `arch()`
+
+Returns the CPU architecture. Returns an `Arch` enum value.
+
+```ts
+const arch = await $(OS).arch(); // "x64", "arm64", etc.
+```
+
+**Arch values**: `arm`, `arm64`, `ia32`, `loong64`, `mips`, `mips64el`, `mipsel`, `ppc`, `ppc64`, `riscv64`, `s390`, `s390x`, `x32`, `x64`, `x86_64`, `x86`
+
+### `uptime()`
+
+Returns the system uptime in seconds. Parses platform-specific output automatically.
+
+```ts
+const seconds = await $(OS).uptime();
+console.log(`Up for ${Math.floor(seconds / 3600)} hours`);
+```
+
+### `commandExists(command)`
+
+Checks if a command is available on the system PATH.
+
+```ts
+if (await $(OS).commandExists('docker')) {
+  console.log('Docker is installed');
+}
+```
+
+### `reboot()`
+
+Reboots the system. Uses `shutdown /r` on Windows, `reboot` on Unix.
+
+```ts
+await $(OS).reboot();
+```
+
+### `shutdown()`
+
+Shuts down the system. Uses `shutdown /s` on Windows, `shutdown now` on Unix.
+
+```ts
+await $(OS).shutdown();
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/shell`](/docs/packages/shell) — Core shell execution
+- [`@nodevisor/packages`](/docs/packages/packages) — Package manager abstraction (uses OS for detection)
+- [`@nodevisor/pwsh`](/docs/packages/pwsh) — PowerShell wrapper (used internally for Windows)

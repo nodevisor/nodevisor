@@ -1,0 +1,108 @@
+---
+title: '@nodevisor/registry'
+description: Abstract container registry interface for Docker image management.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/registry
+```
+
+Defines the abstract `Registry` class that all container registry implementations extend. You typically use concrete implementations like `DockerRegistry`, `DockerRegistryLocal`, or `ECR`.
+
+---
+
+## Usage
+
+```ts
+import Registry from '@nodevisor/registry';
+
+// Static helpers — work without a registry instance
+const tag = Registry.getTag('myapp:v1.0');         // "v1.0"
+const image = Registry.getImage('myapp:v1.0');      // "myapp"
+const full = Registry.getImageWithTag('myapp');      // "myapp:latest"
+const hasTag = Registry.hasTag('myapp:v1.0');        // true
+```
+
+---
+
+## Static Methods
+
+### `Registry.getTag(image, defaultTag?)`
+
+Extract the tag from an image name.
+
+```ts
+Registry.getTag('myapp:v1.0');         // "v1.0"
+Registry.getTag('myapp');              // undefined
+Registry.getTag('myapp', 'dev');       // "dev"
+```
+
+### `Registry.getImage(image)`
+
+Extract the image name without the tag.
+
+```ts
+Registry.getImage('myapp:v1.0');       // "myapp"
+Registry.getImage('ghcr.io/org/app');  // "ghcr.io/org/app"
+```
+
+### `Registry.getImageWithTag(image, defaultTag?)`
+
+Get the full image name with tag.
+
+```ts
+Registry.getImageWithTag('myapp');           // "myapp:latest"
+Registry.getImageWithTag('myapp:v1.0');      // "myapp:v1.0"
+Registry.getImageWithTag('myapp', 'dev');    // "myapp:dev"
+```
+
+### `Registry.hasTag(image)`
+
+Check if an image string includes a tag.
+
+```ts
+Registry.hasTag('myapp:v1.0');  // true
+Registry.hasTag('myapp');        // false
+```
+
+---
+
+## Abstract Methods
+
+These must be implemented by concrete registries:
+
+| Method | Description |
+|--------|-------------|
+| `push(image, options?)` | Push an image to the registry |
+| `login($con)` | Authenticate to the registry on a connection |
+| `getLoginCredentials()` | Get authentication credentials |
+
+---
+
+## Implementations
+
+| Class | Package | Use case |
+|-------|---------|----------|
+| `DockerRegistry` | `@nodevisor/docker` | Docker Hub, GitHub Container Registry, etc. |
+| `DockerRegistryLocal` | `@nodevisor/docker` | Local development (no remote push) |
+| `ECR` | `@nodevisor/aws` | AWS Elastic Container Registry |
+
+```ts
+import { DockerRegistry } from '@nodevisor/docker';
+
+const registry = new DockerRegistry({
+  server: 'ghcr.io',
+  username: 'myorg',
+  password: process.env.GITHUB_TOKEN!,
+});
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/docker`](/docs/packages/docker) — DockerRegistry and DockerRegistryLocal
+- [`@nodevisor/aws`](/docs/packages/aws) — ECR implementation
+- [`@nodevisor/builder`](/docs/packages/builder) — Builders push to registries

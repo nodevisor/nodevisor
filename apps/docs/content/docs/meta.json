@@ -1,0 +1,11 @@
+{
+  "title": "Nodevisor Docs",
+  "pages": [
+    "index",
+    "getting-started",
+    "architecture",
+    "workspace-strategy",
+    "examples",
+    "packages"
+  ]
+}

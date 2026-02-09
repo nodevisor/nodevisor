@@ -1,3 +1,4 @@
+export { default as Capabilities } from './Capabilities';
 export { default as Duration } from './Duration';
 export { default as Restart } from './Restart';
 export { default as Dependency } from './Dependency';
@@ -8,4 +9,5 @@ export { default as PortObject } from './PortObject';
 export { default as PortString } from './PortString';
 export { default as PartialFor } from './PartialFor';
 export { default as Volume } from './Volume';
+export { default as Sysctls } from './Sysctls';
 export { default as Placement } from './Placement';

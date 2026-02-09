@@ -1,7 +1,7 @@
 import { hostname, arch, platform, uptime } from 'os';
 import OS from './OS';
 import Arch from './constants/Arch';
-import { Nodevisor } from '@nodevisor/core';
+import { Nodevisor } from '@nodevisor/shell';
 
 describe('OS Module', () => {
   let os: OS;

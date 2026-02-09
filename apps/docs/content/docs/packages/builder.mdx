@@ -1,0 +1,90 @@
+---
+title: '@nodevisor/builder'
+description: Abstract image builder interface for building and pushing container images.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/builder
+```
+
+Defines the abstract `Builder` class that all image builder implementations extend. You typically use concrete builders like `DockerBuilder` or `NodeBuilder` from `@nodevisor/docker`.
+
+---
+
+## Builder (Abstract)
+
+```ts
+import Builder from '@nodevisor/builder';
+
+// Builder is abstract — use concrete implementations
+```
+
+### Configuration
+
+```ts
+new Builder({
+  arch: 'amd64',            // Target architecture: 'amd64' | 'arm64'
+  context: './apps/api',     // Build context path
+  args: { NODE_ENV: 'production' }, // Build arguments
+  tags: ['latest', 'v1.0'], // Image tags
+});
+```
+
+### Abstract Method
+
+#### `build(image, registry, config)`
+
+Build and optionally push an image. Returns an array of built tags.
+
+```ts
+const tags = await builder.build('myapp', registry, {
+  push: true,
+  context: './apps/api',
+  labels: { version: '1.0' },
+});
+```
+
+---
+
+## Implementations
+
+| Class | Package | Description |
+|-------|---------|-------------|
+| `DockerBuilder` | `@nodevisor/docker` | Builds from an existing Dockerfile |
+| `NodeBuilder` | `@nodevisor/docker` | Multi-stage Node.js builder (generates Dockerfile) |
+
+### DockerBuilder
+
+```ts
+import { DockerBuilder } from '@nodevisor/docker';
+
+const builder = new DockerBuilder({
+  dockerfilePath: './Dockerfile',
+  context: '.',
+  tags: ['latest'],
+});
+```
+
+### NodeBuilder
+
+Generates an optimized multi-stage Dockerfile for Node.js apps:
+
+```ts
+import { NodeBuilder } from '@nodevisor/docker';
+
+const builder = new NodeBuilder({
+  context: './apps/api',
+  tags: ['latest'],
+  arch: 'amd64',
+});
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/docker`](/docs/packages/docker) — Concrete builder implementations
+- [`@nodevisor/registry`](/docs/packages/registry) — Builders push to registries
+- [`@nodevisor/cluster`](/docs/packages/cluster) — Services use builders for image creation

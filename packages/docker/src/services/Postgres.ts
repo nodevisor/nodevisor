@@ -2,7 +2,7 @@ import { type PartialFor } from '@nodevisor/cluster';
 import type DockerVolume from '../@types/DockerVolume';
 import PortDockerService, { type PortDockerServiceConfig } from './PortDockerService';
 
-type PostgresConfig = PartialFor<PortDockerServiceConfig, 'name'> & {
+export type PostgresConfig = PartialFor<PortDockerServiceConfig, 'name'> & {
   port?: number;
   password?: string;
   username?: string;

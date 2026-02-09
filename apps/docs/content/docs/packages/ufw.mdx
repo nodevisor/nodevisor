@@ -1,0 +1,189 @@
+---
+title: '@nodevisor/ufw'
+description: Manage the UFW (Uncomplicated Firewall) — install, configure rules, and control the firewall.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/ufw
+```
+
+Manages the UFW firewall on Debian/Ubuntu systems. Extends the `Service` base class for full lifecycle management (install, start, stop, etc.).
+
+---
+
+## Quick Start
+
+```ts
+import $ from '@nodevisor/shell';
+import UFW from '@nodevisor/ufw';
+import { endpoints } from '@nodevisor/endpoint';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+const ufw = $server(UFW);
+
+// Install UFW
+await ufw.install();
+
+// Allow common services
+await ufw.allow([
+  endpoints.ssh,       // port 22/tcp
+  endpoints.web,       // port 80/tcp
+  endpoints.webSecure, // port 443/tcp
+]);
+
+// Enable the firewall
+await ufw.start();
+```
+
+---
+
+## API
+
+### Installation
+
+#### `install()` / `installPackage()`
+
+Install the UFW package via apt.
+
+```ts
+await $(UFW).install();
+```
+
+#### `isInstalled()`
+
+Check if UFW is installed. Returns `boolean`.
+
+```ts
+if (!(await $(UFW).isInstalled())) {
+  await $(UFW).install();
+}
+```
+
+#### `getVersion()`
+
+Get the installed UFW version.
+
+```ts
+const version = await $(UFW).getVersion();
+```
+
+### Firewall Control
+
+#### `start()`
+
+Enable the firewall. Equivalent to `ufw enable`.
+
+```ts
+await $(UFW).start();
+```
+
+#### `stop()`
+
+Disable the firewall. Equivalent to `ufw disable`.
+
+```ts
+await $(UFW).stop();
+```
+
+#### `isRunning()`
+
+Check if the firewall is currently active. Returns `boolean`.
+
+```ts
+if (await $(UFW).isRunning()) {
+  console.log('Firewall is active');
+}
+```
+
+### Rules
+
+#### `allow(endpoint)`
+
+Allow traffic for an endpoint (port + protocol). Accepts a single endpoint or an array.
+
+```ts
+import { endpoints, Protocol } from '@nodevisor/endpoint';
+
+// Allow predefined endpoints
+await $(UFW).allow(endpoints.ssh);
+await $(UFW).allow([endpoints.web, endpoints.webSecure]);
+
+// Allow a custom port
+await $(UFW).allow({ port: 8080, protocol: Protocol.TCP });
+```
+
+#### `deleteAllow(endpoint)`
+
+Remove a previously allowed rule.
+
+```ts
+await $(UFW).deleteAllow(endpoints.web);
+```
+
+#### `isAllowed(endpoint)`
+
+> **Note:** This method is not yet fully implemented. It parses `ufw status` output but the matching logic is incomplete.
+
+Check if a specific endpoint is allowed through the firewall.
+
+```ts
+const allowed = await $(UFW).isAllowed(endpoints.ssh);
+```
+
+---
+
+## Endpoints
+
+Use `@nodevisor/endpoint` for predefined network endpoints:
+
+```ts
+import { endpoints, Protocol } from '@nodevisor/endpoint';
+
+endpoints.ssh;                    // { port: 22, protocol: 'tcp' }
+endpoints.web;                    // { port: 80, protocol: 'tcp' }
+endpoints.webSecure;              // { port: 443, protocol: 'tcp' }
+endpoints.dockerSwarmManagement;  // { port: 2377, protocol: 'tcp' }
+
+// Custom endpoint
+const myEndpoint = { port: 3000, protocol: Protocol.TCP };
+```
+
+---
+
+## Common Patterns
+
+### Basic server hardening
+
+```ts
+import $, { UFW, endpoints } from 'nodevisor';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+
+await $server(UFW).install();
+await $server(UFW).allow([endpoints.ssh, endpoints.web, endpoints.webSecure]);
+await $server(UFW).start();
+```
+
+### Docker Swarm firewall rules
+
+```ts
+await $server(UFW).allow([
+  endpoints.ssh,
+  endpoints.web,
+  endpoints.webSecure,
+  endpoints.dockerSwarmManagement,
+  { port: 7946, protocol: Protocol.TCP },  // Swarm node communication
+  { port: 7946, protocol: Protocol.UDP },
+  { port: 4789, protocol: Protocol.UDP },  // Overlay network traffic
+]);
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/endpoint`](/docs/packages/endpoint) — Endpoint definitions and protocol constants
+- [`@nodevisor/packages`](/docs/packages/packages) — Used internally for UFW installation
+- [`@nodevisor/docker`](/docs/packages/docker) — Docker requires specific firewall rules

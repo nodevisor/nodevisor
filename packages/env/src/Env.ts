@@ -1,4 +1,4 @@
-import { Module } from '@nodevisor/core';
+import { Module } from '@nodevisor/shell';
 
 export default class Env extends Module {
   readonly name = 'env';

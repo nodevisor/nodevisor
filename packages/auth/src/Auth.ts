@@ -1,4 +1,4 @@
-import { Module } from '@nodevisor/core';
+import { Module } from '@nodevisor/shell';
 // import Users from '@nodevisor/users';
 import FS from '@nodevisor/fs';
 

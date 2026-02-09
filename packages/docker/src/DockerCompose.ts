@@ -1,4 +1,4 @@
-import { Module } from '@nodevisor/core';
+import { Module } from '@nodevisor/shell';
 import Docker from './Docker';
 
 type DockerComposeOptions = {

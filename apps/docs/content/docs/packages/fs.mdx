@@ -1,0 +1,199 @@
+---
+title: '@nodevisor/fs'
+description: Cross-platform file system operations over local and remote connections.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/fs
+```
+
+Provides file system operations that work identically on local and remote (SSH) connections. Handles reading, writing, permissions, temp files, and directory management.
+
+---
+
+## Quick Start
+
+```ts
+import $ from '@nodevisor/shell';
+import FS from '@nodevisor/fs';
+
+const fs = $(FS);
+
+// Create a temp file, write to it, read it back
+const tmp = await fs.temp();
+await fs.writeFile(tmp, 'hello world');
+const content = await fs.readFile(tmp);
+console.log(content); // "hello world"
+
+// Clean up
+await fs.rm(tmp);
+```
+
+Remote usage:
+
+```ts
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+const fs = $server(FS);
+
+await fs.writeFile('/var/www/index.html', '<h1>Hello</h1>');
+```
+
+---
+
+## API
+
+### Reading Files
+
+#### `readFile(path, options?)`
+
+Read file contents. Uses SFTP for remote connections.
+
+```ts
+const content = await $(FS).readFile('/etc/hostname');
+```
+
+Options: `{ encoding?: BufferEncoding, flag?: string }`
+
+### Writing Files
+
+#### `writeFile(path, data, options?)`
+
+Write content to a file. Creates the file if it doesn't exist.
+
+```ts
+await $(FS).writeFile('/tmp/config.json', JSON.stringify({ port: 3000 }));
+```
+
+Options: `{ encoding?: BufferEncoding, mode?: number, flag?: string }`
+
+#### `appendFile(path, data, options?)`
+
+Append content to an existing file.
+
+```ts
+await $(FS).appendFile('/var/log/app.log', 'New entry\n');
+```
+
+### Deleting
+
+#### `rm(path)` / `unlink(path)`
+
+Delete a file.
+
+```ts
+await $(FS).rm('/tmp/old-file.txt');
+```
+
+#### `rmdir(path, options?)`
+
+Remove a directory. Use `{ recursive: true }` for non-empty directories.
+
+```ts
+await $(FS).rmdir('/tmp/old-dir', { recursive: true });
+```
+
+### Directories
+
+#### `mkdir(path, options?)`
+
+Create a directory. Use `{ recursive: true }` for nested directories.
+
+```ts
+await $(FS).mkdir('/var/www/app/public', { recursive: true });
+```
+
+### Checking Files
+
+#### `exists(path)`
+
+Check if a file or directory exists.
+
+```ts
+if (await $(FS).exists('/etc/nginx/nginx.conf')) {
+  console.log('Nginx is configured');
+}
+```
+
+#### `stat(path)`
+
+Get file metadata (size, permissions, timestamps).
+
+```ts
+const info = await $(FS).stat('/var/log/syslog');
+```
+
+### Permissions
+
+#### `chmod(path, mode)`
+
+Change file permissions.
+
+```ts
+await $(FS).chmod('/opt/app/start.sh', '755');
+```
+
+#### `chown(path, owner)`
+
+Change file ownership.
+
+```ts
+await $(FS).chown('/var/www', 'www-data');
+```
+
+#### `chgrp(path, group)`
+
+Change file group.
+
+```ts
+await $(FS).chgrp('/var/www', 'www-data');
+```
+
+### Moving / Renaming
+
+#### `mv(source, destination)`
+
+Move or rename a file or directory.
+
+```ts
+await $(FS).mv('/tmp/upload.zip', '/opt/releases/v1.0.zip');
+```
+
+### Temp Files
+
+#### `temp()`
+
+Create a temporary file and return its path.
+
+```ts
+const tmpFile = await $(FS).temp();
+// Use tmpFile, then clean up
+await $(FS).rm(tmpFile);
+```
+
+#### `tempDir()`
+
+Create a temporary directory and return its path.
+
+```ts
+const tmpDir = await $(FS).tempDir();
+```
+
+### Path Resolution
+
+#### `abs(path)`
+
+Resolve a path to its absolute form.
+
+```ts
+const full = await $(FS).abs('~/documents'); // "/home/user/documents"
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/shell`](/docs/packages/shell) — Core shell execution and connections
+- [`@nodevisor/env`](/docs/packages/env) — Environment variable management
+- [`@nodevisor/authorized-keys`](/docs/packages/authorized-keys) — Uses FS internally for key file management

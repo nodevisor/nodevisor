@@ -1,4 +1,4 @@
-import { type NodevisorProxy } from '@nodevisor/core';
+import { type NodevisorProxy } from '@nodevisor/shell';
 
 export type RegistryConfig = {};
 

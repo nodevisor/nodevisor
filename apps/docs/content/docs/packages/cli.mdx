@@ -1,0 +1,194 @@
+---
+title: '@nodevisor/cli'
+description: Command-line interface for server setup, deployment, service execution, and remote connections.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/cli
+
+# Or install globally
+npm install -g @nodevisor/cli
+```
+
+The CLI provides four commands that drive your infrastructure workflow: `setup`, `deploy`, `connect`, and `run`. Each command takes a TypeScript cluster definition file and executes the corresponding operation.
+
+Available as three binary names: `nv`, `nodevisor`, or `nodevisor-cli`.
+
+---
+
+## Cluster Definition File
+
+Every CLI command requires a cluster definition file — a TypeScript file that exports a cluster as its default export:
+
+```ts
+// .nodevisor/production.ts
+import { DockerCluster, DockerNode, ClusterUser, NodeWeb, Traefik, Postgres } from 'nodevisor';
+
+const cluster = new DockerCluster({
+  name: 'production',
+  nodes: [
+    new DockerNode({ host: '10.0.0.1' }),
+    new DockerNode({ host: '10.0.0.2' }),
+  ],
+  users: [
+    new ClusterUser({
+      username: 'root',
+      privateKeyPath: '~/.ssh/nodevisor_id_ed25519',
+    }),
+  ],
+});
+
+cluster.addDependency(new Traefik({ ssl: { email: 'ops@example.com' } }));
+cluster.addDependency(new Postgres({ database: 'app', username: 'app', password: process.env.DB_PASSWORD! }));
+cluster.addDependency(new NodeWeb({ name: 'api', appDir: './apps/api', domains: ['api.example.com'], port: 3000 }));
+
+export default cluster;
+```
+
+The CLI automatically loads `.env` files from the same directory as your cluster file, so environment variables like `DB_PASSWORD` are available without extra configuration.
+
+If you pass a filename without a directory separator, the CLI first looks in the `.nodevisor/` directory. So `nv deploy production.ts` resolves to `.nodevisor/production.ts` if it exists.
+
+---
+
+## Commands
+
+### `setup`
+
+Provision and secure your servers. Installs system packages, configures the firewall, sets up SSH keys, creates deploy users, and initializes Docker Swarm.
+
+```bash
+nv setup production.ts
+```
+
+#### Options
+
+| Flag | Description |
+|------|-------------|
+| `-g, --generate-keys` | Generate new SSH key pair before setup |
+| `-i, --identity <path>` | Path to SSH key (default: `~/.ssh/nodevisor_id_ed25519`) |
+| `-p, --passphrase <passphrase>` | Passphrase for the generated private key |
+
+Generate keys and set up servers in one step:
+
+```bash
+nv setup production.ts --generate-keys
+```
+
+With a custom key path:
+
+```bash
+nv setup production.ts --generate-keys --identity ~/.ssh/my_deploy_key
+```
+
+---
+
+### `deploy`
+
+Build images, push to your registry, and deploy all services to the cluster.
+
+```bash
+nv deploy production.ts
+```
+
+#### Options
+
+| Flag | Description |
+|------|-------------|
+| `--no-build` | Skip the build step (deploy existing images) |
+| `-l, --local` | Deploy to the local Docker daemon instead of the cluster |
+| `-s, --service <name>` | Deploy specific services only (repeatable) |
+
+Deploy only specific services:
+
+```bash
+nv deploy production.ts --service api --service worker
+```
+
+Skip building and deploy existing images:
+
+```bash
+nv deploy production.ts --no-build
+```
+
+Local development with Docker Compose:
+
+```bash
+nv deploy production.ts --local
+```
+
+---
+
+### `connect`
+
+Open an SSH connection to the master node. Optionally forward all service ports to your local machine for debugging.
+
+```bash
+nv connect production.ts
+```
+
+#### Options
+
+| Flag | Description |
+|------|-------------|
+| `-f, --forward` | Forward all service ports to localhost |
+
+Connect and forward ports for local access to remote services:
+
+```bash
+nv connect production.ts --forward
+```
+
+---
+
+### `run`
+
+Run a one-off service (like database migrations) on the cluster.
+
+```bash
+nv run production.ts --service migration
+```
+
+#### Options
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Services to run (repeatable) |
+| `--no-build` | Skip the build step |
+
+Run a migration service:
+
+```bash
+nv run production.ts --service migration
+```
+
+---
+
+## Typical Workflow
+
+```bash
+# 1. First time: generate keys and provision servers
+nv setup production.ts --generate-keys
+
+# 2. Deploy your application
+nv deploy production.ts
+
+# 3. Run database migrations
+nv run production.ts --service migration
+
+# 4. Debug: connect and forward ports
+nv connect production.ts --forward
+
+# 5. Subsequent deploys
+nv deploy production.ts
+```
+
+---
+
+## Related Packages
+
+- [`nodevisor`](/docs/packages/nodevisor) — Umbrella package with all modules
+- [`@nodevisor/docker`](/docs/packages/docker) — DockerCluster used by CLI commands
+- [`@nodevisor/cluster`](/docs/packages/cluster) — Abstract cluster primitives

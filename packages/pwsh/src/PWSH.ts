@@ -1,4 +1,4 @@
-import { Module, doubleQuote } from '@nodevisor/core';
+import { Module, doubleQuote } from '@nodevisor/shell';
 
 export default class PWSH extends Module {
   readonly name = 'pwsh';

@@ -1,0 +1,143 @@
+---
+title: '@nodevisor/authorized-keys'
+description: Manage SSH authorized_keys files for passwordless authentication.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/authorized-keys
+```
+
+Manage the `~/.ssh/authorized_keys` file safely. Handles directory creation, permissions, and key file reading for both local and remote systems.
+
+---
+
+## Quick Start
+
+```ts
+import $ from '@nodevisor/shell';
+import AuthorizedKeys from '@nodevisor/authorized-keys';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+const keys = $server(AuthorizedKeys);
+
+// Write a public key (replaces existing keys)
+await keys.write('ssh-ed25519 AAAA... user@machine');
+
+// Or append to existing keys
+await keys.append('ssh-ed25519 BBBB... another@machine');
+
+// Add a key from a local file
+await keys.appendFromFile('~/.ssh/id_ed25519.pub');
+```
+
+---
+
+## API
+
+### `write(publicKey)`
+
+Replace the authorized_keys file with a single public key. Creates the `.ssh` directory if needed with proper permissions (0700).
+
+```ts
+await $(AuthorizedKeys).write('ssh-ed25519 AAAA...');
+```
+
+### `append(publicKey)`
+
+Append a public key to the existing authorized_keys file.
+
+```ts
+await $(AuthorizedKeys).append('ssh-ed25519 BBBB...');
+```
+
+### `writeFromFile(publicKeyPath, remotePath?)`
+
+Read a public key from a file and replace authorized_keys with it.
+
+```ts
+// Read from local file (default)
+await $(AuthorizedKeys).writeFromFile('~/.ssh/id_ed25519.pub');
+
+// Read from remote file
+await $(AuthorizedKeys).writeFromFile('/tmp/key.pub', true);
+```
+
+### `appendFromFile(publicKeyPath, remotePath?)`
+
+Read a public key from a file and append it to authorized_keys.
+
+```ts
+await $(AuthorizedKeys).appendFromFile('~/.ssh/id_ed25519.pub');
+```
+
+### `readPublicKey(publicKeyPath, remotePath?)`
+
+Read a public key from a file without modifying authorized_keys.
+
+```ts
+const key = await $(AuthorizedKeys).readPublicKey('~/.ssh/id_ed25519.pub');
+console.log(key); // "ssh-ed25519 AAAA..."
+```
+
+### `getAuthorizedKeysPath()`
+
+Get the full path to the authorized_keys file for the current user.
+
+```ts
+const path = await $(AuthorizedKeys).getAuthorizedKeysPath();
+// "/home/runner/.ssh/authorized_keys"
+```
+
+### `ensureSSHDirectory()`
+
+Create the `~/.ssh` directory with proper permissions (0700) if it doesn't exist. Called automatically by `write()`, but can be used standalone.
+
+```ts
+await $(AuthorizedKeys).ensureSSHDirectory();
+```
+
+### Properties
+
+- `sshDir` — The `.ssh` directory name (default: `.ssh`)
+- `authorizedKeysFile` — The authorized_keys filename (default: `authorized_keys`)
+
+---
+
+## Common Patterns
+
+### Setup SSH key access for a new user
+
+```ts
+import $, { Users, AuthorizedKeys } from 'nodevisor';
+
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+
+// Create the user
+await $server(Users).add('runner');
+
+// Switch to user context and add key
+const $runner = $server.as('runner');
+await $runner(AuthorizedKeys).write(process.env.SSH_PUBLIC_KEY!);
+```
+
+### Add keys for multiple users
+
+```ts
+const users = ['deploy', 'monitor', 'backup'];
+
+for (const user of users) {
+  await $server(Users).add(user);
+  const $user = $server.as(user);
+  await $user(AuthorizedKeys).write(process.env.SSH_PUBLIC_KEY!);
+}
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/ssh`](/docs/packages/ssh) — SSH server hardening (disable password auth)
+- [`@nodevisor/users`](/docs/packages/users) — Create system users
+- [`@nodevisor/fs`](/docs/packages/fs) — Used internally for file operations

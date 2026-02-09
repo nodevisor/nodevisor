@@ -3,7 +3,7 @@ import DockerService, { type DockerServiceConfig } from '../DockerService';
 import { Protocol } from '@nodevisor/endpoint';
 import PortDockerService from './PortDockerService';
 
-type SocatConfig = PartialFor<DockerServiceConfig, 'name'> & {
+export type SocatConfig = PartialFor<DockerServiceConfig, 'name'> & {
   version?: string;
   ip: string;
 };

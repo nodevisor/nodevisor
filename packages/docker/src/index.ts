@@ -18,6 +18,9 @@ export * from './DockerNode';
 export { default as DockerRegistry } from './DockerRegistry';
 export * from './DockerRegistry';
 
+export { default as DockerRegistryLocal } from './DockerRegistryLocal';
+export * from './DockerRegistryLocal';
+
 export { default as DockerService } from './DockerService';
 export * from './DockerService';
 

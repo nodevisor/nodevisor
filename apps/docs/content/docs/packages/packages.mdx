@@ -1,0 +1,145 @@
+---
+title: '@nodevisor/packages'
+description: Cross-platform package manager abstraction — apt, yum, brew, and winget unified under one API.
+---
+
+## Install
+
+```bash
+npm install @nodevisor/packages
+```
+
+Provides a unified API for installing, removing, and updating system packages. Automatically detects the correct package manager for the target system.
+
+---
+
+## Quick Start
+
+```ts
+import $ from '@nodevisor/shell';
+import Packages from '@nodevisor/packages';
+
+const pkg = $(Packages);
+
+// Update package lists and upgrade all packages
+await pkg.updateAndUpgrade();
+
+// Install packages
+await pkg.install(['curl', 'git', 'unzip']);
+
+// Check if a package is installed
+if (await pkg.isInstalled('docker-ce')) {
+  console.log('Docker is already installed');
+}
+```
+
+Remote usage:
+
+```ts
+const $server = $.connect({ host: '10.0.0.10', username: 'root' });
+
+await $server(Packages).updateAndUpgrade();
+await $server(Packages).install('nginx');
+```
+
+---
+
+## Supported Package Managers
+
+| Package Manager | Platforms | Detection |
+|----------------|-----------|-----------|
+| `apt` | Debian, Ubuntu | Auto-detected |
+| `yum` | CentOS, RHEL, Fedora | Auto-detected |
+| `brew` | macOS | Auto-detected |
+| `winget` | Windows | Auto-detected |
+
+---
+
+## API
+
+### `packageManager()`
+
+Detect which package manager is available on the system.
+
+```ts
+const pm = await $(Packages).packageManager();
+console.log(pm); // "apt", "yum", "brew", or "winget"
+```
+
+### `update()`
+
+Update the package list (e.g., `apt-get update`).
+
+```ts
+await $(Packages).update();
+```
+
+### `upgrade()`
+
+Upgrade all installed packages to their latest versions.
+
+```ts
+await $(Packages).upgrade();
+```
+
+### `updateAndUpgrade()`
+
+Run both `update()` and `upgrade()` in sequence.
+
+```ts
+await $(Packages).updateAndUpgrade();
+```
+
+### `install(packages)`
+
+Install one or more packages. Accepts a string or array of strings.
+
+```ts
+// Single package
+await $(Packages).install('curl');
+
+// Multiple packages
+await $(Packages).install(['curl', 'git', 'wget']);
+```
+
+### `uninstall(name)`
+
+Remove an installed package.
+
+```ts
+await $(Packages).uninstall('nginx');
+```
+
+### `isInstalled(name)`
+
+Check if a package is currently installed. Returns `boolean`.
+
+```ts
+const installed = await $(Packages).isInstalled('docker-ce');
+```
+
+### `isUpgradable(name)`
+
+Check if a package has an available upgrade. Returns `boolean`.
+
+```ts
+if (await $(Packages).isUpgradable('openssl')) {
+  await $(Packages).install('openssl');
+}
+```
+
+### `requireInstalled(name)`
+
+Throws an error if the package is not installed. Useful for validation.
+
+```ts
+await $(Packages).requireInstalled('git'); // throws if git is not installed
+```
+
+---
+
+## Related Packages
+
+- [`@nodevisor/os`](/docs/packages/os) — OS detection (used to determine package manager)
+- [`@nodevisor/docker`](/docs/packages/docker) — Docker installation uses Packages internally
+- [`@nodevisor/ssh`](/docs/packages/ssh) — SSH server installation uses Packages internally

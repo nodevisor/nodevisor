@@ -1,6 +1,6 @@
 // base
-export { default } from '@nodevisor/core';
-export * from '@nodevisor/core';
+export { default } from '@nodevisor/shell';
+export * from '@nodevisor/shell';
 
 export * from '@nodevisor/endpoint';
 

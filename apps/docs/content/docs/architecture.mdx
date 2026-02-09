@@ -1,0 +1,199 @@
+---
+title: Architecture
+description: How Nodevisor packages compose into a complete infrastructure automation platform.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+## Layered Package Model
+
+Nodevisor is organized into five layers. Each layer builds on the one below it.
+
+### 1. Execution Layer
+
+The foundation. Handles command execution, SSH connections, and output parsing.
+
+| Package | Purpose |
+|---------|---------|
+| [`@nodevisor/shell`](/docs/packages/shell) | Shell proxy, command builder, connections, module base class |
+| [`@nodevisor/endpoint`](/docs/packages/endpoint) | Network endpoint definitions (ports, protocols) |
+
+### 2. System Layer
+
+Cross-platform abstractions for common system operations.
+
+| Package | Purpose |
+|---------|---------|
+| [`@nodevisor/os`](/docs/packages/os) | Hostname, arch, uptime, command detection |
+| [`@nodevisor/fs`](/docs/packages/fs) | File read/write, permissions, temp files |
+| [`@nodevisor/packages`](/docs/packages/packages) | Package install/remove (apt, yum, brew, winget) |
+| [`@nodevisor/services`](/docs/packages/services) | systemd service start/stop/restart |
+| [`@nodevisor/env`](/docs/packages/env) | Environment variables, env files |
+| [`@nodevisor/pwsh`](/docs/packages/pwsh) | PowerShell command execution |
+
+### 3. Security Layer
+
+User management, authentication, and access control.
+
+| Package | Purpose |
+|---------|---------|
+| [`@nodevisor/users`](/docs/packages/users) | Create/remove system users |
+| [`@nodevisor/groups`](/docs/packages/groups) | Manage groups and membership |
+| [`@nodevisor/auth`](/docs/packages/auth) | Set user passwords |
+| [`@nodevisor/authorized-keys`](/docs/packages/authorized-keys) | Manage SSH authorized_keys |
+| [`@nodevisor/ssh`](/docs/packages/ssh) | Install/configure OpenSSH server |
+| [`@nodevisor/ufw`](/docs/packages/ufw) | UFW firewall management |
+
+### 4. Orchestration Layer
+
+Container management, multi-node deployment, and cloud integrations.
+
+| Package | Purpose |
+|---------|---------|
+| [`@nodevisor/cluster`](/docs/packages/cluster) | Abstract cluster primitives (nodes, services, users) |
+| [`@nodevisor/docker`](/docs/packages/docker) | Docker, Compose, Swarm, pre-built services |
+| [`@nodevisor/aws`](/docs/packages/aws) | AWS CLI and ECR integration |
+| [`@nodevisor/registry`](/docs/packages/registry) | Abstract container registry interface |
+| [`@nodevisor/builder`](/docs/packages/builder) | Abstract image builder interface |
+
+### 5. Aggregator
+
+| Package | Purpose |
+|---------|---------|
+| [`nodevisor`](/docs/packages/nodevisor) | Umbrella package that re-exports everything |
+| [`@nodevisor/cli`](/docs/packages/cli) | CLI for setup, deploy, connect, run |
+| [`@nodevisor/schema`](/docs/packages/schema) | Shared Zod schemas for admin/runner configs |
+
+---
+
+## Core Patterns
+
+### The Shell Proxy (`$`)
+
+The `$` function is a [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) that supports multiple calling conventions:
+
+```ts
+import $ from 'nodevisor';
+
+// 1. Template literal → execute command
+await $`echo hello`;
+
+// 2. $.connect() → create remote shell proxy
+const $remote = $.connect({ host: '10.0.0.10', username: 'root' });
+
+// 3. $(Module) → instantiate module with current shell
+const packages = $(Packages);
+
+// 4. $remote(Module) → instantiate module on remote shell
+const remotePackages = $remote(Packages);
+
+// 5. $.as(user) → switch execution user
+const $runner = $.as('runner');
+```
+
+### Modules
+
+Every functional package (Users, Packages, FS, Docker, etc.) exports a class that extends `Module`. Modules receive the shell context and execute commands through it:
+
+```ts
+import { Module } from '@nodevisor/shell';
+
+class MyModule extends Module {
+  async doSomething() {
+    // this.$ is bound to the shell context
+    return this.$`my-command --flag`.text();
+  }
+}
+
+// Use it locally
+const result = await $(MyModule).doSomething();
+
+// Use it remotely
+const remoteResult = await $remote(MyModule).doSomething();
+```
+
+### Command Builder
+
+Every template literal call returns a `CommandBuilder` with a fluent API for output transformation:
+
+```ts
+// Chain transforms
+const name = await $`hostname`.trim().toLowerCase().text();
+
+// Parse different formats
+const data = await $`cat config.json`.json();
+const lines = await $`cat /etc/hosts`.lines();
+const ok = await $`ping -c1 google.com`.noThrow().boolean();
+
+// Control execution
+await $`long-command`.timeout(5000);
+await $`risky-command`.noThrow();
+```
+
+### Package & Service Base Classes
+
+Installable software extends `Package`. Services (which can be started/stopped) extend `Service`:
+
+```
+Module          → Base class for all modules
+  └─ Package    → Adds install/uninstall/isInstalled
+       └─ Service → Adds start/stop/restart/isRunning
+```
+
+---
+
+## Dependency Graph
+
+```
+@nodevisor/shell (foundation)
+├── @nodevisor/os → pwsh
+├── @nodevisor/fs → pwsh, users, os
+├── @nodevisor/env
+├── @nodevisor/packages → os
+├── @nodevisor/services
+├── @nodevisor/users
+├── @nodevisor/groups
+├── @nodevisor/auth → fs, users
+├── @nodevisor/authorized-keys → fs, env
+├── @nodevisor/ssh → services, packages
+├── @nodevisor/ufw → packages, endpoint
+├── @nodevisor/pwsh
+├── @nodevisor/docker → groups, packages, services, fs, ufw, cluster, builder, registry
+├── @nodevisor/cluster → auth, authorized-keys, users, packages, services, ssh, ufw, builder, registry
+├── @nodevisor/aws → packages, fs, os, registry
+├── @nodevisor/registry
+├── @nodevisor/builder → registry
+└── @nodevisor/endpoint
+```
+
+---
+
+## Typical Deployment Flow
+
+```ts
+import $, {
+  Packages, Users, Auth, AuthorizedKeys,
+  SSH, UFW, Docker, DockerSwarm, endpoints
+} from 'nodevisor';
+
+const $server = $.connect({ host: 'server', username: 'root' });
+
+// 1. System setup
+await $server(Packages).updateAndUpgrade();
+
+// 2. User setup
+await $server(Users).add('runner');
+await $server(Auth).setPassword('runner', 'secure-password');
+await $server(AuthorizedKeys).writeFromFile('~/.ssh/id_ed25519.pub');
+
+// 3. Security hardening
+await $server(SSH).disablePasswordAuthentication();
+await $server(UFW).install();
+await $server(UFW).allow([endpoints.ssh, endpoints.web, endpoints.webSecure]);
+await $server(UFW).start();
+
+// 4. Container runtime
+await $server(Docker).install();
+await $server(Docker).allowUser('runner');
+await $server(DockerSwarm).start();
+```
