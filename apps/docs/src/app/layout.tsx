@@ -1,6 +1,5 @@
 import './global.css';
 import { RootProvider } from 'fumadocs-ui/provider/next';
-import Script from 'next/script';
 import type { ReactNode } from 'react';
 
 export const metadata = {
@@ -11,14 +10,18 @@ export const metadata = {
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "vev2qb4aqj");`,
+          }}
+        />
+      </head>
       <body className="nv-body">
-        <Script id="clarity" strategy="afterInteractive">
-          {`(function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-          })(window, document, "clarity", "script", "vev2qb4aqj");`}
-        </Script>
         <RootProvider>{children}</RootProvider>
       </body>
     </html>
