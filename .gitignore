@@ -13,3 +13,4 @@ apps/website
 .pnpm-store
 .claude
 apps/docs/out
+apps/docs/.source

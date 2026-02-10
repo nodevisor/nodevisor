@@ -1,0 +1,90 @@
+---
+title: Whoami
+description: Test service for verifying Traefik routing and SSL configuration.
+---
+
+## Overview
+
+The `Whoami` service is a lightweight test container using the `traefik/whoami` image. It responds to HTTP requests with information about the request headers, host, and IP — useful for verifying that Traefik routing, SSL certificates, and domain configuration are working correctly.
+
+Use it during initial cluster setup to confirm that traffic flows from your domain through Traefik to a backend service before deploying your actual application.
+
+## Quick Start
+
+```ts
+import { DockerCluster, Traefik, Whoami } from '@nodevisor/docker';
+
+const cluster = new DockerCluster({ name: 'production', ... });
+
+const traefik = new Traefik({
+  ssl: { email: 'ops@example.com', redirect: true },
+});
+
+cluster.addDependency(traefik);
+
+cluster.addDependency(new Whoami({
+  domains: ['test.example.com'],
+  proxy: traefik,
+}));
+```
+
+After deploying, visit `https://test.example.com` to see request details.
+
+## Configuration
+
+### `WhoamiConfig`
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `name` | `string` | `'whoami'` | Service name |
+| `image` | `string` | `'traefik/whoami'` | Docker image |
+| `domains` | `string[]` | **required** | Domains to route to this service |
+| `proxy` | `WebProxy \| WebProxyDependency` | **required** | Reverse proxy for routing |
+| `port` | `number` | `80` | Application port inside the container |
+| `environment` | `Record<string, string>` | `undefined` | Environment variables |
+
+## Usage with DockerCluster
+
+A common pattern is to add Whoami alongside your real services during initial setup:
+
+```ts
+import {
+  DockerCluster, DockerNode, ClusterUser,
+  Traefik, Whoami, DockerRegistry,
+} from '@nodevisor/docker';
+
+const cluster = new DockerCluster({
+  name: 'staging',
+  nodes: [new DockerNode({ host: '10.0.0.1' })],
+  users: [new ClusterUser({ username: 'root', privateKeyPath: '~/.ssh/id_ed25519' })],
+  registry: new DockerRegistry({
+    server: 'ghcr.io',
+    username: 'myorg',
+    password: process.env.REGISTRY_TOKEN!,
+  }),
+});
+
+const traefik = new Traefik({
+  ssl: { email: 'ops@example.com', redirect: true },
+});
+
+cluster.addDependency(traefik);
+
+// Test service to verify routing
+cluster.addDependency(new Whoami({
+  domains: ['test.example.com'],
+  proxy: traefik,
+}));
+
+await cluster.setup();
+await cluster.deploy();
+
+// Visit https://test.example.com to verify
+// Once confirmed, replace Whoami with your real services
+```
+
+## Related
+
+- [Traefik](/docs/services/traefik) — Reverse proxy that routes to Whoami
+- [NodeWeb](/docs/services/node-web) — Replace Whoami with your real application
+- [Docker Cluster example](/docs/examples/docker-cluster) — Complete deployment walkthrough

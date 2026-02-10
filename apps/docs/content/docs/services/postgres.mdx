@@ -1,0 +1,116 @@
+---
+title: Postgres
+description: PostgreSQL database service with persistent storage and health checks.
+---
+
+## Overview
+
+The `Postgres` service provides a production-ready PostgreSQL database with persistent storage, configurable credentials, and built-in health checks. It extends `PortDockerService` and exposes a single port.
+
+## Quick Start
+
+```ts
+import { DockerCluster, Postgres } from '@nodevisor/docker';
+
+const cluster = new DockerCluster({ name: 'production', ... });
+
+cluster.addDependency(new Postgres({
+  database: 'myapp',
+  username: 'myapp',
+  password: process.env.DB_PASSWORD!,
+}));
+```
+
+## Configuration
+
+### `PostgresConfig`
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `name` | `string` | `'postgres'` | Service name |
+| `version` | `string` | `'17.5'` | PostgreSQL version |
+| `image` | `string` | `'postgres:{version}'` | Docker image |
+| `port` | `number` | `5432` | PostgreSQL port |
+| `database` | `string` | `undefined` | Database to create on first run |
+| `username` | `string` | `undefined` | Database user to create on first run |
+| `password` | `string` | `undefined` | Password for the database user |
+| `volume` | `DockerVolume` | `undefined` | Custom volume configuration |
+| `healthcheck` | `DockerHealthcheckConfig` | Built-in (see below) | Custom health check config |
+
+## Health Check
+
+| Property | Value |
+|----------|-------|
+| Command | `pg_isready -U postgres` |
+| Interval | `10s` |
+| Timeout | `5s` |
+| Retries | `5` |
+| Start period | `15s` |
+
+## Volumes
+
+| Volume | Target | Type | Description |
+|--------|--------|------|-------------|
+| `data` | `/var/lib/postgresql/data` | volume | Persistent database storage |
+
+Data persists across container restarts and redeployments.
+
+## Environment Variables
+
+The following environment variables are set in the container based on your configuration:
+
+| Variable | Source | Description |
+|----------|--------|-------------|
+| `POSTGRES_PASSWORD` | `password` | Database user password |
+| `POSTGRES_USER` | `username` | Database user name |
+| `POSTGRES_DB` | `database` | Database to create |
+| `POSTGRES_PORT` | `port` | PostgreSQL port |
+
+## Usage with DockerCluster
+
+```ts
+import {
+  DockerCluster, DockerNode, ClusterUser,
+  Traefik, Postgres, NodeWeb, DockerRegistry,
+} from '@nodevisor/docker';
+
+const cluster = new DockerCluster({
+  name: 'production',
+  nodes: [new DockerNode({ host: '10.0.0.1' })],
+  users: [new ClusterUser({ username: 'root', privateKeyPath: '~/.ssh/id_ed25519' })],
+  registry: new DockerRegistry({
+    server: 'ghcr.io',
+    username: 'myorg',
+    password: process.env.REGISTRY_TOKEN!,
+  }),
+});
+
+cluster.addDependency(new Traefik({
+  ssl: { email: 'ops@example.com', redirect: true },
+}));
+
+cluster.addDependency(new Postgres({
+  database: 'myapp',
+  username: 'myapp',
+  password: process.env.DB_PASSWORD!,
+}));
+
+cluster.addDependency(new NodeWeb({
+  name: 'api',
+  appDir: './apps/api',
+  domains: ['api.example.com'],
+  environment: {
+    DATABASE_URL: `postgresql://myapp:${process.env.DB_PASSWORD}@postgres:5432/myapp`,
+  },
+}));
+
+await cluster.deploy();
+```
+
+The connection string uses the service name `postgres` as the hostname — Docker's internal DNS resolves it automatically.
+
+## Related
+
+- [Redis](/docs/services/redis) — Cache service
+- [Traefik](/docs/services/traefik) — Reverse proxy
+- [Docker package reference](/docs/packages/docker) — Full Docker module API

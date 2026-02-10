@@ -1,0 +1,59 @@
+---
+title: Services
+description: Pre-built Docker services for production deployments.
+---
+
+## Overview
+
+Nodevisor ships with pre-built Docker services that handle common infrastructure needs — reverse proxies, databases, caches, and web applications. Each service is a TypeScript class with sensible defaults, built-in health checks, and automatic Docker Compose/Swarm configuration.
+
+All services extend the `DockerService` base class and can be added to a `DockerCluster` via `addDependency()`.
+
+```ts
+import { DockerCluster, Traefik, Postgres, Redis, NodeWeb } from '@nodevisor/docker';
+
+const cluster = new DockerCluster({ name: 'production', ... });
+
+cluster.addDependency(new Traefik({ ssl: { email: 'ops@example.com' } }));
+cluster.addDependency(new Postgres({ password: process.env.DB_PASSWORD! }));
+cluster.addDependency(new Redis({ password: process.env.REDIS_PASSWORD! }));
+cluster.addDependency(new NodeWeb({ name: 'api', domains: ['api.example.com'], appDir: './apps/api' }));
+```
+
+## Available Services
+
+| Service | Description | Default Image | Default Port |
+|---------|------------|---------------|-------------|
+| [Traefik](/docs/services/traefik) | Reverse proxy with automatic SSL | `traefik:3.1.7` | 80, 443, 8080 |
+| [Postgres](/docs/services/postgres) | PostgreSQL database | `postgres:17.5` | 5432 |
+| [Redis](/docs/services/redis) | Redis cache and data store | `redis:8.0.2` | 6379 |
+| [NodeWeb](/docs/services/node-web) | Node.js web applications | Built from source | 3000 |
+| [Next.js](/docs/services/nextjs) | Next.js applications | Built from source | 3000 |
+| [Whoami](/docs/services/whoami) | Test/debug service for verifying routing | `traefik/whoami` | 80 |
+
+## Class Hierarchy
+
+Services are organized into a class hierarchy based on their role:
+
+```
+DockerService
+├── WebProxy (abstract)
+│   └── Traefik         — reverse proxy
+├── PortDockerService
+│   ├── Postgres        — database
+│   └── Redis           — cache
+└── Web
+    ├── NodeWeb         — Node.js apps
+    ├── Nextjs          — Next.js apps
+    └── Whoami          — test service
+```
+
+- **DockerService** — Base class providing volumes, networks, health checks, labels, and Docker Compose generation.
+- **WebProxy** — Abstract base for reverse proxies. Runs in global mode on manager nodes.
+- **PortDockerService** — Base for services that expose a single port (databases, caches).
+- **Web** — Base for web applications. Requires `domains` and a `proxy` (e.g., Traefik) for automatic routing.
+
+## Related
+
+- [Docker package reference](/docs/packages/docker) — Full Docker module API
+- [Docker Cluster example](/docs/examples/docker-cluster) — Complete deployment walkthrough

@@ -1,0 +1,12 @@
+{
+  "title": "Services",
+  "pages": [
+    "index",
+    "traefik",
+    "postgres",
+    "redis",
+    "node-web",
+    "nextjs",
+    "whoami"
+  ]
+}

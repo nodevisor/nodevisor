@@ -1,0 +1,113 @@
+---
+title: Next.js
+description: Deploy Next.js applications with automatic builds and Traefik routing.
+---
+
+## Overview
+
+The `Nextjs` service deploys Next.js applications with automatic Docker image building and Traefik integration. It extends the `Web` base class and uses `NodeBuilder` — identical to [NodeWeb](/docs/services/node-web) in implementation.
+
+Use `Nextjs` instead of `NodeWeb` when you want semantic clarity in your cluster configuration. Both classes produce the same Docker image build pipeline and routing setup.
+
+## Quick Start
+
+```ts
+import { DockerCluster, Traefik, Nextjs } from '@nodevisor/docker';
+
+const cluster = new DockerCluster({ name: 'production', ... });
+
+const traefik = new Traefik({
+  ssl: { email: 'ops@example.com', redirect: true },
+});
+
+cluster.addDependency(traefik);
+
+cluster.addDependency(new Nextjs({
+  name: 'web',
+  appDir: './apps/web',
+  domains: ['www.example.com'],
+  port: 3000,
+  proxy: traefik,
+}));
+```
+
+## Configuration
+
+### `NextjsConfig`
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `name` | `string` | **required** | Service name |
+| `domains` | `string[]` | **required** | Domains to route to this service |
+| `proxy` | `WebProxy \| WebProxyDependency` | **required** | Reverse proxy for routing (e.g., a Traefik instance) |
+| `port` | `number` | `3000` | Application port inside the container |
+| `appDir` | `string` | `''` | Path to the Next.js app directory in the monorepo |
+| `tags` | `string[]` | `undefined` | Docker image tags |
+| `artifacts` | `Artifact[]` | `undefined` | Additional files to copy into the production image |
+| `builder` | `NodeBuilder` | Auto-created | Custom builder (overrides `appDir`, `tags`, `artifacts`) |
+| `image` | `string` | Built from source | Docker image (skip building if set) |
+| `environment` | `Record<string, string>` | `undefined` | Environment variables |
+
+See the [NodeWeb documentation](/docs/services/node-web) for details on `Artifact`, `NodeBuilder` options, and Traefik integration — the configuration is identical.
+
+## Differences from NodeWeb
+
+`Nextjs` and `NodeWeb` share the same implementation. The separate class exists for:
+
+- **Semantic clarity** — Makes it obvious which services are Next.js apps vs generic Node.js APIs
+- **Future extensibility** — Next.js-specific defaults can be added without affecting NodeWeb
+
+## Usage with DockerCluster
+
+```ts
+import {
+  DockerCluster, DockerNode, ClusterUser,
+  Traefik, Postgres, NodeWeb, Nextjs, DockerRegistry,
+} from '@nodevisor/docker';
+
+const cluster = new DockerCluster({
+  name: 'production',
+  nodes: [new DockerNode({ host: '10.0.0.1' })],
+  users: [new ClusterUser({ username: 'root', privateKeyPath: '~/.ssh/id_ed25519' })],
+  registry: new DockerRegistry({
+    server: 'ghcr.io',
+    username: 'myorg',
+    password: process.env.REGISTRY_TOKEN!,
+  }),
+});
+
+const traefik = new Traefik({
+  ssl: { email: 'ops@example.com', redirect: true },
+});
+
+cluster.addDependency(traefik);
+
+// API server
+cluster.addDependency(new NodeWeb({
+  name: 'api',
+  appDir: './apps/api',
+  domains: ['api.example.com'],
+  port: 4000,
+  proxy: traefik,
+}));
+
+// Next.js frontend
+cluster.addDependency(new Nextjs({
+  name: 'web',
+  appDir: './apps/web',
+  domains: ['www.example.com'],
+  port: 3000,
+  proxy: traefik,
+  environment: {
+    NEXT_PUBLIC_API_URL: 'https://api.example.com',
+  },
+}));
+
+await cluster.deploy();
+```
+
+## Related
+
+- [NodeWeb](/docs/services/node-web) — Generic Node.js web applications
+- [Traefik](/docs/services/traefik) — Reverse proxy for routing
+- [Docker package reference](/docs/packages/docker) — Full Docker module API

@@ -1,0 +1,144 @@
+---
+title: NodeWeb
+description: Deploy Node.js web applications with automatic builds and Traefik routing.
+---
+
+## Overview
+
+The `NodeWeb` service deploys Node.js web applications with automatic Docker image building, multi-stage Dockerfiles, and Traefik integration for routing. It extends the `Web` base class and uses `NodeBuilder` to generate optimized production images.
+
+When added to a cluster with a Traefik proxy, NodeWeb automatically configures routing labels so traffic to your domains reaches your application — no manual proxy configuration needed.
+
+## Quick Start
+
+```ts
+import { DockerCluster, Traefik, NodeWeb } from '@nodevisor/docker';
+
+const cluster = new DockerCluster({ name: 'production', ... });
+
+const traefik = new Traefik({
+  ssl: { email: 'ops@example.com', redirect: true },
+});
+
+cluster.addDependency(traefik);
+
+cluster.addDependency(new NodeWeb({
+  name: 'api',
+  appDir: './apps/api',
+  domains: ['api.example.com'],
+  port: 3000,
+  proxy: traefik,
+}));
+```
+
+## Configuration
+
+### `NodeWebConfig`
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `name` | `string` | **required** | Service name (used in Docker labels and image tags) |
+| `domains` | `string[]` | **required** | Domains to route to this service |
+| `proxy` | `WebProxy \| WebProxyDependency` | **required** | Reverse proxy for routing (e.g., a Traefik instance) |
+| `port` | `number` | `3000` | Application port inside the container |
+| `appDir` | `string` | `''` | Path to the application directory in the monorepo |
+| `tags` | `string[]` | `undefined` | Docker image tags |
+| `artifacts` | `Artifact[]` | `undefined` | Additional files to copy into the production image |
+| `builder` | `NodeBuilder` | Auto-created | Custom builder (overrides `appDir`, `tags`, `artifacts`) |
+| `image` | `string` | Built from source | Docker image (skip building if set) |
+| `environment` | `Record<string, string>` | `undefined` | Environment variables |
+
+### `Artifact`
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `source` | `string` | **required** | Source path in the builder stage |
+| `dest` | `string` | `appDir` path | Destination path in the runner stage |
+| `from` | `DockerfileStage \| string` | builder stage | Stage to copy from |
+
+## NodeBuilder
+
+NodeWeb uses `NodeBuilder` to generate a multi-stage Dockerfile:
+
+1. **Builder stage** — Installs dependencies, runs `npm run build`, prunes dev dependencies
+2. **Runner stage** — Copies build output, sets `NODE_ENV=production`, runs `npm run start`
+
+### NodeBuilder Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `node` | `string` | `'node'` | Node image name |
+| `version` | `string \| number` | `'22-alpine'` | Node.js version |
+| `appDir` | `string` | `''` | Application directory within the monorepo |
+| `buildCommand` | `string` | `'npm run build'` | Build command |
+| `startCommand` | `string` | `'npm run start'` | Start command |
+| `dotEnv` | `string \| Record<string, string>` | `undefined` | `.env` file content for the runner |
+| `artifacts` | `Artifact[]` | `[]` | Additional files to copy to the runner stage |
+
+## Traefik Integration
+
+When you specify a `proxy`, NodeWeb automatically generates Traefik labels:
+
+- `traefik.enable=true` — Enables Traefik routing
+- `traefik.http.routers.{name}-http.rule=Host(...)` — HTTP routing rule from `domains`
+- `traefik.http.routers.{name}-https.rule=Host(...)` — HTTPS routing rule (when SSL is configured)
+- `traefik.http.services.{name}.loadbalancer.server.port` — Application port
+- `traefik.docker.network` — Cluster network for proxy communication
+
+## Usage with DockerCluster
+
+```ts
+import {
+  DockerCluster, DockerNode, ClusterUser,
+  Traefik, Postgres, Redis, NodeWeb, DockerRegistry,
+} from '@nodevisor/docker';
+
+const cluster = new DockerCluster({
+  name: 'production',
+  nodes: [new DockerNode({ host: '10.0.0.1' })],
+  users: [new ClusterUser({ username: 'root', privateKeyPath: '~/.ssh/id_ed25519' })],
+  registry: new DockerRegistry({
+    server: 'ghcr.io',
+    username: 'myorg',
+    password: process.env.REGISTRY_TOKEN!,
+  }),
+});
+
+const traefik = new Traefik({
+  ssl: { email: 'ops@example.com', redirect: true },
+});
+
+cluster.addDependency(traefik);
+
+cluster.addDependency(new Postgres({
+  database: 'myapp',
+  password: process.env.DB_PASSWORD!,
+}));
+
+cluster.addDependency(new Redis({
+  password: process.env.REDIS_PASSWORD!,
+}));
+
+cluster.addDependency(new NodeWeb({
+  name: 'api',
+  appDir: './apps/api',
+  tags: ['latest'],
+  domains: ['api.example.com'],
+  port: 3000,
+  proxy: traefik,
+  environment: {
+    NODE_ENV: 'production',
+    DATABASE_URL: `postgresql://myapp:${process.env.DB_PASSWORD}@postgres:5432/myapp`,
+    REDIS_URL: `redis://:${process.env.REDIS_PASSWORD}@redis:6379`,
+  },
+}));
+
+await cluster.deploy();
+```
+
+## Related
+
+- [Next.js](/docs/services/nextjs) — Next.js-specific variant
+- [Traefik](/docs/services/traefik) — Reverse proxy for routing
+- [Whoami](/docs/services/whoami) — Test service for verifying routing
+- [Docker package reference](/docs/packages/docker) — Full Docker module API

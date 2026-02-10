@@ -1,0 +1,139 @@
+---
+title: Redis
+description: Redis cache and data store with persistence and memory management.
+---
+
+## Overview
+
+The `Redis` service provides a production-ready Redis instance with optional persistence, memory limits, eviction policies, and built-in health checks. It extends `PortDockerService` and exposes a single port.
+
+## Quick Start
+
+```ts
+import { DockerCluster, Redis } from '@nodevisor/docker';
+
+const cluster = new DockerCluster({ name: 'production', ... });
+
+cluster.addDependency(new Redis({
+  password: process.env.REDIS_PASSWORD!,
+  maxmemory: '256mb',
+  maxmemoryPolicy: 'allkeys-lru',
+}));
+```
+
+## Configuration
+
+### `RedisConfig`
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `name` | `string` | `'redis'` | Service name |
+| `version` | `string` | `'8.0.2'` | Redis version |
+| `image` | `string` | `'redis:{version}'` | Docker image |
+| `port` | `number` | `6379` | Redis port |
+| `password` | `string` | `undefined` | Redis password |
+| `appendonly` | `boolean` | `undefined` | Enable AOF persistence |
+| `maxmemory` | `string \| number` | `undefined` | Memory limit (e.g., `'256mb'` or `256` for MB) |
+| `maxmemoryPolicy` | `MaxmemoryPolicy` | `undefined` | Eviction policy when memory limit is reached |
+| `volume` | `DockerVolume` | `undefined` | Custom volume configuration |
+| `healthcheck` | `DockerHealthcheckConfig` | Built-in (see below) | Custom health check config |
+
+### `MaxmemoryPolicy`
+
+| Policy | Description |
+|--------|-------------|
+| `'noeviction'` | Return errors when memory limit is reached |
+| `'allkeys-lru'` | Evict least recently used keys (recommended for caches) |
+| `'allkeys-random'` | Evict random keys |
+| `'volatile-lru'` | Evict least recently used keys with TTL set |
+| `'volatile-random'` | Evict random keys with TTL set |
+| `'volatile-ttl'` | Evict keys with shortest TTL |
+
+## Health Check
+
+| Property | Value |
+|----------|-------|
+| Command | `redis-cli ping \| grep PONG` |
+| Interval | `10s` |
+| Timeout | `2s` |
+| Retries | `3` |
+| Start period | `5s` |
+
+## Volumes
+
+| Volume | Target | Type | Description |
+|--------|--------|------|-------------|
+| `data` | `/data` | volume | Persistent Redis data (RDB snapshots and AOF files) |
+
+## Environment Variables
+
+| Variable | Source | Description |
+|----------|--------|-------------|
+| `REDIS_PASSWORD` | `password` | Redis authentication password |
+
+## Command Arguments
+
+Redis server command arguments are configured automatically based on your options:
+
+| Argument | Source | Example |
+|----------|--------|---------|
+| `--appendonly` | `appendonly: true` | `redis-server --appendonly yes` |
+| `--maxmemory` | `maxmemory: '256mb'` | `redis-server --maxmemory 256mb` |
+| `--maxmemory-policy` | `maxmemoryPolicy: 'allkeys-lru'` | `redis-server --maxmemory-policy allkeys-lru` |
+
+When `maxmemory` is a number, it's treated as megabytes (e.g., `256` becomes `'256mb'`).
+
+## Usage with DockerCluster
+
+```ts
+import {
+  DockerCluster, DockerNode, ClusterUser,
+  Traefik, Postgres, Redis, NodeWeb, DockerRegistry,
+} from '@nodevisor/docker';
+
+const cluster = new DockerCluster({
+  name: 'production',
+  nodes: [new DockerNode({ host: '10.0.0.1' })],
+  users: [new ClusterUser({ username: 'root', privateKeyPath: '~/.ssh/id_ed25519' })],
+  registry: new DockerRegistry({
+    server: 'ghcr.io',
+    username: 'myorg',
+    password: process.env.REGISTRY_TOKEN!,
+  }),
+});
+
+cluster.addDependency(new Traefik({
+  ssl: { email: 'ops@example.com', redirect: true },
+}));
+
+cluster.addDependency(new Postgres({
+  database: 'myapp',
+  password: process.env.DB_PASSWORD!,
+}));
+
+cluster.addDependency(new Redis({
+  password: process.env.REDIS_PASSWORD!,
+  appendonly: true,
+  maxmemory: '256mb',
+  maxmemoryPolicy: 'allkeys-lru',
+}));
+
+cluster.addDependency(new NodeWeb({
+  name: 'api',
+  appDir: './apps/api',
+  domains: ['api.example.com'],
+  environment: {
+    REDIS_URL: `redis://:${process.env.REDIS_PASSWORD}@redis:6379`,
+  },
+}));
+
+await cluster.deploy();
+```
+
+The connection string uses the service name `redis` as the hostname — Docker's internal DNS resolves it automatically.
+
+## Related
+
+- [Postgres](/docs/services/postgres) — Database service
+- [Traefik](/docs/services/traefik) — Reverse proxy
+- [Docker package reference](/docs/packages/docker) — Full Docker module API

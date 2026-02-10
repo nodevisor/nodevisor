@@ -1,0 +1,160 @@
+---
+title: Traefik
+description: Reverse proxy with automatic SSL, dashboard, and Docker provider integration.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+## Overview
+
+The `Traefik` service provides a production-ready reverse proxy with automatic SSL certificate management via Let's Encrypt, an optional dashboard, and automatic Docker service discovery. It extends `WebProxy` and runs in global mode on manager nodes.
+
+Traefik automatically routes traffic to your web services (NodeWeb, Nextjs, Whoami) based on domain labels — no manual nginx or HAProxy configuration needed.
+
+## Quick Start
+
+```ts
+import { DockerCluster, Traefik } from '@nodevisor/docker';
+
+const cluster = new DockerCluster({ name: 'production', ... });
+
+cluster.addDependency(new Traefik({
+  ssl: {
+    email: 'ops@example.com',
+    redirect: true,
+  },
+}));
+```
+
+## Configuration
+
+### `TraefikConfig`
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `name` | `string` | `'traefik'` | Service name |
+| `version` | `string \| number` | `'3.1.7'` | Traefik version |
+| `image` | `string` | `'traefik:{version}'` | Docker image |
+| `ssl` | `SSLConfig` | `undefined` | SSL/TLS configuration (see below) |
+| `dashboard` | `DashboardConfig` | `undefined` | Dashboard configuration (see below) |
+| `dockerUnixSocket` | `string` | `'/var/run/docker.sock'` | Path to Docker socket |
+| `healthcheck` | `DockerHealthcheckConfig` | Built-in (see below) | Custom health check config |
+
+### `SSLConfig`
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `email` | `string` | **required** | Email for Let's Encrypt registration |
+| `port` | `number` | `443` | HTTPS port |
+| `storage` | `string` | `'/letsencrypt/acme.json'` | Path to store certificates inside the container |
+| `redirect` | `boolean` | `undefined` | Redirect all HTTP traffic to HTTPS |
+
+### `DashboardConfig`
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `host` | `string` | `undefined` | Domain for the dashboard (e.g., `'traefik.example.com'`) |
+| `username` | `string` | `'admin'` | Basic auth username |
+| `password` | `string \| false` | **required** | htpasswd hash for basic auth, or `false` to disable auth |
+| `port` | `8080` | `8080` | Dashboard port (fixed) |
+
+<Callout type="warn">
+The dashboard `password` must be an htpasswd-hashed string. Generate one with: `htpasswd -nb admin yourpassword`
+</Callout>
+
+## Health Check
+
+Traefik includes a built-in health check using the ping endpoint:
+
+| Property | Value |
+|----------|-------|
+| Command | `traefik healthcheck --ping` |
+| Interval | `10s` |
+| Timeout | `2s` |
+| Retries | `3` |
+| Start period | `10s` |
+
+The health check enables Traefik's `--ping` entrypoint on port 8080 internally.
+
+## Volumes
+
+| Volume | Target | Type | Description |
+|--------|--------|------|-------------|
+| `docker-socket` | `/var/run/docker.sock` | bind (read-only) | Docker socket for service discovery |
+| `letsencrypt` | `/letsencrypt` | volume | SSL certificate storage (only when `ssl` is configured) |
+
+## Ports
+
+| Port | Protocol | Mode | Description |
+|------|----------|------|-------------|
+| 80 | TCP | host | HTTP traffic |
+| 443 | TCP | host | HTTPS traffic (only when `ssl` is configured) |
+
+<Callout>
+Ports use `host` mode instead of `ingress` to preserve real client IPs and ensure proper ACME challenge handling.
+</Callout>
+
+## Docker Provider
+
+Traefik automatically configures the following Docker provider settings:
+
+- `--providers.docker` — Enable Docker provider
+- `--providers.swarm` — Enable Swarm provider (when using Docker Swarm)
+- `--providers.docker.exposedbydefault=false` — Containers are not exposed without explicit labels
+- `--providers.docker.network` — Uses the cluster's network for communication
+
+## Usage with DockerCluster
+
+```ts
+import {
+  DockerCluster, DockerNode, ClusterUser,
+  Traefik, Postgres, NodeWeb, DockerRegistry,
+} from '@nodevisor/docker';
+
+const cluster = new DockerCluster({
+  name: 'production',
+  nodes: [new DockerNode({ host: '10.0.0.1' })],
+  users: [new ClusterUser({ username: 'root', privateKeyPath: '~/.ssh/id_ed25519' })],
+  registry: new DockerRegistry({
+    server: 'ghcr.io',
+    username: 'myorg',
+    password: process.env.REGISTRY_TOKEN!,
+  }),
+});
+
+// Reverse proxy with SSL and dashboard
+cluster.addDependency(new Traefik({
+  ssl: {
+    email: 'ops@example.com',
+    redirect: true,
+  },
+  dashboard: {
+    host: 'traefik.example.com',
+    username: 'admin',
+    password: process.env.TRAEFIK_PASSWORD_HASH!,
+  },
+}));
+
+// Database
+cluster.addDependency(new Postgres({
+  database: 'myapp',
+  password: process.env.DB_PASSWORD!,
+}));
+
+// Application — automatically uses Traefik for routing
+cluster.addDependency(new NodeWeb({
+  name: 'api',
+  appDir: './apps/api',
+  domains: ['api.example.com'],
+  port: 3000,
+}));
+
+await cluster.deploy();
+```
+
+## Related
+
+- [Postgres](/docs/services/postgres) — Database service
+- [Redis](/docs/services/redis) — Cache service
+- [NodeWeb](/docs/services/node-web) — Node.js web applications
+- [Docker package reference](/docs/packages/docker) — Full Docker module API
