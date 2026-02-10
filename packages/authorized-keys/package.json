@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/authorized-keys",
   "description": "Module provides ability to manage authorized keys",
-  "version": "0.0.82",
+  "version": "0.0.83",
   "license": "SEE LICENSE IN LICENSE",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",

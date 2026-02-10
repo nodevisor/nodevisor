@@ -1,7 +1,7 @@
 {
   "name": "@nodevisor/packages",
   "description": "Module provides ability to manage packages",
-  "version": "0.0.82",
+  "version": "0.0.83",
   "license": "SEE LICENSE IN LICENSE",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
