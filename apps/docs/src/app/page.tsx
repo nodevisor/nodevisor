@@ -20,9 +20,9 @@ await $server(Docker).install();`;
 
 const features = [
   {
-    title: 'Shell proxy with SSH',
+    title: 'Agentless remote execution',
     description:
-      'Run commands locally or remotely with the same API. Variables are auto-escaped to prevent injection.',
+      'SSH into any server with nothing to install. Run commands locally or remotely with the same API. Variables are auto-escaped to prevent injection.',
     code: `const $server = $.connect({ host: '10.0.0.10', username: 'root' });
 
 // Safe — variables are automatically escaped
@@ -34,9 +34,9 @@ const hostname = await $server\`hostname\`.text();
 const config = await $server\`cat config.json\`.json();`,
   },
   {
-    title: '20+ typed modules',
+    title: 'Cross-platform typed modules',
     description:
-      'Every system task has a typed API — packages, users, firewall, SSH, Docker, and more. Full autocomplete in your editor.',
+      'One API for Linux, macOS, and Windows. Auto-detects apt, yum, brew, or winget. Full type safety and autocomplete in your editor.',
     code: `// Auto-detects apt, yum, brew, or winget
 await $server(Packages).install(['nginx', 'curl']);
 
@@ -113,10 +113,11 @@ export default function HomePage() {
       {/* Hero */}
       <section className="landing-hero">
         <p className="landing-kicker">Nodevisor</p>
-        <h1>Infrastructure automation in TypeScript.</h1>
+        <h1>Automate any server with TypeScript.</h1>
         <p className="landing-description">
-          Manage servers, configure firewalls, deploy Docker clusters — all from
-          TypeScript with full IDE support, type safety, and SSH built in.
+          Deploy Docker clusters, manage packages, configure firewalls —
+          agentless over SSH with nothing to install. Cross-platform across
+          Linux, macOS, and Windows.
         </p>
 
         <Code code={heroCode} />

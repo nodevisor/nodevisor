@@ -8,7 +8,7 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 # Nodevisor
 
-TypeScript Infrastructure Automation Platform. No YAML, no Ansible — just code.
+Automate any server with TypeScript. No YAML, no config files — just code.
 
 ```bash
 npm install nodevisor
@@ -32,10 +32,11 @@ await $server`apt-get update`.quiet();
 
 ## Why Nodevisor?
 
-- **TypeScript Native** — Full IDE support, autocomplete, and type safety. Catch infrastructure errors before they reach production.
-- **SSH Built-In** — Connect to remote servers over SSH. Run the same code locally or remotely — zero API changes.
+- **TypeScript Native** — Full IDE support, autocomplete, and type safety. Use real code — loops, async/await, npm packages — not YAML.
+- **Deploy to Your Servers** — Define your production stack in TypeScript. Deploy Docker clusters with Traefik, Postgres, and your app to any server.
+- **Agentless** — Connects over SSH with nothing to install on remote servers. No daemons, no agents — just a standard SSH server.
+- **Cross-Platform** — One API for Linux, macOS, and Windows. Modules auto-detect OS differences — apt, yum, brew, or winget.
 - **Safe by Default** — Template literal variables are automatically escaped, preventing shell injection.
-- **Modular** — 20+ focused packages. Import only what you need, or use the `nodevisor` umbrella for everything.
 
 ---
 
