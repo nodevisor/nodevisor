@@ -26,7 +26,8 @@
 .nv-body {
   min-height: 100vh;
   font-family: 'Space Grotesk', 'Avenir Next', 'Segoe UI', sans-serif;
-  background: radial-gradient(circle at 15% 10%, rgba(0, 170, 122, 0.16) 0%, transparent 45%),
+  background:
+    radial-gradient(circle at 15% 10%, rgba(0, 170, 122, 0.16) 0%, transparent 45%),
     radial-gradient(circle at 85% 30%, rgba(255, 168, 83, 0.14) 0%, transparent 48%),
     hsl(var(--background));
   color: hsl(var(--foreground));
@@ -37,6 +38,11 @@ pre,
 kbd,
 samp {
   font-family: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Fix: prevent prose inline-code styles from leaking into code blocks */
+pre code {
+  display: block;
 }
 
 /* ── Landing layout ── */
@@ -54,7 +60,8 @@ samp {
   position: fixed;
   inset: 0;
   opacity: 0.28;
-  background-image: linear-gradient(to right, rgba(17, 24, 39, 0.08) 1px, transparent 1px),
+  background-image:
+    linear-gradient(to right, rgba(17, 24, 39, 0.08) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(17, 24, 39, 0.08) 1px, transparent 1px);
   background-size: 28px 28px;
   pointer-events: none;

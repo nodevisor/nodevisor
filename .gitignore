@@ -12,3 +12,4 @@ apps/docs-org
 apps/website
 .pnpm-store
 .claude
+apps/docs/out
