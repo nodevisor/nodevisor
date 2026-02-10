@@ -48,7 +48,7 @@ export default class DockerRegistry extends Registry {
   async push(image: string, options: { tags?: string[] } = {}, $con = $) {
     const { tags = [] } = options;
 
-    await this.login($);
+    await this.login($con);
 
     const imageWithoutTag = Registry.getImage(image);
 

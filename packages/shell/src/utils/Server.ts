@@ -197,12 +197,8 @@ MQd/p9Q2fR/Rt2afAAAAInNlZWRlbkBabGF0a29zLU1hY0Jvb2stUHJvLTIubG9jYWw=
             // Determine the mode based on flags
             if (flags & fs.constants.O_WRONLY || flags & fs.constants.O_RDWR) {
               mode = 'w'; // Open file for writing
-            } else if (flags & fs.constants.O_RDONLY) {
-              mode = 'r'; // Open file for reading
             } else {
-              // Unsupported flags
-              sftpStream.status(reqid, STATUS_CODE.FAILURE);
-              return;
+              mode = 'r'; // O_RDONLY is 0, so it's the default
             }
 
             // Create a unique handle using nanoid
@@ -222,7 +218,7 @@ MQd/p9Q2fR/Rt2afAAAAInNlZWRlbkBabGF0a29zLU1hY0Jvb2stUHJvLTIubG9jYWw=
 
             try {
               // Write data to the file at the specified offset
-              const fileHandle = await fs.open(fileInfo.filename, 'r+');
+              const fileHandle = await fs.open(fileInfo.filename, 'a+');
               await fileHandle.write(data, 0, data.length, offset);
               await fileHandle.close();
 
@@ -252,8 +248,12 @@ MQd/p9Q2fR/Rt2afAAAAInNlZWRlbkBabGF0a29zLU1hY0Jvb2stUHJvLTIubG9jYWw=
               );
               await fileHandle.close();
 
-              // Send the read data back
-              sftpStream.data(reqid, buffer.slice(0, bytesRead));
+              // Send the read data back or EOF if no more data
+              if (bytesRead === 0) {
+                sftpStream.status(reqid, STATUS_CODE.EOF);
+              } else {
+                sftpStream.data(reqid, buffer.slice(0, bytesRead));
+              }
             } catch (err) {
               logServer('Read error:', err);
               sftpStream.status(reqid, STATUS_CODE.FAILURE);
@@ -264,7 +264,7 @@ MQd/p9Q2fR/Rt2afAAAAInNlZWRlbkBabGF0a29zLU1hY0Jvb2stUHJvLTIubG9jYWw=
             const fileInfo = files.get(handle.toString('utf8'));
             if (fileInfo) {
               // Remove the file handle from the map
-              // files.delete(handle.toString('utf8'));
+              files.delete(handle.toString('utf8'));
               sftpStream.status(reqid, STATUS_CODE.OK);
             } else {
               sftpStream.status(reqid, STATUS_CODE.FAILURE);

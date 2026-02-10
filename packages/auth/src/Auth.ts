@@ -1,10 +1,8 @@
 import { Module } from '@nodevisor/shell';
 // import Users from '@nodevisor/users';
-import FS from '@nodevisor/fs';
 
 export default class Auth extends Module {
   readonly name = 'auth';
-  readonly fs = new FS(this.nodevisor);
   // readonly users = new Users(this.nodevisor);
 
   async logout() {

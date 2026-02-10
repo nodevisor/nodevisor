@@ -39,15 +39,15 @@ export default class DockerSwarm extends Module {
   }
 
   async getManagerToken() {
-    return this.$`docker swarm join-token -q manager}`.text();
+    return this.$`docker swarm join-token -q manager`.text();
   }
 
   async getWorkerToken() {
-    return this.$`docker swarm join-token -q worker}`.text();
+    return this.$`docker swarm join-token -q worker`.text();
   }
 
   async join(token: string, address: string, port = 2377) {
-    return this.$`docker swarm join`.argument('--token', token).append` ${address}:${port}`;
+    return this.$`docker swarm join`.argument('--token', token).append` ${address}:${port}`.text();
   }
 
   async promote(node: string) {

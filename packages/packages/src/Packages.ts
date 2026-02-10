@@ -33,7 +33,7 @@ export default class Packages extends Module {
         // winget doesn't have a dedicated update command, upgrade covers it
         return;
       case PackageManager.YUM:
-        await this.$`yum check-update`;
+        await this.$`yum check-update`.noThrow();
         break;
       default:
         await this.$`DEBIAN_FRONTEND=noninteractive apt-get update`;
@@ -129,7 +129,7 @@ export default class Packages extends Module {
         const darwinLines = await this.$`brew ls --versions ${name}`.noThrow().lines();
         return !!darwinLines.length;
       case PackageManager.WINGET:
-        const wingetResponse = await this.$`winget list ${name}`.lines();
+        const wingetResponse = await this.$`winget list ${name}`.noThrow().lines();
         return wingetResponse.some((line) => line.includes(name));
       case PackageManager.YUM:
         const yumLines = await this.$`yum list installed ${name}`.noThrow().lines();
@@ -164,7 +164,7 @@ export default class Packages extends Module {
 
         return !!relevantLines.length;
       case PackageManager.WINGET:
-        const wingetUpgradeCheck = await this.$`winget upgrade --source winget`.lines();
+        const wingetUpgradeCheck = await this.$`winget upgrade --source winget`.noThrow().lines();
         return wingetUpgradeCheck.some((line) => line.includes(name));
       /*
         const wingetResponse = await this
@@ -175,7 +175,7 @@ export default class Packages extends Module {
         const yumUpgradable = await this.$`yum list updates ${name}`.noThrow().lines();
         return !!yumUpgradable.length;
       case PackageManager.APT:
-        const aptUpgradable = await this.$`apt list --upgradable ${name}`.lines();
+        const aptUpgradable = await this.$`apt list --upgradable ${name}`.noThrow().lines();
         return !!aptUpgradable.length;
     }
   }

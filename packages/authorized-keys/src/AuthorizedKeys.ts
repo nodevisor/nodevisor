@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import { Module } from '@nodevisor/shell';
 import Env from '@nodevisor/env';
 import FS from '@nodevisor/fs';
-import path from 'path';
+import path from 'path/posix';
 
 export default class AuthorizedKeys extends Module<{
   sshDir: string;
@@ -41,6 +41,7 @@ export default class AuthorizedKeys extends Module<{
       throw new Error('Public key is required and cannot be empty.');
     }
 
+    await this.ensureSSHDirectory();
     const authorizedKeysPath = await this.getAuthorizedKeysPath();
     const currentContent = await this.fs.readFile(authorizedKeysPath);
     const contentToAppend = currentContent ? `\n${trimmedKey}` : trimmedKey;

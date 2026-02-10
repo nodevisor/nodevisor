@@ -120,7 +120,7 @@ export default class AWS extends Package<{
       throw new Error('AWS region is not specified');
     }
 
-    return await this.$`aws ecr get-login-password --region ${region}`.text();
+    return await this.$aws`ecr get-login-password --region ${region}`.text();
   }
 
   async getECRDockerRegistryEndpoint(registryId: string, options: { region?: string } = {}) {

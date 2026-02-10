@@ -225,7 +225,7 @@ export default class DockerNode extends ClusterNode {
 
     let cleanupCalled = false;
 
-    function cleanup() {
+    async function cleanup() {
       if (cleanupCalled) {
         return;
       }
@@ -233,7 +233,7 @@ export default class DockerNode extends ClusterNode {
       cleanupCalled = true;
 
       if (tempKeyFile) {
-        $(FS).rm(tempKeyFile);
+        await $(FS).rm(tempKeyFile);
       }
     }
 
@@ -244,7 +244,7 @@ export default class DockerNode extends ClusterNode {
       });
 
       // cleanup when ssh process is started
-      ssh.on('data', function () {
+      ssh.on('spawn', function () {
         cleanup();
       });
 

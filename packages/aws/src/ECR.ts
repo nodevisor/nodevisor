@@ -22,14 +22,14 @@ export default class ECR extends Registry {
   }
 
   // 123456789.dkr.ecr.eu-central-1.amazonaws.com/project-web
-  getURI(image: string, options: { region?: string } = {}) {
+  async getURI(image: string, options: { region?: string } = {}) {
     const { region = this.region } = options;
 
     if (!image) {
       throw new Error('Repository is required');
     }
 
-    const endpoint = this.aws.getECRDockerRegistryEndpoint(this.registryId, { region });
+    const endpoint = await this.aws.getECRDockerRegistryEndpoint(this.registryId, { region });
     const uri = `${endpoint}/${image}`;
 
     return uri;

@@ -40,7 +40,7 @@ export default abstract class Package<TConfig extends PackageConfig = PackageCon
   protected abstract installPackage(): Promise<void>;
 
   async uninstall() {
-    if (await this.isInstalled()) {
+    if (!(await this.isInstalled())) {
       this.log('Not installed');
       return;
     }

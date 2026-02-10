@@ -10,7 +10,7 @@ export default class UFW extends Service {
   // package version methods
   async getVersion() {
     if (!(await this.isInstalled())) {
-      throw new Error('docker is not installed');
+      throw new Error('ufw is not installed');
     }
 
     return await this.$`ufw --version`.text();
@@ -96,9 +96,9 @@ export default class UFW extends Service {
 
     const status = await this.$`ufw status`.text();
 
-    //return status.includes(`${port}:${protocol} ALLOW`);
-    // const status = await $`${name} status`;
-
-    // select line with ${port}:${protocol} and verify allow, allow can be more spaces after
+    const lines = status.split('\n');
+    return lines.some(
+      (line) => line.includes(`${port}/${protocol}`) && /ALLOW/.test(line),
+    );
   }
 }

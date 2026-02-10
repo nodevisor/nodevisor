@@ -23,6 +23,11 @@ export default class Module<TConfig extends ModuleConfig = ModuleConfig> {
     this.log = log.extend(this.name);
   }
 
+  // backward-compatible alias for this.shell (used by child classes across packages)
+  protected get nodevisor(): Shell {
+    return this.shell;
+  }
+
   get connection() {
     return this.shell.connection;
   }

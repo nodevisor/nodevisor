@@ -21,7 +21,7 @@ export default class DockerHealthcheck {
   }
 
   get interval(): Duration | undefined {
-    return this.config.interval ?? '';
+    return this.config.interval;
   }
 
   set timeout(timeout: Duration | undefined) {

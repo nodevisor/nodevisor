@@ -1,4 +1,3 @@
-import { platform } from 'node:os';
 import SSH from './SSH';
 
 const itIfSafe = process.env.SAFE === 'true' ? it : xit;

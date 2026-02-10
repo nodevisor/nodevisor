@@ -8,7 +8,7 @@ export default class Services extends Module {
       return;
     }
 
-    this.$`systemctl start ${name}`;
+    await this.$`systemctl start ${name}`;
   }
 
   async stop(name: string) {

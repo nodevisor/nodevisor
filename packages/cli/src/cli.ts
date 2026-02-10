@@ -27,7 +27,7 @@ program
 
 program
   .command('setup')
-  .description('Setup and secure your servers and install depedencies')
+  .description('Setup and secure your servers and install dependencies')
   .argument('<file>', 'Your cluster definition')
   .option('-g, --generate-keys', 'Generate new SSH keys')
   .option('-i, --identity <path>', 'Path to SSH key', '~/.ssh/nodevisor_id_ed25519')
@@ -37,7 +37,7 @@ program
       if (options.generateKeys) {
         const { identity } = options;
         if (!identity) {
-          throw new Error('Error: --identity is required when --generate is used');
+          throw new Error('Error: --identity is required when --generate-keys is used');
         }
 
         const identityPath = expandHomeDir(identity);

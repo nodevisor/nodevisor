@@ -34,7 +34,7 @@ export default class DockerStack extends Module {
       throw new Error('stackName is required');
     }
 
-    return this.command('up')
+    return this.command('deploy')
       .argument({
         '--compose-file': composeFile,
         '--detach': detach,
@@ -62,7 +62,7 @@ export default class DockerStack extends Module {
   }
 
   async services(stack: string) {
-    return this.$`docker stack services ${stack}`;
+    return this.$`docker stack services ${stack}`.text();
   }
 
   // https://docs.docker.com/reference/cli/docker/stack/rm/
@@ -78,7 +78,7 @@ export default class DockerStack extends Module {
       throw new Error('stackName is required');
     }
 
-    return this.command('up')
+    return this.command('rm')
       .argument({
         '--detach': detach,
       })

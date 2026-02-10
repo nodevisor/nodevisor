@@ -252,7 +252,7 @@ export default abstract class ClusterService extends ClusterServiceBase {
       throw new Error('initial cannot be greater than max');
     }
 
-    return { min, max, initial };
+    return { min, max, initial: definedInitial };
   }
 
   getLabels() {

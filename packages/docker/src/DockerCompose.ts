@@ -68,10 +68,11 @@ export default class DockerCompose extends Module {
   ) {
     const { rm = true, pull = 'always', detach = true, profile } = options;
 
-    const cb = this.composeCommand('run')
+    return this.composeCommand('run')
       .argument({
         '--rm': rm,
         '--pull': pull,
+        '--detach': detach,
         '--profile': profile,
       })
       .argument(service, null)

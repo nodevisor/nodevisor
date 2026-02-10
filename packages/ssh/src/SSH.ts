@@ -83,8 +83,6 @@ export default class SSH extends Service {
       'fakeuser@localhost': true,
     }).append` 2>&1 | grep password`.text();
 
-    console.log('RESULT***', result);
-
     return result.includes('Permission denied');
   }
 }

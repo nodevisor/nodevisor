@@ -77,7 +77,7 @@ export default class ShellConnection extends Connection {
     try {
       await this.waitForConnection();
 
-      return exec(cmd, { stdin, signal });
+      return await exec(cmd, { stdin, signal });
     } catch (error) {
       if (error instanceof CommandOutputError) {
         throw error;
